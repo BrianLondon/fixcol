@@ -25,7 +25,7 @@ mod tests {
     }
 
     #[test]
-    fn test_custom() {
+    fn test_write_custom_basic() {
         struct Foo;
 
         impl WriteFixed for Foo {
@@ -41,5 +41,55 @@ mod tests {
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), "Foo");
+    }
+
+    // Name is left aligned, ten characters
+    // value is right aligned three characters
+    #[derive(Debug, PartialEq, Eq)]
+    struct NumWord {
+        name: String,
+        value: u8,
+    }
+
+    impl WriteFixed for NumWord {
+        fn write_fixed(&self, write: &mut dyn std::io::Write) -> Result<(), ()> {
+            let _ = write.write_fmt(format_args!("{:<10}{:>3}", self.name, self.value));
+            Ok(())
+        }
+    }
+
+    impl ReadFixed for NumWord {
+        fn read_fixed(read: &mut impl std::io::Read) -> Result<Self, ()>
+                where Self: Sized {
+            let mut s = String::new();
+            let _ = read.read_to_string(&mut s);
+
+            let name = s[0..10].trim_end().to_string();
+            let num = s[10..].to_string();
+            let value = num.trim_start().parse::<u8>().unwrap();
+            
+            Ok(NumWord { name, value })
+        }
+    }
+
+    #[test]
+    fn custom_struct_write() {
+        let three = NumWord { name: "three".to_string(), value: 3 };
+
+        let mut v = Vec::new();
+        let res = three.write_fixed(&mut v);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), "three       3");
+    }
+
+    #[test]
+    fn custom_struct_read() {
+        let three = NumWord { name: "three".to_string(), value: 3 };
+
+        let mut buf = "three       3".as_bytes();
+        let decoded = NumWord::read_fixed(&mut buf).unwrap();
+
+        assert_eq!(decoded, three);
     }
 }
