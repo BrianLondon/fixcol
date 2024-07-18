@@ -1,34 +1,18 @@
+use crate::format::{Alignment, FieldDescription};
+
 use std::str::FromStr;
-
-/// Represents the alignment of a field in a fixed length representation
-pub enum Alignment {
-    /// Field is aligned left
-    Left,
-    /// Field is aligned right
-    Right,
-    /// Field takes the full width and whitespace will not be stripped
-    Full, // TODO: handle incorrect length writes (with strict mode)
-}
-
-
-/// Represents how a field should be encoded in fixed len representation
-pub struct EncodingScheme {
-    pub skip: usize,
-    pub len: usize,
-    pub alignment: Alignment,
-}
 
 
 /// A trait the represents field types that can be decoded from fixed len strings
 pub trait FixedDeserializable<T : Sized> {
-    fn parse_with(&self, scheme: EncodingScheme) -> Result<T, ()>;
+    fn parse_with(&self, desc: FieldDescription) -> Result<T, ()>;
 }
 
 
-fn extract_trimmed(src: &str, scheme: EncodingScheme) -> &str {
-    let slice = &src[scheme.skip..scheme.skip+scheme.len];
+fn extract_trimmed(src: &str, desc: FieldDescription) -> &str {
+    let slice = &src[desc.skip..desc.skip+desc.len];
         
-    match scheme.alignment {
+    match desc.alignment {
         Alignment::Left => slice.trim_end(),
         Alignment::Right => slice.trim_start(),
         Alignment::Full => slice,
@@ -37,8 +21,8 @@ fn extract_trimmed(src: &str, scheme: EncodingScheme) -> &str {
 
 
 impl<T: FromStr> FixedDeserializable<T> for &str {
-    fn parse_with(&self, scheme: EncodingScheme) -> Result<T, ()> {
-        let trimmed = extract_trimmed(self, scheme);
+    fn parse_with(&self, desc: FieldDescription) -> Result<T, ()> {
+        let trimmed = extract_trimmed(self, desc);
         trimmed.parse::<T>().map_err(|_| ())
     }
 }

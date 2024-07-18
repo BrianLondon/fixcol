@@ -23,7 +23,7 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
         quote!{
             let mut s: [u8; 10] = [0; 10];
             let _ = buf.read_exact(&mut s);
-            let #name = std::str::from_utf8(&s).unwrap().parse_with(fixed::EncodingScheme {
+            let #name = std::str::from_utf8(&s).unwrap().parse_with(fixed::FieldDescription {
                 skip: 0,
                 len: 10,
                 alignment: fixed::Alignment::Left,

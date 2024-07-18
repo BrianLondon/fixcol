@@ -1,11 +1,13 @@
 //! A crate used for fixed width column serialization and deserialization
 mod fixed;
+mod format;
 mod parse;
 
 extern crate fixed_derive;
 
 pub use fixed::{ReadFixed, WriteFixed};
-pub use parse::{Alignment, EncodingScheme, FixedDeserializable};
+pub use parse::FixedDeserializable;
+pub use format::{Alignment, FieldDescription};
 
 #[cfg(test)]
 mod tests {
@@ -30,7 +32,7 @@ mod tests {
     }
 
     #[test]
-    fn test_write_custom_basic() {
+    fn write_custom_basic() {
         struct Foo;
 
         impl WriteFixed for Foo {
