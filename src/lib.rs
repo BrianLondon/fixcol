@@ -1,6 +1,7 @@
 //! A crate used for fixed width column serialization and deserialization
-
 mod fixed;
+
+extern crate fixed_derive;
 
 pub use fixed::{ReadFixed, WriteFixed};
 
@@ -93,5 +94,24 @@ mod tests {
         let decoded = NumWord::read_fixed(&mut buf).unwrap();
 
         assert_eq!(decoded, three);
+    }
+
+    // TODO: Delete me (this is not correct behavior)
+    #[test]
+    fn derive_dummy() {
+        use fixed_derive::WriteFixed;
+        
+        #[derive(WriteFixed)]
+        struct Foo {
+            foo: u64
+        }
+
+        let foo = Foo { foo: 42 };
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), "Foo");
     }
 }
