@@ -7,6 +7,7 @@ use proc_macro::TokenStream;
 
 use syn::{Data, DataStruct, DeriveInput, Fields};
 use quote::quote;
+
 // For now as a PoC we're just assuming ten characters per field
 fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
     let fields = match fields  {
@@ -22,10 +23,10 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
         quote!{
             let mut s: [u8; 10] = [0; 10];
             let _ = buf.read_exact(&mut s);
-            let #name = std::str::from_utf8(&s).unwrap().parse_with(crate::parse::EncodingScheme {
+            let #name = std::str::from_utf8(&s).unwrap().parse_with(fixed::EncodingScheme {
                 skip: 0,
                 len: 10,
-                alignment: crate::parse::Alignment::Left,
+                alignment: fixed::Alignment::Left,
             }).unwrap();
         }
     });
@@ -43,8 +44,8 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
 
     
     quote!{
-        fn read_fixed<R: io::Read>(buf: &mut R) -> Result<Self, ()> {
-            use crate::parse::FixedDeserializable;
+        fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, ()> {
+            use fixed::FixedDeserializable;
             #read_steps
 
             Ok(Self {
@@ -68,12 +69,12 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
     };
 
     let gen = quote! {
-        impl #impl_generics crate::ReadFixed for #name #ty_generics #where_clause {
+        impl #impl_generics fixed::ReadFixed for #name #ty_generics #where_clause {
             #function_impl
         }
     };
 
-    println!("{}", gen);
+    // println!("{}", gen);
 
     gen.into()
 }
@@ -118,12 +119,12 @@ pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
     };
 
     let gen = quote! {
-        impl #impl_generics crate::WriteFixed for #name #ty_generics #where_clause {
+        impl #impl_generics fixed::WriteFixed for #name #ty_generics #where_clause {
             #function_impl
         }
     };
 
-    println!("{}", gen);
+    // println!("{}", gen);
 
     gen.into()
 }
