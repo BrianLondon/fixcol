@@ -1,3 +1,5 @@
+//! A crate used for fixed width column serialization and deserialization
+
 mod fixed;
 
 pub use fixed::{ReadFixed, WriteFixed};
@@ -29,8 +31,8 @@ mod tests {
         struct Foo;
 
         impl WriteFixed for Foo {
-            fn write_fixed(&self, write: &mut dyn std::io::Write) -> Result<(), ()> {
-                write.write("Foo".as_bytes()).map(|_| ()).map_err(|_| ())
+            fn write_fixed(&self, buf: &mut dyn std::io::Write) -> Result<(), ()> {
+                buf.write("Foo".as_bytes()).map(|_| ()).map_err(|_| ())
             }
         }
 
@@ -52,8 +54,8 @@ mod tests {
     }
 
     impl WriteFixed for NumWord {
-        fn write_fixed(&self, write: &mut dyn std::io::Write) -> Result<(), ()> {
-            let _ = write.write_fmt(format_args!("{:<10}{:>3}", self.name, self.value));
+        fn write_fixed(&self, buf: &mut dyn std::io::Write) -> Result<(), ()> {
+            let _ = buf.write_fmt(format_args!("{:<10}{:>3}", self.name, self.value));
             Ok(())
         }
     }
