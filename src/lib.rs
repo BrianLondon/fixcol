@@ -1,5 +1,6 @@
 //! A crate used for fixed width column serialization and deserialization
 mod fixed;
+mod parse;
 
 extern crate fixed_derive;
 
@@ -7,7 +8,7 @@ pub use fixed::{ReadFixed, WriteFixed};
 
 #[cfg(test)]
 mod tests {
-    use std::io::Write;
+    use std::io::{self, Write};
 
     use super::*;
 
@@ -62,10 +63,10 @@ mod tests {
     }
 
     impl ReadFixed for NumWord {
-        fn read_fixed(read: &mut impl std::io::Read) -> Result<Self, ()>
+        fn read_fixed<R: io::Read>(buf: &mut R) -> Result<Self, ()>
                 where Self: Sized {
             let mut s = String::new();
-            let _ = read.read_to_string(&mut s);
+            let _ = buf.read_to_string(&mut s);
 
             let name = s[0..10].trim_end().to_string();
             let num = s[10..].to_string();
@@ -115,4 +116,22 @@ mod tests {
         assert!(res.is_ok());
         assert_eq!(to_str(v), "42        3         ");
     }
+
+        // TODO: Delete me (this is not correct behavior)
+        #[test]
+        fn derive_dummy_read() {
+            use fixed_derive::ReadFixed;
+
+            #[derive(Debug, ReadFixed, Eq, PartialEq)]
+            struct Point {
+                x: u64,
+                y: u64,
+            }
+    
+            // let point = Point { x: 42, y: 3 };
+
+            let mut buf = "42        3         ".as_bytes();
+            let point = Point::read_fixed(&mut buf).unwrap();
+            assert_eq!(point, Point { x: 42, y: 3 });
+        }
 }
