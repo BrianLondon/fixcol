@@ -10,6 +10,6 @@ pub trait WriteFixed {
 /// Trait for reading from fixed width (column based) serializaiton
 pub trait ReadFixed {
     /// Reads an instance of the object from the supplied buffer
-    fn read_fixed(buf: &mut impl io::Read) -> Result<Self, ()>
-        where Self: Sized;
+    fn read_fixed<R>(buf: &mut R) -> Result<Self, ()>
+        where Self: Sized, R : io::Read;
 }
