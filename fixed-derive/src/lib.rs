@@ -6,23 +6,6 @@ use proc_macro::TokenStream;
 use syn::{Data, DataStruct, DeriveInput};
 use quote::quote;
 
-// #[proc_macro_derive(ReadFixed, attributes(fixed))]
-// pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
-//     let ast: DeriveInput = syn::parse(input).unwrap();
-
-//     let name = &ast.ident;
-//     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
-
-//     let function_impl = match ast.data {
-//         Data::Struct(DataStruct { fields, .. }) => quote!{
-
-//         },
-//         Data::Enum(_) => panic!("Deriving ReadFixed on enums is not supported"),
-//         Data::Union(_) => panic!("Deriving ReadFixed on unions is not supported"),
-//     };
-
-//     TokenStream::new()
-// }
 
 #[proc_macro_derive(WriteFixed, attributes(fixed))]
 pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
@@ -38,12 +21,6 @@ pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
                 Ok(())
             }
         },
-        // Data::Struct(DataStruct { fields: _, .. }) => 
-        //     r#"fn write_fixed(&self, buf: &mut dyn std::io::Write) -> Result<(), ()> {
-        //         buf.write("Foo");
-        //         Ok(())
-        //     }"#.parse().unwrap()
-        // ,
         Data::Enum(_) => panic!("Deriving ReadFixed on enums is not supported"),
         Data::Union(_) => panic!("Deriving ReadFixed on unions is not supported"),
     };
