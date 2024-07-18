@@ -102,16 +102,17 @@ mod tests {
         use fixed_derive::WriteFixed;
         
         #[derive(WriteFixed)]
-        struct Foo {
-            foo: u64
+        struct Point {
+            x: u64,
+            y: u64,
         }
 
-        let foo = Foo { foo: 42 };
+        let point = Point { x: 42, y: 3 };
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v);
+        let res = point.write_fixed(&mut v);
 
         assert!(res.is_ok());
-        assert_eq!(to_str(v), "Foo");
+        assert_eq!(to_str(v), "42        3         ");
     }
 }
