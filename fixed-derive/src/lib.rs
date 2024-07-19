@@ -23,7 +23,7 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
         quote!{
             let mut s: [u8; 10] = [0; 10];
             let _ = buf.read_exact(&mut s);
-            let #name = std::str::from_utf8(&s).unwrap().parse_with(fixed::FieldDescription {
+            let #name = std::str::from_utf8(&s).unwrap().parse_with(&fixed::FieldDescription {
                 skip: 0,
                 len: 10,
                 alignment: fixed::Alignment::Left,
@@ -45,7 +45,7 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
     
     quote!{
         fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, ()> {
-            use fixed::FixedDeserializable;
+            use fixed::FixedDeserializer;
             #read_steps
 
             Ok(Self {
