@@ -128,3 +128,13 @@ pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
 
     gen.into()
 }
+
+#[cfg(test)]
+mod tests {
+    // use super::*;
+
+    #[test]
+    fn macro_test() {
+        assert!(true);
+    }
+}
