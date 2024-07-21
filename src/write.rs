@@ -69,7 +69,65 @@ impl IntegerLike for i16 {}
 impl IntegerLike for i32 {}
 impl IntegerLike for i64 {}
 
+// TODO: make this handle overflows
 impl<D: Display + IntegerLike> FixedSerializer for D {
+    fn write_fixed<W: Write>(&self, buf: &mut W, desc: &FieldDescription)
+            -> Result<(), ()> 
+    {
+        let mut s = self.to_string();
+        if s.len() > desc.len {
+            s = s.as_str()[..desc.len].to_string();
+        }
+
+        let padding = desc.len - s.len();
+
+        match desc.alignment {
+            Alignment::Left | Alignment::Full => {
+                buf.write(&SPACES[..desc.skip]).map_err(to_unit)?;
+                buf.write(s.as_bytes()).map_err(to_unit)?;
+                buf.write(&SPACES[..padding]).map_err(to_unit)?;
+            },
+            Alignment::Right => {
+                let skip = padding + desc.skip;
+                buf.write(&SPACES[..skip]).map_err(to_unit)?;
+                buf.write(s.as_bytes()).map_err(to_unit)?;
+            },
+        }
+
+        Ok(())
+    }
+}
+
+// TODO: These are likely completely broken and need to support fmt options
+impl FixedSerializer for f32 {
+    fn write_fixed<W: Write>(&self, buf: &mut W, desc: &FieldDescription)
+            -> Result<(), ()> 
+    {
+        let mut s = self.to_string();
+        if s.len() > desc.len {
+            s = s.as_str()[..desc.len].to_string();
+        }
+
+        let padding = desc.len - s.len();
+
+        match desc.alignment {
+            Alignment::Left | Alignment::Full => {
+                buf.write(&SPACES[..desc.skip]).map_err(to_unit)?;
+                buf.write(s.as_bytes()).map_err(to_unit)?;
+                buf.write(&SPACES[..padding]).map_err(to_unit)?;
+            },
+            Alignment::Right => {
+                let skip = padding + desc.skip;
+                buf.write(&SPACES[..skip]).map_err(to_unit)?;
+                buf.write(s.as_bytes()).map_err(to_unit)?;
+            },
+        }
+
+        Ok(())
+    }
+}
+
+impl FixedSerializer for f64 {
     fn write_fixed<W: Write>(&self, buf: &mut W, desc: &FieldDescription)
             -> Result<(), ()> 
     {
@@ -337,5 +395,111 @@ mod tests {
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), "   -12345");
+    }
+
+    //
+    // Floating point checks
+    ///////////////////////////////
+
+    #[test]
+    fn write_f32_left() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 6,
+            alignment: Alignment::Left,
+        };
+
+        let foo: f32 = 3.14;
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), " 3.14  ");
+    }
+
+    #[test]
+    fn write_f32_left_trucnate() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 6,
+            alignment: Alignment::Left,
+        };
+
+        let foo: f32 = 3.141592654;
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), " 3.1415"); // TODO: should end with 6
+    }
+
+    #[test]
+    fn write_f32_full() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 6,
+            alignment: Alignment::Full,
+        };
+
+        let foo: f32 = 3.14;
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), " 3.14  ");
+    }
+
+    #[test]
+    fn write_f32_full_trucnate() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 6,
+            alignment: Alignment::Full,
+        };
+
+        let foo: f32 = 3.141592654;
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), " 3.1415"); // TODO: should end with 6
+    }
+
+    #[test]
+    fn write_f32_right() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 6,
+            alignment: Alignment::Right,
+        };
+
+        let foo: f32 = 3.14;
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), "   3.14");
+    }
+
+    #[test]
+    fn write_f32_right_trucnate() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 6,
+            alignment: Alignment::Right,
+        };
+
+        let foo: f32 = 3.141592654;
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), " 3.1415"); // TODO: should end with 6
     }
 }
