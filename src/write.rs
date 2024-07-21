@@ -1,6 +1,6 @@
 use crate::format::{Alignment, FieldDescription};
 
-use std::io::{self, Write};
+use std::io::Write;
 
 /// A trait that represents the field types that can be encoded to fix len strings
 pub trait FixedSerializer {
@@ -10,7 +10,7 @@ pub trait FixedSerializer {
 
 const SPACES: [u8; 256] = [b' '; 256];
 
-fn to_unit<T>(t: T) -> () {
+fn to_unit<T>(_: T) -> () {
     ()
 }
 
@@ -131,5 +131,110 @@ mod tests {
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), "foo   ");
+    }
+
+    #[test]
+    fn skip_string_left() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 6,
+            alignment: Alignment::Left,
+        };
+
+        let foo = "foo".to_string();
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), " foo   ");
+    }
+
+    #[test]
+    fn skip_string_right() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 6,
+            alignment: Alignment::Right,
+        };
+
+        let foo = "foo".to_string();
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), "    foo");
+    }
+
+
+    #[test]
+    fn skip_string_full() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 6,
+            alignment: Alignment::Left,
+        };
+
+        let foo = "foo".to_string();
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), " foo   ");
+    }
+
+
+    #[test]
+    fn truncate_string_left() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 4,
+            alignment: Alignment::Left,
+        };
+
+        let foo = "abcdefg".to_string();
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), " abcd");
+    }
+
+    #[test]
+    fn truncate_string_right() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 4,
+            alignment: Alignment::Right,
+        };
+
+        let foo = "abcdefg".to_string();
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), " defg");
+    }
+
+
+    #[test]
+    fn truncate_string_full() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 4,
+            alignment: Alignment::Left,
+        };
+
+        let foo = "abcdefg".to_string();
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), " abcd");
     }
 }
