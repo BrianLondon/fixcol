@@ -1,5 +1,6 @@
 use crate::format::{Alignment, FieldDescription};
 
+use std::fmt::Display;
 use std::io::Write;
 
 /// A trait that represents the field types that can be encoded to fix len strings
@@ -68,9 +69,33 @@ impl IntegerLike for i16 {}
 impl IntegerLike for i32 {}
 impl IntegerLike for i64 {}
 
-// impl<D: Display + IntegerLike, W: Write> FixedSerializer<D> for W {
-//     fn wr
-// }
+impl<D: Display + IntegerLike> FixedSerializer for D {
+    fn write_fixed<W: Write>(&self, buf: &mut W, desc: &FieldDescription)
+            -> Result<(), ()> 
+    {
+        let mut s = self.to_string();
+        if s.len() > desc.len {
+            s = s.as_str()[..desc.len].to_string();
+        }
+
+        let padding = desc.len - s.len();
+
+        match desc.alignment {
+            Alignment::Left | Alignment::Full => {
+                buf.write(&SPACES[..desc.skip]).map_err(to_unit)?;
+                buf.write(s.as_bytes()).map_err(to_unit)?;
+                buf.write(&SPACES[..padding]).map_err(to_unit)?;
+            },
+            Alignment::Right => {
+                let skip = padding + desc.skip;
+                buf.write(&SPACES[..skip]).map_err(to_unit)?;
+                buf.write(s.as_bytes()).map_err(to_unit)?;
+            },
+        }
+
+        Ok(())
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -80,6 +105,10 @@ mod tests {
         use std::str;
         str::from_utf8(inp.as_slice()).unwrap().to_string()
     }
+
+    //
+    // String writes
+    /////////////////////////////////
 
     #[test]
     fn pad_string_left() {
@@ -236,5 +265,77 @@ mod tests {
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), " abcd");
+    }
+
+    //
+    // Integer writes
+    ////////////////////////////////////////////
+
+    #[test]
+    fn write_u16_left() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 6,
+            alignment: Alignment::Left,
+        };
+
+        let foo: u16 = 12345;
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), " 12345 ");
+    }
+
+    #[test]
+    fn write_u16_right() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 6,
+            alignment: Alignment::Right,
+        };
+
+        let foo: u16 = 12345;
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), "  12345");
+    }
+
+    #[test]
+    fn write_i16_left() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 8,
+            alignment: Alignment::Left,
+        };
+
+        let foo: i16 = -12345;
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), " -12345  ");
+    }
+
+    #[test]
+    fn write_i16_right() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 8,
+            alignment: Alignment::Right,
+        };
+
+        let foo: i16 = -12345;
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), "   -12345");
     }
 }
