@@ -19,6 +19,7 @@ fn extract_trimmed<'a, 'b>(src: &'a str, desc: &'b FieldDescription) -> &'a str 
     }
 }
 
+
 // Dummy trait to limit the application of the generic FixedDeseralizable
 trait Numeric {}
 
@@ -42,6 +43,7 @@ impl<T: FromStr + Numeric> FixedDeserializer<T> for &str {
         trimmed.parse::<T>().map_err(|_| ())
     }
 }
+
 
 impl FixedDeserializer<String> for &str {
     fn parse_with(&self, desc: &FieldDescription) -> Result<String, ()> {

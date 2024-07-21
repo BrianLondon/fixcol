@@ -14,7 +14,12 @@ pub enum Alignment {
 /// Represents how a field should be encoded in fixed len representation
 #[derive(Clone, Copy, Debug)]
 pub struct FieldDescription {
+    /// How many characters to skip between the prior field and this one
+    /// 
+    /// Note, currently limited to 256 for writes
     pub skip: usize,
+    /// The number of characters available to hold this field
     pub len: usize,
+    /// How data in this field is aligned
     pub alignment: Alignment,
 }

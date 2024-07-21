@@ -2,6 +2,7 @@
 mod fixed;
 mod format;
 mod parse;
+mod write;
 
 extern crate fixed_derive;
 
