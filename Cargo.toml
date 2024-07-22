@@ -5,3 +5,6 @@ edition = "2021"
 
 [dependencies]
 fixed-derive = {path = "fixed-derive"}
+
+[workspace]
+members = ["fixed-derive"]

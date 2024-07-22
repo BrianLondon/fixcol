@@ -1,3 +1,5 @@
+mod attrs;
+
 extern crate proc_macro;
 extern crate proc_macro2;
 extern crate quote;
@@ -7,6 +9,7 @@ use proc_macro::TokenStream;
 
 use syn::{Data, DataStruct, DeriveInput, Fields};
 use quote::quote;
+
 
 // For now as a PoC we're just assuming ten characters per field
 fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
@@ -41,7 +44,6 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
     });
     let mut field_names = proc_macro2::TokenStream::new();
     field_names.extend(struct_init.into_iter());
-
     
     quote!{
         fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, ()> {
@@ -86,6 +88,15 @@ fn struct_write(fields: Fields) -> proc_macro2::TokenStream {
         Fields::Unnamed(_) => todo!(),
         Fields::Unit => todo!(),
     };
+
+
+
+    fields.named.iter().for_each(|field| {
+        println!("\n\n{}\n------------", field.ident.as_ref().unwrap());
+        field.attrs.iter().for_each(|attr| {
+            println!("{:?}", attr)
+        })
+    });
 
     let field_writes = fields.named.iter().map(|field| {
         let name = field.ident.as_ref().unwrap().clone();

@@ -1,12 +1,16 @@
 extern crate fixed;
 extern crate fixed_derive;
 
-use fixed_derive::ReadFixed;
+use fixed_derive::{ReadFixed, WriteFixed};
 
 
-#[derive(Debug, ReadFixed, Eq, PartialEq)]
+#[derive(Debug, ReadFixed, WriteFixed, Eq, PartialEq)]
 struct Point {
+    #[fixed(width=10, align=left)]
     x: u64,
+    /// The y coordinate
+    #[fixed(width=10, strict=true, align="right")]
+    #[allow(non_camel_case_types)]
     y: u64,
 }
 
