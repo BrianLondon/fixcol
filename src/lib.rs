@@ -2,11 +2,12 @@
 mod fixed;
 mod format;
 mod parse;
+mod write;
 
 extern crate fixed_derive;
 
 pub use fixed::{ReadFixed, WriteFixed};
-pub use parse::FixedDeserializable;
+pub use parse::FixedDeserializer;
 pub use format::{Alignment, FieldDescription};
 
 #[cfg(test)]
