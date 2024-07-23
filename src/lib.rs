@@ -8,6 +8,7 @@ extern crate fixed_derive;
 
 pub use fixed::{ReadFixed, WriteFixed};
 pub use parse::FixedDeserializer;
+pub use write::FixedSerializer;
 pub use format::{Alignment, FieldDescription};
 
 #[cfg(test)]
@@ -37,7 +38,7 @@ mod tests {
         struct Foo;
 
         impl WriteFixed for Foo {
-            fn write_fixed(&self, buf: &mut dyn std::io::Write) -> Result<(), ()> {
+            fn write_fixed<W: Write>(&self, buf: &mut W) -> Result<(), ()> {
                 buf.write("Foo".as_bytes()).map(|_| ()).map_err(|_| ())
             }
         }
@@ -60,7 +61,7 @@ mod tests {
     }
 
     impl WriteFixed for NumWord {
-        fn write_fixed(&self, buf: &mut dyn std::io::Write) -> Result<(), ()> {
+        fn write_fixed<W: Write>(&self, buf: &mut W) -> Result<(), ()> {
             let _ = buf.write_fmt(format_args!("{:<10}{:>3}", self.name, self.value));
             Ok(())
         }

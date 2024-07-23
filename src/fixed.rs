@@ -3,7 +3,7 @@ use std::io::{Read, Write};
 /// Trait for writing to fixed width (column based) serialization
 pub trait WriteFixed {
     /// Writes the object into the supplied buffer
-    fn write_fixed(&self, buf: &mut dyn Write) -> Result<(), ()>;
+    fn write_fixed<W: Write>(&self, buf: &mut W) -> Result<(), ()>;
 }
 
 /// Trait for reading from fixed width (column based) serializaiton

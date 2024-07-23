@@ -24,8 +24,18 @@ fn derive_read_struct() {
     assert_eq!(point, Point { x: 42, y: 3 });    
 }
 
-// #[test]
-// fn derive_write_struct() {
-//     let point = Point { x: 42, y: 3 };
-//     assert!(false);
-// }
+#[test]
+fn derive_write_struct() {
+    use fixed::WriteFixed;
+
+    let point = Point { x: 42, y: 3 };
+
+    let mut v = Vec::new();
+    let res = point.write_fixed(&mut v);
+
+    assert!(res.is_ok());
+    assert_eq!(
+        std::str::from_utf8(v.as_slice()).unwrap(), 
+        std::str::from_utf8("42                 3".as_bytes()).unwrap()
+    );
+}

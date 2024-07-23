@@ -12,7 +12,6 @@ use syn::{Data, DataStruct, DeriveInput, Fields};
 use quote::quote;
 
 
-// For now as a PoC we're just assuming ten characters per field
 fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
     let fields = match fields  {
         Fields::Named(named_fields) => named_fields,
@@ -54,6 +53,7 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
             #name,
         }
     });
+
     let mut field_names = proc_macro2::TokenStream::new();
     field_names.extend(struct_init.into_iter());
     
@@ -103,8 +103,24 @@ fn struct_write(fields: Fields) -> proc_macro2::TokenStream {
 
     let field_writes = fields.named.iter().map(|field| {
         let name = field.ident.as_ref().unwrap().clone();
-        quote!{
-            let _ = buf.write_fmt(format_args!("{:<10}", self.#name));
+        let config = attrs::parse_attributes(&field.attrs);
+        let FieldConfig {skip, width, align} = config;
+    
+        let alignment = match align {
+            attrs::Align::Left => quote!{fixed::Alignment::Left},
+            attrs::Align::Right => quote!{fixed::Alignment::Right},
+            attrs::Align::Full => quote!{fixed::Alignment::Full},
+        };
+
+        quote!{            
+            let _ = self.#name.write_fixed(
+                buf,
+                &fixed::FieldDescription {
+                    skip: #skip,
+                    len: #width,
+                    alignment: #alignment,
+                }
+            ).unwrap();
         }
     });
 
@@ -112,8 +128,11 @@ fn struct_write(fields: Fields) -> proc_macro2::TokenStream {
     write_steps.extend(field_writes.into_iter());
 
     quote!{
-        fn write_fixed(&self, buf: &mut dyn std::io::Write) -> Result<(), ()> {
+        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), ()> {
+            use fixed::FixedSerializer;
+
             #write_steps
+
             Ok(())
         }
     }
