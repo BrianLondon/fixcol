@@ -5,6 +5,7 @@ extern crate proc_macro2;
 extern crate quote;
 extern crate syn;
 
+use attrs::FieldConfig;
 use proc_macro::TokenStream;
 
 use syn::{Data, DataStruct, DeriveInput, Fields};
@@ -22,14 +23,25 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
     let field_reads = fields.named.iter().map(|field| {
         let name = field.ident.as_ref().unwrap().clone();
 
+        let config = attrs::parse_attributes(&field.attrs);
+        let FieldConfig {skip, width, align} = config;
+
+        let alignment = match align {
+            attrs::Align::Left => quote!{fixed::Alignment::Left},
+            attrs::Align::Right => quote!{fixed::Alignment::Right},
+            attrs::Align::Full => quote!{fixed::Alignment::Full},
+        };
+
+        let buf_size = skip + width;
+
         // TODO: we shouldn't need a String here at all 
         quote!{
-            let mut s: [u8; 10] = [0; 10];
+            let mut s: [u8; #buf_size] = [0; #buf_size];
             let _ = buf.read_exact(&mut s);
             let #name = std::str::from_utf8(&s).unwrap().parse_with(&fixed::FieldDescription {
-                skip: 0,
-                len: 10,
-                alignment: fixed::Alignment::Left,
+                skip: #skip,
+                len: #width,
+                alignment: #alignment,
             }).unwrap();
         }
     });
@@ -88,15 +100,6 @@ fn struct_write(fields: Fields) -> proc_macro2::TokenStream {
         Fields::Unnamed(_) => todo!(),
         Fields::Unit => todo!(),
     };
-
-
-
-    fields.named.iter().for_each(|field| {
-        println!("\n\n{}\n------------", field.ident.as_ref().unwrap());
-        field.attrs.iter().for_each(|attr| {
-            println!("{:?}", attr)
-        })
-    });
 
     let field_writes = fields.named.iter().map(|field| {
         let name = field.ident.as_ref().unwrap().clone();

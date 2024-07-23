@@ -6,11 +6,12 @@ use fixed_derive::{ReadFixed, WriteFixed};
 
 #[derive(Debug, ReadFixed, WriteFixed, Eq, PartialEq)]
 struct Point {
+    /// The x coordinate
     #[fixed(width=10, align=left)]
     x: u64,
     /// The y coordinate
-    #[fixed(width=10, strict=true, align="right")]
-    #[allow(non_camel_case_types)]
+    // #[fixed(width=10, strict=true, align="right")] TODO: add strict back
+    #[fixed(skip=1, width=9, align=right)]
     y: u64,
 }
 
@@ -18,8 +19,13 @@ struct Point {
 fn derive_read_struct() {
     use fixed::ReadFixed;  // TODO: this double import is really ugly
 
-    let mut buf = "42        3         ".as_bytes();
+    let mut buf = "42                 3".as_bytes();
     let point = Point::read_fixed(&mut buf).unwrap();
     assert_eq!(point, Point { x: 42, y: 3 });    
 }
 
+// #[test]
+// fn derive_write_struct() {
+//     let point = Point { x: 42, y: 3 };
+//     assert!(false);
+// }

@@ -1,37 +1,34 @@
 //! Utilities for parsing field attributres
-use std::fmt::Display;
+use std::{fmt::Display, str::FromStr};
 
 use proc_macro2::{TokenStream, TokenTree};
-use syn::{Attribute, Ident, Meta, Path};
+use syn::{Attribute, Meta, Path};
 
 
 const FIXED_ATTR_KEY: &'static str = "fixed";
 
 
 // Extracts the ident name from a path
-fn ident_from_path(path: Path) -> String {
+fn ident_from_path(path: &Path) -> String {
     path.segments.first()
         .map(|seg| {seg.ident.to_string()})
         .unwrap_or("".to_string())
 }
 
 /// Indicates whether the attribute is used by Fixed
-pub fn is_fixed_attr(attr: Attribute) -> bool {
-    let ident = match attr.meta {
+fn is_fixed_attr(attr: &Attribute) -> bool {
+    let ident = match &attr.meta {
         Meta::Path(path) => ident_from_path(path),
-        Meta::NameValue(named_value) => ident_from_path(named_value.path),
-        Meta::List(meta_list) => ident_from_path(meta_list.path),
+        Meta::NameValue(named_value) => ident_from_path(&named_value.path),
+        Meta::List(meta_list) => ident_from_path(&meta_list.path),
     };
 
     ident == FIXED_ATTR_KEY
 }
 
-// valid field parameters
-//
-// width, skip, align
-
 // valid struct params
 // ??
+
 #[derive(PartialEq, Eq, Debug)]
 struct FieldParam {
     key: String,
@@ -78,8 +75,6 @@ impl Display for ExpectedTokenState {
 fn parse_next_token(state: ExpectedTokenState, tt: TokenTree) -> 
         (ExpectedTokenState, Option<FieldParam>) 
 {
-    println!("{:?} -> {:?}", state, tt);
-
     match (state, tt) {
         (ExpectedTokenState::Key, TokenTree::Ident(ident)) => {
             (ExpectedTokenState::Equals(ident.to_string()), None)
@@ -139,95 +134,99 @@ fn get_config_params(tokens: TokenStream) -> Vec<FieldParam> {
 }
 
 
-    /*
+pub enum Align {
+    Left,
+    Right,
+    Full,
+}
 
-    #[fixed(width=12)]
-    
-    Attribute { 
-        pound_token: Pound, 
-        style: AttrStyle::Outer, 
-        bracket_token: Bracket, 
-        meta: Meta::List { 
-            path: Path { 
-                leading_colon: None, 
-                segments: [
-                    PathSegment { 
-                        ident: Ident { 
-                            ident: "fixed", 
-                            span: #0 bytes(169..174) 
-                        }, 
-                        arguments: PathArguments::None 
-                    }
-                ] 
-            }, 
-            delimiter: MacroDelimiter::Paren(Paren),
-            tokens: TokenStream [
-                Ident { ident: "width", span: #0 bytes(175..180) },
-                Punct { ch: '=', spacing: Alone, span: #0 bytes(180..181) }, 
-                Literal { kind: Integer, symbol: "12", suffix: None, span: #0 bytes(181..183) }
-            ] 
+impl FromStr for Align {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "left" => Ok(Align::Left),
+            "right" => Ok(Align::Right),
+            "full" => Ok(Align::Full),
+            other => Err(format!("Unknown alignment type {}", other)),
+        }
+    }
+}
+
+pub struct FieldConfig {
+    pub skip: usize,
+    pub width: usize,
+    pub align: Align,
+}
+
+struct FieldConfigBuilder {
+    width: Option<usize>,
+    skip: Option<usize>,
+    align: Option<Align>,
+}
+
+impl FieldConfigBuilder {
+    fn new() -> Self {
+        Self {
+            width: None,
+            skip: None,
+            align: None,
+        }
+    }
+}
+
+pub fn parse_attributes(attrs: &Vec<Attribute>) -> FieldConfig {
+    let params = attrs.iter()
+        .filter(|a| is_fixed_attr(*a))
+        .flat_map(|a| {
+            let tokens = match &a.meta {
+                Meta::Path(_) => todo!(),
+                Meta::List(m) => &m.tokens,
+                Meta::NameValue(_) => todo!(),
+            };
+            get_config_params(tokens.clone())
+        });
+
+    let mut conf = FieldConfigBuilder::new();
+
+    for param in params {
+        match param.key.as_str() {
+            "skip" => {
+                if conf.skip.is_none() {
+                    conf.skip = Some(param.value.parse().unwrap());
+                } else {
+                    panic!("Duplicate values for skip");
+                }
+            },
+            "width" => {
+                if conf.width.is_none() {
+                    conf.width = Some(param.value.parse().unwrap());
+                } else {
+                    panic!("Duplicate values for width");
+                }
+            },
+            "align" => {
+                if conf.align.is_none() {
+                    conf.align = Some(param.value.parse().unwrap());
+                } else {
+                    panic!("Duplicate values for align");
+                }
+            },
+            key => panic!("Unrecognized parameter {}", key),
         }
     }
 
-    /// The y coordinate
-    Attribute { 
-        pound_token: Pound, 
-        style: AttrStyle::Outer, 
-        bracket_token: Bracket, 
-        meta: Meta::NameValue { 
-            path: Path { 
-                leading_colon: None, 
-                segments: [
-                    PathSegment {
-                        ident: Ident { 
-                            ident: "doc", 
-                            span: #0 bytes(227..247) 
-                        }, 
-                        arguments: PathArguments::None 
-                    }
-                ] 
-            }, 
-            eq_token: Eq, 
-            value: Expr::Lit {
-                attrs: [], 
-                lit: Lit::Str { token: " The y coordinate" } 
-            } 
-        } 
+    let width = match conf.width {
+        Some(w) => w,
+        None => panic!("Width must be specified for all fields"),
+    };
+
+    FieldConfig {
+        skip: conf.skip.unwrap_or(0),
+        align: conf.align.unwrap_or(Align::Left),
+        width: width,
     }
-
-    #[fixed(width=8, strict=true)]
-    Attribute { 
-        pound_token: Pound, 
-        style: AttrStyle::Outer, 
-        bracket_token: Bracket, 
-        meta: Meta::List { 
-            path: Path { 
-                leading_colon: None, 
-                segments: [
-                    PathSegment {
-                        ident: Ident { ident: "fixed", span: #0 bytes(254..259) }, 
-                        arguments: PathArguments::None 
-                    }
-                ] 
-            }, 
-            delimiter: MacroDelimiter::Paren(Paren),
-            tokens: TokenStream [
-                Ident {ident: "width", span: #0 bytes(260..265) }, 
-                Punct { ch: '=', spacing: Alone, span: #0 bytes(265..266) }, 
-                Literal { kind: Integer, symbol: "8", suffix: None, span: #0 bytes(266..267) }, 
-                Punct { ch: ',', spacing: Alone, span: #0 bytes(267..268) }, 
-                Ident { ident: "strict", span: #0 bytes(269..275) }, 
-                Punct { ch: '=', spacing: Alone, span: #0 bytes(275..276) }, 
-                Ident { ident: "true", span: #0 bytes(276..280) }
-            ] 
-        } 
-    }
-
-    #[allow(non_camel_case_types)]
-
-Attribute { pound_token: Pound, style: AttrStyle::Outer, bracket_token: Bracket, meta: Meta::List { path: Path { leading_colon: None, segments: [PathSegment { ident: Ident { ident: "allow", span: #0 bytes(289..294) }, arguments: PathArguments::None }] }, delimiter: MacroDelimiter::Paren(Paren), tokens: TokenStream [Ident { ident: "non_camel_case_types", span: #0 bytes(295..315) }] } }
-    
-    */
+}
 
 #[cfg(test)]
 mod tests {
