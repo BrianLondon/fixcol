@@ -4,7 +4,51 @@ use std::str::FromStr;
 
 
 /// A trait the represents field types that can be decoded from fixed len strings
+/// 
+/// Implementations are provided for `&str` that are used internally in the macro
+/// generated code to derive [`ReadFixed`]. It is unlikely end users will need to
+/// implement this trait for other types.
+/// 
+/// It may be useful to implement this for other `T` on &str if you would like
+/// to directly deserialize other primitives.
+/// 
+/// ```text
+/// # use fixed_derive::ReadFixed;
+/// # use fixed::FixedDeserializer;
+/// enum EyeColor {
+///     Blue,
+///     Brown,
+///     Green,
+/// }
+/// 
+/// impl FixedDeserializer<EyeColor> for &str {
+///     fn parse_with(&self, desc: &FieldDescription) -> Result<EyeColor, ()> {
+///         match self {
+///             "Bl" => Ok(EyeColor::Blue),
+///             "Br" => Ok(EyeColor::Brown),
+///             "Gr" => Ok(EyeColor::Green),
+///             _ => Err(())
+///         }
+///     }
+/// }
+/// 
+/// #[derive(ReadFixed)]
+/// struct Person {
+///     #[fixed(width=12)]
+///     name: String,
+///     #[fixed(width=3, align=right)]
+///     age: u8,
+///     #[fixed(width=2)]
+///     eye_color: EyeColor,
+/// }
+/// 
+/// assert(false); // TODO Fix this :) 
+/// ```
 pub trait FixedDeserializer<T : Sized> {
+    /// Read an object of type `T` from the current object.
+    /// 
+    /// Uses the provided [`FieldDescription`] to determine how to parse a data field
+    /// from a fixed width representation.
     fn parse_with(&self, desc: &FieldDescription) -> Result<T, ()>;
 }
 

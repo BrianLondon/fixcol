@@ -50,17 +50,6 @@ enum ExpectedTokenState {
     Separator,
 }
 
-impl ExpectedTokenState {
-    fn duplicate(&self) -> Self {
-        match self {
-            ExpectedTokenState::Key => ExpectedTokenState::Key,
-            ExpectedTokenState::Equals(s) => ExpectedTokenState::Equals(s.to_owned()),
-            ExpectedTokenState::Value(s) => ExpectedTokenState::Value(s.to_owned()),
-            ExpectedTokenState::Separator => ExpectedTokenState::Separator,
-        }
-    }
-}
-
 impl Display for ExpectedTokenState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
