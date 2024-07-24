@@ -134,9 +134,9 @@ impl FromStr for Align {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "left" => Ok(Align::Left),
-            "right" => Ok(Align::Right),
-            "full" => Ok(Align::Full),
+            "left" | "\"left\"" => Ok(Align::Left),
+            "right" | "\"right\"" => Ok(Align::Right),
+            "full" | "\"full\"" => Ok(Align::Full),
             other => Err(format!("Unknown alignment type {}", other)),
         }
     }
@@ -219,6 +219,7 @@ pub fn parse_attributes(attrs: &Vec<Attribute>) -> FieldConfig {
 
 #[cfg(test)]
 mod tests {
+    // TODO: needs tests not just of parsing but all the way to the field config
     use syn::{self, MetaList};
 
     use super::*;
@@ -282,6 +283,19 @@ mod tests {
         let params: Vec<FieldParam> = get_config_params(code.tokens);
 
         assert_eq!(params, expected);
+    }
+
+    #[test]
+    fn parse_with_quotes() {
+        let expected = FieldParam { 
+            key: "align".to_owned(), 
+            value: "\"right\"".to_owned(),
+        };
+        let code: MetaList = syn::parse_str("fixed(align=\"right\")").unwrap();
+        let params: Vec<FieldParam> = get_config_params(code.tokens);
+
+        assert_eq!(params.len(), 1);
+        assert_eq!(*(params.get(0)).unwrap(), expected);
     }
 
     #[test]

@@ -12,9 +12,13 @@ use std::str::FromStr;
 /// It may be useful to implement this for other `T` on &str if you would like
 /// to directly deserialize other primitives.
 /// 
-/// ```text
+/// # Example
+/// 
+/// ```
 /// # use fixed_derive::ReadFixed;
 /// # use fixed::FixedDeserializer;
+/// # use fixed::FieldDescription;
+/// #[derive(PartialEq, Eq, Debug)]
 /// enum EyeColor {
 ///     Blue,
 ///     Brown,
@@ -23,7 +27,7 @@ use std::str::FromStr;
 /// 
 /// impl FixedDeserializer<EyeColor> for &str {
 ///     fn parse_with(&self, desc: &FieldDescription) -> Result<EyeColor, ()> {
-///         match self {
+///         match *self {
 ///             "Bl" => Ok(EyeColor::Blue),
 ///             "Br" => Ok(EyeColor::Brown),
 ///             "Gr" => Ok(EyeColor::Green),
@@ -34,15 +38,17 @@ use std::str::FromStr;
 /// 
 /// #[derive(ReadFixed)]
 /// struct Person {
-///     #[fixed(width=12)]
-///     name: String,
+///     #[fixed(width=10)]
+///     pub name: String,
 ///     #[fixed(width=3, align=right)]
-///     age: u8,
+///     pub age: u8,
 ///     #[fixed(width=2)]
-///     eye_color: EyeColor,
+///     pub eye_color: EyeColor,
 /// }
 /// 
-/// assert(false); // TODO Fix this :) 
+/// # use fixed::ReadFixed;
+/// let person = Person::read_fixed_str("Harold     42Gr").unwrap();
+/// assert_eq!(person.eye_color, EyeColor::Green);
 /// ```
 pub trait FixedDeserializer<T : Sized> {
     /// Read an object of type `T` from the current object.

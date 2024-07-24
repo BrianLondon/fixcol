@@ -9,15 +9,7 @@ extern crate fixed_derive;
 pub use fixed::{ReadFixed, WriteFixed};
 pub use parse::FixedDeserializer;
 pub use write::FixedSerializer;
-
-/// Helper utilities that are used internally by `fixed`
-/// 
-/// The items contained in this module are used internally by the `fixed` API.
-/// They might be helpful if you are manually implementing [`ReadFixed`] or
-/// [`WriteFixed`] for a type.
-pub mod internal {
-    pub use crate::format::{Alignment, FieldDescription};
-}
+pub use format::{Alignment, FieldDescription};
 
 #[cfg(test)]
 mod tests {

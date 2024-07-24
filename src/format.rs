@@ -1,12 +1,16 @@
 
 /// Represents the alignment of a field in a fixed length representation
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Alignment {
     /// Field is aligned left
     Left,
     /// Field is aligned right
     Right,
-    /// Field takes the full width and whitespace will not be stripped
+    /// Field takes the full width
+    /// 
+    /// When reading strings, whitespace will not be stripped. This can be
+    /// useful to preserve tabular data. Numerical fields will ignore leading
+    /// and trailing whitespace when parsing a value from text.
     Full, // TODO: handle incorrect length writes (with strict mode)
 }
 

@@ -26,9 +26,9 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
         let FieldConfig {skip, width, align} = config;
 
         let alignment = match align {
-            attrs::Align::Left => quote!{fixed::internal::Alignment::Left},
-            attrs::Align::Right => quote!{fixed::internal::Alignment::Right},
-            attrs::Align::Full => quote!{fixed::internal::Alignment::Full},
+            attrs::Align::Left => quote!{fixed::Alignment::Left},
+            attrs::Align::Right => quote!{fixed::Alignment::Right},
+            attrs::Align::Full => quote!{fixed::Alignment::Full},
         };
 
         let buf_size = skip + width;
@@ -37,7 +37,7 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
         quote!{
             let mut s: [u8; #buf_size] = [0; #buf_size];
             let _ = buf.read_exact(&mut s);
-            let #name = std::str::from_utf8(&s).unwrap().parse_with(&fixed::internal::FieldDescription {
+            let #name = std::str::from_utf8(&s).unwrap().parse_with(&fixed::FieldDescription {
                 skip: #skip,
                 len: #width,
                 alignment: #alignment,
@@ -107,15 +107,15 @@ fn struct_write(fields: Fields) -> proc_macro2::TokenStream {
         let FieldConfig {skip, width, align} = config;
     
         let alignment = match align {
-            attrs::Align::Left => quote!{fixed::internal::Alignment::Left},
-            attrs::Align::Right => quote!{fixed::internal::Alignment::Right},
-            attrs::Align::Full => quote!{fixed::internal::Alignment::Full},
+            attrs::Align::Left => quote!{fixed::Alignment::Left},
+            attrs::Align::Right => quote!{fixed::Alignment::Right},
+            attrs::Align::Full => quote!{fixed::Alignment::Full},
         };
 
         quote!{            
             let _ = self.#name.write_fixed(
                 buf,
-                &fixed::internal::FieldDescription {
+                &fixed::FieldDescription {
                     skip: #skip,
                     len: #width,
                     alignment: #alignment,
