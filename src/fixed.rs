@@ -6,10 +6,16 @@ pub trait WriteFixed {
     fn write_fixed<W: Write>(&self, buf: &mut W) -> Result<(), ()>;
 }
 
-/// Iterator over the deserialized line of a fixed column file
+/// Iterator over the deserialized lines of a fixed column file
+/// 
+/// Implements [`Iterator`] for `T`.
 pub struct Iter<T, R>
     where T: Sized + ReadFixed, R: Read
 {
+    // TODO: it might be more performant do operate at a slighly lower level
+    // than mapping over ther BufReader lines iterator. If we did that, we'd use
+    // fields that look something like the following:
+    //
     // read_buf: BufReader<R>,
     // line_buf: String,
     // failed: bool,
@@ -18,7 +24,7 @@ pub struct Iter<T, R>
 }
 
 impl<T: Sized + ReadFixed, R: Read>  Iter<T, R> {
-    pub fn new(read: R) -> Self {
+    fn new(read: R) -> Self {
         Self {
             lines: BufReader::new(read).lines(),
             t: PhantomData,
@@ -43,6 +49,29 @@ impl<T: Sized + ReadFixed, R: Read> Iterator for Iter<T, R> {
 /// Trait for reading from fixed width (column based) serializaiton
 pub trait ReadFixed {
     /// Reads an instance of the object from the supplied buffer
+    /// 
+    /// Provides logic for deserializing an instance of the type read from a 
+    /// supplied buffer. 
+    /// 
+    /// # Example
+    /// ```
+    /// # use fixed_derive::ReadFixed;
+    /// # use std::fs::File;
+    /// # use std::io;
+    /// #[derive(ReadFixed)]
+    /// struct Foo {
+    ///     #[fixed(width=3)]
+    ///     foo: String,
+    ///     #[fixed(width=3)]
+    ///     bar: String,
+    /// }
+    /// 
+    /// # use fixed::ReadFixed;
+    /// let mut buffer: &[u8] = "foobar".as_bytes();
+    /// let my_foo: Foo = Foo::read_fixed(&mut buffer).unwrap();
+    /// # assert_eq!(my_foo.foo, "foo".to_string());
+    /// # assert_eq!(my_foo.bar, "bar".to_string());
+    /// ```
     fn read_fixed<R>(buf: &mut R) -> Result<Self, ()>
         where Self: Sized, R: Read;
 
@@ -198,4 +227,39 @@ mod tests {
         let foo = Foo::read_fixed_string(s);
         assert_eq!(foo.unwrap(), Foo{ foo: "bar".to_string()});
     }
+
+    #[test]
+    fn read_fixed_all() {
+        let buf = "foo\nbar\nbaz\n";
+
+        let expected = vec![
+            Foo { foo: "foo".to_string() },
+            Foo { foo: "bar".to_string() },
+            Foo { foo: "baz".to_string() },
+        ];
+
+        let actual: Vec<Foo> = Foo::read_fixed_all(buf.as_bytes())
+            .map(|r| r.unwrap())
+            .collect();
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn read_fixed_all_no_trailing() {
+        let buf = "foo\nbar\nbaz";
+
+        let expected = vec![
+            Foo { foo: "foo".to_string() },
+            Foo { foo: "bar".to_string() },
+            Foo { foo: "baz".to_string() },
+        ];
+
+        let actual: Vec<Foo> = Foo::read_fixed_all(buf.as_bytes())
+            .map(|r| r.unwrap())
+            .collect();
+
+        assert_eq!(actual, expected);
+    }
+
 }
