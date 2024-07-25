@@ -11,11 +11,17 @@ use crate::error::{DataError, InnerError};
 /// It may be useful to implement this for other `T` on &str if you would like
 /// to directly deserialize other primitives.
 /// 
+/// Additionally, it is possible to use custom `FixedDeserializer` implementations
+/// with the [new type](https://doc.rust-lang.org/rust-by-example/generics/new_types.html)
+/// pattern to define custom derserialization logic.
+/// 
 /// Custom error messages can be created with [`DataError::custom`].
 /// 
 /// [ReadFixed]: crate::ReadFixed
-///
-/// # Example
+/// 
+/// # Examples
+/// 
+/// ### Custom deserialization
 /// 
 /// ```
 /// # use fixed_derive::ReadFixed;
@@ -54,7 +60,64 @@ use crate::error::{DataError, InnerError};
 /// let person = Person::read_fixed_str("Harold     42Gr").unwrap();
 /// assert_eq!(person.eye_color, EyeColor::Green);
 /// ```
-pub trait FixedDeserializer<T: Sized> {
+/// 
+/// ### Multiple deserialization approached
+/// 
+/// Here we use a few different approaches to deserializing a fixed column 
+/// data file. Documentation of the file structure follows.
+/// 
+/// ```text
+///     Name      Birthday
+/// /----------\ /--------\
+/// XXXXXXXXXXXX YYYY MM DD
+///       \        \   \  \--- Day   (numeric)
+///        \        \   \----- Month (numeric)
+///         \        \-------- Year  (numeric)
+///          \
+///           \--------------- Name  (alphabetic)
+/// 
+/// Example rows
+/// George       1989  3 12     
+/// Claire       2001 11 26
+/// ```
+/// 
+/// Naive implementation
+/// 
+/// ```
+/// # use fixed_derive::ReadFixed;
+/// # use fixed::FixedDeserializer;
+/// # use fixed::FieldDescription;
+/// # use std::fs::File;
+/// #[derive(ReadFixed)]
+/// # #[derive(Eq, PartialEq, Debug)]
+/// struct Person {
+///     #[fixed(width=12)]
+///     name: String,
+///     #[fixed(width=4, skip=1)]
+///     birth_year: u16,
+///     #[fixed(width=2, skip=1)]
+///     birth_month: u8,
+///     #[fixed(width=2, skip=1)]
+///     birth_date: u8,
+/// }
+/// 
+/// // Note we are being sloppy with error handling to keep the example simple
+/// # use fixed::ReadFixed;
+/// # fn f() {
+/// let mut file = File::open("my_file.txt").unwrap();
+/// # }
+/// # let mut file = "George       1989  3 12\nClaire       2001 11 26".as_bytes();
+/// let people: Vec<Person> = Person::read_fixed_all(file)
+///     .map(|res| res.unwrap())
+///     .collect();
+/// # assert_eq!(people, vec![
+/// #     Person{name: "George".to_string(), birth_year: 1989, birth_month: 3, birth_date: 12},
+/// #     Person{name: "Calire".to_string(), birth_year: 2001, birth_month: 11, birth_date: 26},
+/// # ]);
+/// ```
+/// 
+/// [ReadFixed]: crate::ReadFixed
+pub trait FixedDeserializer<T : Sized> {
     /// Read an object of type `T` from the current object.
     /// 
     /// Uses the provided [`FieldDescription`] to determine how to parse a data field

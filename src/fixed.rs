@@ -67,6 +67,11 @@ impl<T: Sized + ReadFixed, R: Read> Iterator for Iter<T, R> {
 }
 
 /// Trait for reading from fixed width (column based) serializaiton
+/// 
+/// This trait is the main entry point to using `fixed` for deserializing
+/// column delimited data files. This trait is not normally implemented manually
+/// but derived using the `fixed_derive` crate. The deserialization behavior
+/// of individual columns is defined using the `#[fixed(...)]` annotation.
 pub trait ReadFixed {
     /// Reads an instance of the object from the supplied buffer
     /// 
