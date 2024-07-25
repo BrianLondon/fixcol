@@ -5,6 +5,11 @@ use std::io::Write;
 
 /// A trait that represents the field types that can be encoded to fix len strings
 pub trait FixedSerializer {
+    /// Serialize a fixed with representation of the object.
+    /// 
+    /// Uses the provided [`FieldDescription`] to determine how to serialize a fixed
+    /// with representation of `self` and writes that representation to the supplie 
+    /// buffer `buf`.
     fn write_fixed<W: Write>(&self, buf: &mut W, desc: &FieldDescription)
         -> Result<(), ()>;
 }

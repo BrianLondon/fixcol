@@ -4,7 +4,59 @@ use std::str::FromStr;
 
 
 /// A trait the represents field types that can be decoded from fixed len strings
+/// 
+/// Implementations are provided for `&str` that are used internally in the macro
+/// generated code to derive [`ReadFixed`]. It is unlikely end users will need to
+/// implement this trait for other types.
+/// 
+/// It may be useful to implement this for other `T` on &str if you would like
+/// to directly deserialize other primitives.
+/// 
+/// # Example
+/// 
+/// 
+/// [ReadFixed]: crate::ReadFixed
+/// ```
+/// # use fixed_derive::ReadFixed;
+/// # use fixed::FixedDeserializer;
+/// # use fixed::FieldDescription;
+/// #[derive(PartialEq, Eq, Debug)]
+/// enum EyeColor {
+///     Blue,
+///     Brown,
+///     Green,
+/// }
+/// 
+/// impl FixedDeserializer<EyeColor> for &str {
+///     fn parse_with(&self, desc: &FieldDescription) -> Result<EyeColor, ()> {
+///         match *self {
+///             "Bl" => Ok(EyeColor::Blue),
+///             "Br" => Ok(EyeColor::Brown),
+///             "Gr" => Ok(EyeColor::Green),
+///             _ => Err(())
+///         }
+///     }
+/// }
+/// 
+/// #[derive(ReadFixed)]
+/// struct Person {
+///     #[fixed(width=10)]
+///     pub name: String,
+///     #[fixed(width=3, align=right)]
+///     pub age: u8,
+///     #[fixed(width=2)]
+///     pub eye_color: EyeColor,
+/// }
+/// 
+/// # use fixed::ReadFixed;
+/// let person = Person::read_fixed_str("Harold     42Gr").unwrap();
+/// assert_eq!(person.eye_color, EyeColor::Green);
+/// ```
 pub trait FixedDeserializer<T : Sized> {
+    /// Read an object of type `T` from the current object.
+    /// 
+    /// Uses the provided [`FieldDescription`] to determine how to parse a data field
+    /// from a fixed width representation.
     fn parse_with(&self, desc: &FieldDescription) -> Result<T, ()>;
 }
 
