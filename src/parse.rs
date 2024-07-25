@@ -14,6 +14,8 @@ use std::str::FromStr;
 /// 
 /// # Example
 /// 
+/// 
+/// [ReadFixed]: crate::ReadFixed
 /// ```
 /// # use fixed_derive::ReadFixed;
 /// # use fixed::FixedDeserializer;
