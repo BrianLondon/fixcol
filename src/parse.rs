@@ -141,7 +141,7 @@ use crate::error::{DataError, InnerError};
 /// impl FixedDeserializer<Birthday> for &str {
 ///     fn parse_with(&self, desc: &FieldDescription) -> Result<Birthday, DataError> {
 ///         let text = &self[desc.skip..desc.skip+desc.len];
-///         let mut parts = text.split(' ').filter(|x| *x == "");
+///         let mut parts = text.split(' ').filter(|x| *x != "");
 ///         let dt = NaiveDate::from_ymd_opt(
 ///             parts.next().unwrap().parse().map_err(|e| DataError::custom(&text, "Could not find year"))?,
 ///             parts.next().unwrap().parse().map_err(|e| DataError::custom(&text, "Could not find month"))?,
@@ -151,6 +151,26 @@ use crate::error::{DataError, InnerError};
 ///         Ok(Birthday(dt))
 ///     }
 /// }
+/// 
+/// # use fixed::ReadFixed;
+/// # fn f() {
+/// let mut file = File::open("my_file.txt").unwrap();
+/// # }
+/// # let mut file = "George       1989  3 12\nClaire       2001 11 26".as_bytes();
+/// let people: Vec<Person> = Person::read_fixed_all(file)
+///     .map(|res| res.unwrap())
+///     .collect();
+/// # assert_eq!(people, vec![
+/// #     Person {
+/// #         name: "George".to_string(), 
+/// #         birthday: Birthday(NaiveDate::from_ymd_opt(1989, 3, 12).unwrap())
+/// #     },
+/// #     Person {
+/// #         name: "Claire".to_string(),
+/// #         birthday: Birthday(NaiveDate::from_ymd_opt(2001, 11, 26).unwrap())
+/// #     },
+/// # ]);
+
 /// ```
 pub trait FixedDeserializer<T : Sized> {
     /// Read an object of type `T` from the current object.
