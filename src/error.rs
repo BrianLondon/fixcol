@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, num::{ParseFloatError, ParseIntError}};
 
 #[derive(Debug)]
 pub enum Error {
@@ -18,14 +18,36 @@ impl From<DataError> for Error {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct DataError {
+    text: String,
     line: Option<usize>,
+    inner_error: InnerError,
 }
 
 impl DataError {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(text: String) -> Self {
         DataError {
+            text: text,
+            line: None,
+            inner_error: InnerError::None
+        }
+    }
+
+    pub(crate) fn new_err<Err>(text: String, err: Err) -> Self 
+        where Err: Into<InnerError>
+    {
+        DataError {
+            text: text,
+            line: None, 
+            inner_error: err.into(),
+        }
+    }
+
+    pub fn custom(parsed_value: String, message: String) -> Self {
+        DataError {
+            text: parsed_value,
+            inner_error: InnerError::Custom(message),
             line: None,
         }
     }
@@ -37,4 +59,23 @@ impl DataError {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum InnerError {
+    None,
+    Custom(String),
+    ParseIntError(ParseIntError),
+    ParseFloatError(ParseFloatError),
+}
 
+impl From<ParseFloatError> for InnerError {
+    fn from(value: ParseFloatError) -> Self {
+        Self::ParseFloatError(value)
+    }
+}
+
+
+impl From<ParseIntError> for InnerError {
+    fn from(value: ParseIntError) -> Self {
+        Self::ParseIntError(value)
+    }
+}
