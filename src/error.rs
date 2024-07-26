@@ -1,4 +1,6 @@
-use std::{io, num::{ParseFloatError, ParseIntError}};
+use std::io;
+use std::num::{ParseFloatError, ParseIntError};
+use std::str::Utf8Error;
 
 #[derive(Debug)]
 pub enum Error {
@@ -15,6 +17,19 @@ impl From<io::Error> for Error {
 impl From<DataError> for Error {
     fn from(value: DataError) -> Self {
         Self::DataError(value)
+    }
+}
+
+impl Error {
+    pub fn from_utf8_error(bytes: &[u8], err: Utf8Error) -> Self {
+        let (good_bytes, _) = bytes.split_at(err.valid_up_to());
+        let text: String = String::from_utf8_lossy(good_bytes).into_owned();
+
+        Self::DataError(DataError{
+            text: text,
+            line: None,
+            inner_error: err.into(),
+        })
     }
 }
 
@@ -59,12 +74,15 @@ impl DataError {
     }
 }
 
+// TODO: Test case for invalid utf8 data
+
 #[derive(Debug, Clone)]
 pub enum InnerError {
     None,
     Custom(String),
     ParseIntError(ParseIntError),
     ParseFloatError(ParseFloatError),
+    Utf8Error(Utf8Error),
 }
 
 impl From<ParseFloatError> for InnerError {
@@ -73,9 +91,14 @@ impl From<ParseFloatError> for InnerError {
     }
 }
 
-
 impl From<ParseIntError> for InnerError {
     fn from(value: ParseIntError) -> Self {
         Self::ParseIntError(value)
+    }
+}
+
+impl From<Utf8Error> for InnerError {
+    fn from(value: Utf8Error) -> Self {
+        Self::Utf8Error(value)
     }
 }

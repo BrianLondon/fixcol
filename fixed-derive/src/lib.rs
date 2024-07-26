@@ -36,12 +36,14 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
         // TODO: we shouldn't need a String here at all 
         quote!{
             let mut s: [u8; #buf_size] = [0; #buf_size];
-            let _ = buf.read_exact(&mut s);
-            let #name = std::str::from_utf8(&s).unwrap().parse_with(&fixed::FieldDescription {
-                skip: #skip,
-                len: #width,
-                alignment: #alignment,
-            }).unwrap();
+            buf.read_exact(&mut s).map_err(|e| fixed::error::Error::from(e))?;
+            let #name = std::str::from_utf8(&s)
+                .map_err(|e| fixed::error::Error::from_utf8_error(&s, e))?
+                .parse_with(&fixed::FieldDescription {
+                    skip: #skip,
+                    len: #width,
+                    alignment: #alignment,
+                }).map_err(|e| fixed::error::Error::from(e))?;
         }
     });
     let mut read_steps = proc_macro2::TokenStream::new();
