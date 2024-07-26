@@ -58,7 +58,7 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
     field_names.extend(struct_init.into_iter());
     
     quote!{
-        fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, ()> {
+        fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixed::error::Error> {
             use fixed::FixedDeserializer;
             #read_steps
 
