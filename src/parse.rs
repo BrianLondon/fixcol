@@ -41,7 +41,7 @@ use crate::error::{DataError, InnerError};
 ///             "Bl" => Ok(EyeColor::Blue),
 ///             "Br" => Ok(EyeColor::Brown),
 ///             "Gr" => Ok(EyeColor::Green),
-///             _ => Err(DataError::custom(self.to_string(), "Unrecognized eye color".to_string())),
+///             _ => Err(DataError::custom(self, "Unrecognized eye color")),
 ///         }
 ///     }
 /// }
@@ -93,11 +93,11 @@ use crate::error::{DataError, InnerError};
 /// struct Person {
 ///     #[fixed(width=12)]
 ///     name: String,
-///     #[fixed(width=4, skip=1)]
+///     #[fixed(width=4, skip=1, align="right")]
 ///     birth_year: u16,
-///     #[fixed(width=2, skip=1)]
+///     #[fixed(width=2, skip=1, align="right")]
 ///     birth_month: u8,
-///     #[fixed(width=2, skip=1)]
+///     #[fixed(width=2, skip=1, align="right")]
 ///     birth_date: u8,
 /// }
 /// 
@@ -112,11 +112,46 @@ use crate::error::{DataError, InnerError};
 ///     .collect();
 /// # assert_eq!(people, vec![
 /// #     Person{name: "George".to_string(), birth_year: 1989, birth_month: 3, birth_date: 12},
-/// #     Person{name: "Calire".to_string(), birth_year: 2001, birth_month: 11, birth_date: 26},
+/// #     Person{name: "Claire".to_string(), birth_year: 2001, birth_month: 11, birth_date: 26},
 /// # ]);
 /// ```
 /// 
-/// [ReadFixed]: crate::ReadFixed
+/// Same data file, but this time using a custom `FixedDeserializer` to decode the date.
+/// We use a `Birthday` new type around a [`chrono::NaiveDate`].
+/// 
+/// ```
+/// # use fixed_derive::ReadFixed;
+/// # use fixed::FixedDeserializer;
+/// # use fixed::FieldDescription;
+/// # use fixed::error::DataError;
+/// # use std::fs::File;
+/// #[derive(ReadFixed)]
+/// # #[derive(Eq, PartialEq, Debug)]
+/// struct Person {
+///     #[fixed(width=12)]
+///     name: String,
+///     #[fixed(width=10, skip=1)]
+///     birthday: Birthday,
+/// }
+/// 
+/// use chrono::NaiveDate;
+/// # #[derive(Eq, PartialEq, Debug)]
+/// struct Birthday(NaiveDate);
+/// 
+/// impl FixedDeserializer<Birthday> for &str {
+///     fn parse_with(&self, desc: &FieldDescription) -> Result<Birthday, DataError> {
+///         let text = &self[desc.skip..desc.skip+desc.len];
+///         let mut parts = text.split(' ').filter(|x| *x == "");
+///         let dt = NaiveDate::from_ymd_opt(
+///             parts.next().unwrap().parse().map_err(|e| DataError::custom(&text, "Could not find year"))?,
+///             parts.next().unwrap().parse().map_err(|e| DataError::custom(&text, "Could not find month"))?,
+///             parts.next().unwrap().parse().map_err(|e| DataError::custom(&text, "Could not find day"))?, 
+///         ).ok_or(DataError::custom(&text, "Did not recognize a date"))?;
+/// 
+///         Ok(Birthday(dt))
+///     }
+/// }
+/// ```
 pub trait FixedDeserializer<T : Sized> {
     /// Read an object of type `T` from the current object.
     /// 

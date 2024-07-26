@@ -69,10 +69,10 @@ impl DataError {
         }
     }
 
-    pub fn custom(parsed_value: String, message: String) -> Self {
+    pub fn custom(parsed_value: &str, message: &str) -> Self {
         DataError {
-            text: parsed_value,
-            inner_error: InnerError::Custom(message),
+            text: parsed_value.to_owned(),
+            inner_error: InnerError::Custom(message.to_owned()),
             line: None,
         }
     }
