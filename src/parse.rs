@@ -367,4 +367,12 @@ mod tests {
         let expected: f32 = 3.14;
         assert_eq!(actual, expected);
     }
+
+    #[test]
+    fn extract_f32_bad() {
+        let desc = FieldDescription{ skip: 0, len: 5, alignment: Alignment::Right};
+        let actual: Result<f32, DataError> = " 3a14 ".parse_with(&desc);
+        let expected = "Error decoding data \"3a14\"\ninvalid float literal\n";
+        assert_eq!(actual.unwrap_err().to_string(), expected);
+    }
 }

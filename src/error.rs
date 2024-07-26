@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use std::io;
 use std::num::{ParseFloatError, ParseIntError};
 use std::str::Utf8Error;
@@ -6,6 +7,15 @@ use std::str::Utf8Error;
 pub enum Error {
     DataError(DataError),
     IoError(io::Error)
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Error::DataError(data_error) => data_error.fmt(f),
+            Error::IoError(io_error) => io_error.fmt(f),
+        }
+    }
 }
 
 impl From<io::Error> for Error {
@@ -71,6 +81,40 @@ impl DataError {
         let mut new_error = self.clone();
         new_error.line = Some(line);
         new_error
+    }
+}
+
+impl Display for DataError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {     
+        fn fmt_err(text: &String, f: &mut Formatter<'_>) -> std::fmt::Result {
+            write!(f, "Error decoding data \"{}\"\n", text)
+        }
+
+        match &self.inner_error {
+            InnerError::None => fmt_err(&self.text, f)?,
+            InnerError::Custom(s) => {
+                fmt_err(&self.text, f)?;
+                s.fmt(f)?;
+            },
+            InnerError::ParseIntError(e) => {
+                fmt_err(&self.text, f)?;
+                e.fmt(f)?;
+            },
+            InnerError::ParseFloatError(e) => {
+                fmt_err(&self.text, f)?;
+                e.fmt(f)?;
+            },
+            InnerError::Utf8Error(e) => {
+                fmt_err(&self.text, f)?;
+                e.fmt(f)?;
+            },
+        }
+
+        if let Some(line) = self.line {
+            write!(f, "\nError occured on line {}", line)?;
+        }
+
+        write!(f, "\n")
     }
 }
 
