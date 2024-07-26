@@ -1,4 +1,5 @@
 use std::{io::{BufRead, BufReader, Lines, Read, Write}, marker::PhantomData};
+use crate::error::Error;
 
 /// Trait for writing to fixed width (column based) serialization
 pub trait WriteFixed {
@@ -18,7 +19,8 @@ pub struct Iter<T, R>
     //
     // read_buf: BufReader<R>,
     // line_buf: String,
-    // failed: bool,
+    failed: bool,
+    line: usize,
     lines: Lines<BufReader<R>>,
     t: PhantomData<T>,
 }
@@ -27,21 +29,39 @@ impl<T: Sized + ReadFixed, R: Read>  Iter<T, R> {
     fn new(read: R) -> Self {
         Self {
             lines: BufReader::new(read).lines(),
+            line: 0,
+            failed: false,
             t: PhantomData,
         }
     }
 }
 
 impl<T: Sized + ReadFixed, R: Read> Iterator for Iter<T, R> {
-    type Item = Result<T, ()>;
+    type Item = Result<T, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.lines.next() {
-            None => None,
-            Some(Err(_)) => Some(Err(())),
-            Some(Ok(s)) => {
-                Some(T::read_fixed_string(s))
-            },
+        if self.failed {
+            None
+        } else {
+            self.line += 1;
+            match self.lines.next() {
+                None => None,
+                Some(Err(e)) => {
+                    self.failed = true;
+                    Some(Err(Error::IoError(e)))
+                },
+                Some(Ok(s)) => {
+                    // TODO: think about whether we want to allow it to return the 
+                    // errored line and keep going
+                    match T::read_fixed_string(s) {
+                        Err(Error::DataError(err)) => {
+                            let err_with_line = err.with_line(self.line);
+                            Some(Err(Error::DataError(err_with_line)))
+                        },
+                        other => Some(other)
+                    }
+                },
+            }    
         }
     }
 }
@@ -72,7 +92,7 @@ pub trait ReadFixed {
     /// # assert_eq!(my_foo.foo, "foo".to_string());
     /// # assert_eq!(my_foo.bar, "bar".to_string());
     /// ```
-    fn read_fixed<R>(buf: &mut R) -> Result<Self, ()>
+    fn read_fixed<R>(buf: &mut R) -> Result<Self, Error>
         where Self: Sized, R: Read;
 
     /// Consumes a buffer returning objects of type `Self`
@@ -154,7 +174,7 @@ pub trait ReadFixed {
     /// assert_eq!(point.x, 123);
     /// assert_eq!(point.y, 61);
     /// ```
-    fn read_fixed_str(s: &str) -> Result<Self, ()> 
+    fn read_fixed_str(s: &str) -> Result<Self, Error> 
         where Self: Sized
     {
         let mut bytes = s.as_bytes();
@@ -187,7 +207,7 @@ pub trait ReadFixed {
     /// assert_eq!(point.x, 42);
     /// assert_eq!(point.y, 7)
     /// ```
-    fn read_fixed_string(s: String) -> Result<Self, ()> 
+    fn read_fixed_string(s: String) -> Result<Self, Error> 
         where Self: Sized
     {
         let mut bytes = s.as_bytes();
@@ -205,11 +225,11 @@ mod tests {
     }
 
     impl ReadFixed for Foo {
-        fn read_fixed<R>(buf: &mut R) -> Result<Self, ()>
+        fn read_fixed<R>(buf: &mut R) -> Result<Self, Error>
             where Self: Sized, R: Read {
             
             let mut s: String = String::new();
-            buf.read_to_string(&mut s).map_err(|_| ())?;
+            buf.read_to_string(&mut s)?;
 
             Ok(Self { foo: s })
         }

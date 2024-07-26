@@ -3,6 +3,7 @@ mod fixed;
 mod format;
 mod parse;
 mod write;
+pub mod error;
 
 extern crate fixed_derive;
 
@@ -14,6 +15,8 @@ pub use format::{Alignment, FieldDescription};
 #[cfg(test)]
 mod tests {
     use std::io::{Read, Write};
+
+    use error::Error;
 
     use super::*;
 
@@ -68,7 +71,7 @@ mod tests {
     }
 
     impl ReadFixed for NumWord {
-        fn read_fixed<R: Read>(buf: &mut R) -> Result<Self, ()>
+        fn read_fixed<R: Read>(buf: &mut R) -> Result<Self, Error>
                 where Self: Sized {
             let mut s = String::new();
             let _ = buf.read_to_string(&mut s);

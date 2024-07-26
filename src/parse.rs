@@ -1,6 +1,5 @@
 use crate::format::{Alignment, FieldDescription};
-
-use std::str::FromStr;
+use crate::error::{DataError, InnerError};
 
 
 /// A trait the represents field types that can be decoded from fixed len strings
@@ -12,14 +11,17 @@ use std::str::FromStr;
 /// It may be useful to implement this for other `T` on &str if you would like
 /// to directly deserialize other primitives.
 /// 
-/// # Example
-/// 
+/// Custom error messages can be created with [`DataError::custom`].
 /// 
 /// [ReadFixed]: crate::ReadFixed
+///
+/// # Example
+/// 
 /// ```
 /// # use fixed_derive::ReadFixed;
 /// # use fixed::FixedDeserializer;
 /// # use fixed::FieldDescription;
+/// # use fixed::error::DataError;
 /// #[derive(PartialEq, Eq, Debug)]
 /// enum EyeColor {
 ///     Blue,
@@ -28,12 +30,12 @@ use std::str::FromStr;
 /// }
 /// 
 /// impl FixedDeserializer<EyeColor> for &str {
-///     fn parse_with(&self, desc: &FieldDescription) -> Result<EyeColor, ()> {
+///     fn parse_with(&self, desc: &FieldDescription) -> Result<EyeColor, DataError> {
 ///         match *self {
 ///             "Bl" => Ok(EyeColor::Blue),
 ///             "Br" => Ok(EyeColor::Brown),
 ///             "Gr" => Ok(EyeColor::Green),
-///             _ => Err(())
+///             _ => Err(DataError::custom(self.to_string(), "Unrecognized eye color".to_string())),
 ///         }
 ///     }
 /// }
@@ -52,12 +54,12 @@ use std::str::FromStr;
 /// let person = Person::read_fixed_str("Harold     42Gr").unwrap();
 /// assert_eq!(person.eye_color, EyeColor::Green);
 /// ```
-pub trait FixedDeserializer<T : Sized> {
+pub trait FixedDeserializer<T: Sized> {
     /// Read an object of type `T` from the current object.
     /// 
     /// Uses the provided [`FieldDescription`] to determine how to parse a data field
     /// from a fixed width representation.
-    fn parse_with(&self, desc: &FieldDescription) -> Result<T, ()>;
+    fn parse_with(&self, desc: &FieldDescription) -> Result<T, DataError>;
 }
 
 
@@ -71,34 +73,52 @@ fn extract_trimmed<'a, 'b>(src: &'a str, desc: &'b FieldDescription) -> &'a str 
     }
 }
 
-
-// Dummy trait to limit the application of the generic FixedDeseralizable
-trait Numeric {}
-
-impl Numeric for u8 {}
-impl Numeric for u16 {}
-impl Numeric for u32 {}
-impl Numeric for u64 {}
-
-impl Numeric for i8 {}
-impl Numeric for i16 {}
-impl Numeric for i32 {}
-impl Numeric for i64 {}
-
-impl Numeric for f32 {}
-impl Numeric for f64 {}
-
-
-impl<T: FromStr + Numeric> FixedDeserializer<T> for &str {
-    fn parse_with(&self, desc: &FieldDescription) -> Result<T, ()> {
-        let trimmed = extract_trimmed(self, desc);
-        trimmed.parse::<T>().map_err(|_| ())
-    }
+macro_rules! fixed_deserializer_float_impl {
+    ($t:ty) => {
+        impl FixedDeserializer<$t> for &str {
+            fn parse_with(&self, desc: &FieldDescription) -> Result<$t, DataError> {
+                let trimmed = extract_trimmed(self, desc);
+                trimmed.parse::<$t>().map_err(|e| {
+                    DataError::new_err(trimmed.to_string(), InnerError::ParseFloatError(e))
+                })
+            }
+        }
+    };
 }
+fixed_deserializer_float_impl!(f32);
+fixed_deserializer_float_impl!(f64);
+
+macro_rules! fixed_deserializer_int_impl {
+    ($t:ty) => {
+        impl FixedDeserializer<$t> for &str {
+            fn parse_with(&self, desc: &FieldDescription) -> Result<$t, DataError> {
+                let trimmed = extract_trimmed(self, desc);
+                trimmed.parse::<$t>().map_err(|e| {
+                    DataError::new_err(trimmed.to_string(), InnerError::ParseIntError(e))
+                })
+            }
+        }
+    };
+}
+
+fixed_deserializer_int_impl!(u8);
+fixed_deserializer_int_impl!(u16);
+fixed_deserializer_int_impl!(u32);
+fixed_deserializer_int_impl!(u64);
+fixed_deserializer_int_impl!(u128);
+
+fixed_deserializer_int_impl!(i8);
+fixed_deserializer_int_impl!(i16);
+fixed_deserializer_int_impl!(i32);
+fixed_deserializer_int_impl!(i64);
+fixed_deserializer_int_impl!(i128);
+
+fixed_deserializer_int_impl!(usize);
+fixed_deserializer_int_impl!(isize);
 
 
 impl FixedDeserializer<String> for &str {
-    fn parse_with(&self, desc: &FieldDescription) -> Result<String, ()> {
+    fn parse_with(&self, desc: &FieldDescription) -> Result<String, DataError> {
         let trimmed = extract_trimmed(self, desc);
         Ok(trimmed.to_string())
     }
@@ -322,7 +342,8 @@ mod tests {
         assert_eq!(actual, expected);
 
         let desc = FieldDescription{ skip: 0, len: 6, alignment: Alignment::Full};
-        let actual: Result<f32, ()> = " 3.14 ".parse_with(&desc);
+        let actual: Result<f32, DataError> = " 3.14 ".parse_with(&desc);
+
         assert!(actual.is_err()); // TODO: check the error type
     }
 
@@ -345,5 +366,13 @@ mod tests {
         let actual: f32 = " 3.14 ".parse_with(&desc).unwrap();
         let expected: f32 = 3.14;
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn extract_f32_bad() {
+        let desc = FieldDescription{ skip: 0, len: 5, alignment: Alignment::Right};
+        let actual: Result<f32, DataError> = " 3a14 ".parse_with(&desc);
+        let expected = "Error decoding data \"3a14\"\ninvalid float literal\n";
+        assert_eq!(actual.unwrap_err().to_string(), expected);
     }
 }
