@@ -1,28 +1,27 @@
-use crate::format::{Alignment, FieldDescription};
 use crate::error::{DataError, InnerError};
-
+use crate::format::{Alignment, FieldDescription};
 
 /// A trait the represents field types that can be decoded from fixed len strings
-/// 
+///
 /// Implementations are provided for `&str` that are used internally in the macro
 /// generated code to derive [`ReadFixed`]. It is unlikely end users will need to
 /// implement this trait for other types.
-/// 
+///
 /// It may be useful to implement this for other `T` on &str if you would like
 /// to directly deserialize other primitives.
-/// 
+///
 /// Additionally, it is possible to use custom `FixedDeserializer` implementations
 /// with the [new type](https://doc.rust-lang.org/rust-by-example/generics/new_types.html)
 /// pattern to define custom derserialization logic.
-/// 
+///
 /// Custom error messages can be created with [`DataError::custom`].
-/// 
+///
 /// [ReadFixed]: crate::ReadFixed
-/// 
+///
 /// # Examples
-/// 
+///
 /// ### Custom deserialization
-/// 
+///
 /// ```
 /// # use fixed_derive::ReadFixed;
 /// # use fixed::FixedDeserializer;
@@ -34,7 +33,7 @@ use crate::error::{DataError, InnerError};
 ///     Brown,
 ///     Green,
 /// }
-/// 
+///
 /// impl FixedDeserializer<EyeColor> for &str {
 ///     fn parse_with(&self, desc: &FieldDescription) -> Result<EyeColor, DataError> {
 ///         match *self {
@@ -45,7 +44,7 @@ use crate::error::{DataError, InnerError};
 ///         }
 ///     }
 /// }
-/// 
+///
 /// #[derive(ReadFixed)]
 /// struct Person {
 ///     #[fixed(width=10)]
@@ -55,17 +54,17 @@ use crate::error::{DataError, InnerError};
 ///     #[fixed(width=2)]
 ///     pub eye_color: EyeColor,
 /// }
-/// 
+///
 /// # use fixed::ReadFixed;
 /// let person = Person::read_fixed_str("Harold     42Gr").unwrap();
 /// assert_eq!(person.eye_color, EyeColor::Green);
 /// ```
-/// 
+///
 /// ### Multiple deserialization approached
-/// 
-/// Here we use a few different approaches to deserializing a fixed column 
+///
+/// Here we use a few different approaches to deserializing a fixed column
 /// data file. Documentation of the file structure follows.
-/// 
+///
 /// ```text
 ///     Name      Birthday
 /// /----------\ /--------\
@@ -75,14 +74,14 @@ use crate::error::{DataError, InnerError};
 ///         \        \-------- Year  (numeric)
 ///          \
 ///           \--------------- Name  (alphabetic)
-/// 
+///
 /// Example rows
 /// George       1989  3 12     
 /// Claire       2001 11 26
 /// ```
-/// 
+///
 /// Naive implementation
-/// 
+///
 /// ```
 /// # use fixed_derive::ReadFixed;
 /// # use fixed::FixedDeserializer;
@@ -100,7 +99,7 @@ use crate::error::{DataError, InnerError};
 ///     #[fixed(width=2, skip=1, align="right")]
 ///     birth_date: u8,
 /// }
-/// 
+///
 /// // Note we are being sloppy with error handling to keep the example simple
 /// # use fixed::ReadFixed;
 /// # fn f() {
@@ -115,10 +114,10 @@ use crate::error::{DataError, InnerError};
 /// #     Person{name: "Claire".to_string(), birth_year: 2001, birth_month: 11, birth_date: 26},
 /// # ]);
 /// ```
-/// 
+///
 /// Same data file, but this time using a custom `FixedDeserializer` to decode the date.
 /// We use a `Birthday` new type around a [`chrono::NaiveDate`].
-/// 
+///
 /// ```
 /// # use fixed_derive::ReadFixed;
 /// # use fixed::FixedDeserializer;
@@ -133,38 +132,38 @@ use crate::error::{DataError, InnerError};
 ///     #[fixed(width=10, skip=1)]
 ///     birthday: Birthday,
 /// }
-/// 
+///
 /// use chrono::NaiveDate;
 /// # #[derive(Eq, PartialEq, Debug)]
 /// struct Birthday(NaiveDate);
-/// 
+///
 /// impl FixedDeserializer<Birthday> for &str {
 ///     fn parse_with(&self, desc: &FieldDescription) -> Result<Birthday, DataError> {
 ///         let text = &self[desc.skip..desc.skip+desc.len];
 ///         let mut parts = text.split(' ').filter(|x| *x != "");
-/// 
+///
 ///         let year = parts.next()
 ///             .ok_or(DataError::custom(&text, "Could not find year"))?
 ///             .parse()
 ///             .map_err(|e| DataError::custom(&text, "Could not decode year"))?;
-/// 
+///
 ///         let month = parts.next()
 ///             .ok_or(DataError::custom(&text, "Could not find month"))?
 ///             .parse()
 ///             .map_err(|e| DataError::custom(&text, "Could not decode month"))?;
-/// 
+///
 ///         let day = parts.next()
 ///             .ok_or(DataError::custom(&text, "Could not find day"))?
 ///             .parse()
 ///             .map_err(|e| DataError::custom(&text, "Could not decode day"))?;
-/// 
+///
 ///         let dt = NaiveDate::from_ymd_opt(year, month, day)
 ///             .ok_or(DataError::custom(&text, "Did not recognize a date"))?;
-/// 
+///
 ///         Ok(Birthday(dt))
 ///     }
 /// }
-/// 
+///
 /// # use fixed::ReadFixed;
 /// # fn f() {
 /// let mut file = File::open("my_file.txt").unwrap();
@@ -175,7 +174,7 @@ use crate::error::{DataError, InnerError};
 ///     .collect();
 /// # assert_eq!(people, vec![
 /// #     Person {
-/// #         name: "George".to_string(), 
+/// #         name: "George".to_string(),
 /// #         birthday: Birthday(NaiveDate::from_ymd_opt(1989, 3, 12).unwrap())
 /// #     },
 /// #     Person {
@@ -186,16 +185,15 @@ use crate::error::{DataError, InnerError};
 /// ```
 pub trait FixedDeserializer<T: Sized> {
     /// Read an object of type `T` from the current object.
-    /// 
+    ///
     /// Uses the provided [`FieldDescription`] to determine how to parse a data field
     /// from a fixed width representation.
     fn parse_with(&self, desc: &FieldDescription) -> Result<T, DataError>;
 }
 
-
 fn extract_trimmed<'a, 'b>(src: &'a str, desc: &'b FieldDescription) -> &'a str {
-    let slice = &src[desc.skip..desc.skip+desc.len];
-        
+    let slice = &src[desc.skip..desc.skip + desc.len];
+
     match desc.alignment {
         Alignment::Left => slice.trim_end(),
         Alignment::Right => slice.trim_start(),
@@ -246,7 +244,6 @@ fixed_deserializer_int_impl!(i128);
 fixed_deserializer_int_impl!(usize);
 fixed_deserializer_int_impl!(isize);
 
-
 impl FixedDeserializer<String> for &str {
     fn parse_with(&self, desc: &FieldDescription) -> Result<String, DataError> {
         let trimmed = extract_trimmed(self, desc);
@@ -254,14 +251,17 @@ impl FixedDeserializer<String> for &str {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn extract_string_left() {
-        let desc = FieldDescription{ skip: 0, len: 3, alignment: Alignment::Left};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 3,
+            alignment: Alignment::Left,
+        };
         let actual: String = "abc   ".parse_with(&desc).unwrap();
         let expected = "abc".to_string();
         assert_eq!(actual, expected)
@@ -269,7 +269,11 @@ mod tests {
 
     #[test]
     fn extract_string_left_pad() {
-        let desc = FieldDescription{ skip: 0, len: 6, alignment: Alignment::Left};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 6,
+            alignment: Alignment::Left,
+        };
         let actual: String = "abc   ".parse_with(&desc).unwrap();
         let expected = "abc".to_string();
         assert_eq!(actual, expected)
@@ -277,7 +281,11 @@ mod tests {
 
     #[test]
     fn extract_string_left_skip() {
-        let desc = FieldDescription{ skip: 1, len: 5, alignment: Alignment::Left};
+        let desc = FieldDescription {
+            skip: 1,
+            len: 5,
+            alignment: Alignment::Left,
+        };
         let actual: String = "abc   ".parse_with(&desc).unwrap();
         let expected = "bc".to_string();
         assert_eq!(actual, expected)
@@ -285,7 +293,11 @@ mod tests {
 
     #[test]
     fn extract_string_left_truncate() {
-        let desc = FieldDescription{ skip: 0, len: 2, alignment: Alignment::Left};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 2,
+            alignment: Alignment::Left,
+        };
         let actual: String = "abc   ".parse_with(&desc).unwrap();
         let expected = "ab".to_string();
         assert_eq!(actual, expected)
@@ -293,7 +305,11 @@ mod tests {
 
     #[test]
     fn extract_string_left_ws() {
-        let desc = FieldDescription{ skip: 0, len: 6, alignment: Alignment::Left};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 6,
+            alignment: Alignment::Left,
+        };
         let actual: String = "a bc  ".parse_with(&desc).unwrap();
         let expected = "a bc".to_string();
         assert_eq!(actual, expected)
@@ -301,7 +317,11 @@ mod tests {
 
     #[test]
     fn extract_string_left_leading_ws() {
-        let desc = FieldDescription{ skip: 0, len: 6, alignment: Alignment::Left};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 6,
+            alignment: Alignment::Left,
+        };
         let actual: String = " abc  ".parse_with(&desc).unwrap();
         let expected = " abc".to_string();
         assert_eq!(actual, expected)
@@ -309,7 +329,11 @@ mod tests {
 
     #[test]
     fn extract_string_right_exact() {
-        let desc = FieldDescription{ skip: 0, len: 3, alignment: Alignment::Right};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 3,
+            alignment: Alignment::Right,
+        };
         let actual: String = "   abc".parse_with(&desc).unwrap();
         let expected = "".to_string();
         assert_eq!(actual, expected)
@@ -317,7 +341,11 @@ mod tests {
 
     #[test]
     fn extract_string_right() {
-        let desc = FieldDescription{ skip: 0, len: 6, alignment: Alignment::Right};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 6,
+            alignment: Alignment::Right,
+        };
         let actual: String = "   abc".parse_with(&desc).unwrap();
         let expected = "abc".to_string();
         assert_eq!(actual, expected)
@@ -325,7 +353,11 @@ mod tests {
 
     #[test]
     fn extract_string_right_skip() {
-        let desc = FieldDescription{ skip: 1, len: 5, alignment: Alignment::Right};
+        let desc = FieldDescription {
+            skip: 1,
+            len: 5,
+            alignment: Alignment::Right,
+        };
         let actual: String = "   abc".parse_with(&desc).unwrap();
         let expected = "abc".to_string();
         assert_eq!(actual, expected)
@@ -333,7 +365,11 @@ mod tests {
 
     #[test]
     fn extract_string_right_skip_into() {
-        let desc = FieldDescription{ skip: 4, len: 2, alignment: Alignment::Right};
+        let desc = FieldDescription {
+            skip: 4,
+            len: 2,
+            alignment: Alignment::Right,
+        };
         let actual: String = "   abc".parse_with(&desc).unwrap();
         let expected = "bc".to_string();
         assert_eq!(actual, expected)
@@ -341,7 +377,11 @@ mod tests {
 
     #[test]
     fn extract_string_right_truncate() {
-        let desc = FieldDescription{ skip: 1, len: 4, alignment: Alignment::Right};
+        let desc = FieldDescription {
+            skip: 1,
+            len: 4,
+            alignment: Alignment::Right,
+        };
         let actual: String = "   abc".parse_with(&desc).unwrap();
         let expected = "ab".to_string();
         assert_eq!(actual, expected)
@@ -349,7 +389,11 @@ mod tests {
 
     #[test]
     fn extract_string_right_ws() {
-        let desc = FieldDescription{ skip: 0, len: 6, alignment: Alignment::Right};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 6,
+            alignment: Alignment::Right,
+        };
         let actual: String = "  a bc".parse_with(&desc).unwrap();
         let expected = "a bc".to_string();
         assert_eq!(actual, expected)
@@ -357,16 +401,23 @@ mod tests {
 
     #[test]
     fn extract_string_right_trailing_ws() {
-        let desc = FieldDescription{ skip: 0, len: 6, alignment: Alignment::Right};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 6,
+            alignment: Alignment::Right,
+        };
         let actual: String = " abc  ".parse_with(&desc).unwrap();
         let expected = "abc  ".to_string();
         assert_eq!(actual, expected)
     }
 
-
     #[test]
     fn extract_string_full() {
-        let desc = FieldDescription{ skip: 0, len: 6, alignment: Alignment::Full};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 6,
+            alignment: Alignment::Full,
+        };
         let actual: String = "abcdef".parse_with(&desc).unwrap();
         let expected = "abcdef".to_string();
         assert_eq!(actual, expected);
@@ -374,7 +425,11 @@ mod tests {
 
     #[test]
     fn extract_string_full_slice() {
-        let desc = FieldDescription{ skip: 1, len: 3, alignment: Alignment::Full};
+        let desc = FieldDescription {
+            skip: 1,
+            len: 3,
+            alignment: Alignment::Full,
+        };
         let actual: String = "abcdef".parse_with(&desc).unwrap();
         let expected = "bcd".to_string();
         assert_eq!(actual, expected);
@@ -382,7 +437,11 @@ mod tests {
 
     #[test]
     fn extract_string_full_left() {
-        let desc = FieldDescription{ skip: 0, len: 6, alignment: Alignment::Full};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 6,
+            alignment: Alignment::Full,
+        };
         let actual: String = "abc   ".parse_with(&desc).unwrap();
         let expected = "abc   ".to_string();
         assert_eq!(actual, expected);
@@ -390,7 +449,11 @@ mod tests {
 
     #[test]
     fn extract_string_full_right() {
-        let desc = FieldDescription{ skip: 0, len: 6, alignment: Alignment::Full};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 6,
+            alignment: Alignment::Full,
+        };
         let actual: String = "   abc".parse_with(&desc).unwrap();
         let expected = "   abc".to_string();
         assert_eq!(actual, expected);
@@ -398,7 +461,11 @@ mod tests {
 
     #[test]
     fn extract_string_full_skip() {
-        let desc = FieldDescription{ skip: 1, len: 5, alignment: Alignment::Full};
+        let desc = FieldDescription {
+            skip: 1,
+            len: 5,
+            alignment: Alignment::Full,
+        };
         let actual: String = "abc   ".parse_with(&desc).unwrap();
         let expected = "bc   ".to_string();
         assert_eq!(actual, expected);
@@ -406,7 +473,11 @@ mod tests {
 
     #[test]
     fn extract_string_full_truncate() {
-        let desc = FieldDescription{ skip: 0, len: 4, alignment: Alignment::Full};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 4,
+            alignment: Alignment::Full,
+        };
         let actual: String = "abc   ".parse_with(&desc).unwrap();
         let expected = "abc ".to_string();
         assert_eq!(actual, expected);
@@ -414,7 +485,11 @@ mod tests {
 
     #[test]
     fn extract_string_full_ws() {
-        let desc = FieldDescription{ skip: 0, len: 6, alignment: Alignment::Full};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 6,
+            alignment: Alignment::Full,
+        };
         let actual: String = " a bc ".parse_with(&desc).unwrap();
         let expected = " a bc ".to_string();
         assert_eq!(actual, expected);
@@ -422,7 +497,11 @@ mod tests {
 
     #[test]
     fn extract_string_full_trimmed_ws() {
-        let desc = FieldDescription{ skip: 1, len: 3, alignment: Alignment::Full};
+        let desc = FieldDescription {
+            skip: 1,
+            len: 3,
+            alignment: Alignment::Full,
+        };
         let actual: String = " ab c ".parse_with(&desc).unwrap();
         let expected = "ab ".to_string();
         assert_eq!(actual, expected);
@@ -430,7 +509,11 @@ mod tests {
 
     #[test]
     fn extract_string_full_tight_wc() {
-        let desc = FieldDescription{ skip: 1, len: 4, alignment: Alignment::Full};
+        let desc = FieldDescription {
+            skip: 1,
+            len: 4,
+            alignment: Alignment::Full,
+        };
         let actual: String = " ab c ".parse_with(&desc).unwrap();
         let expected = "ab c".to_string();
         assert_eq!(actual, expected);
@@ -466,12 +549,20 @@ mod tests {
 
     #[test]
     fn extract_f32_full() {
-        let desc = FieldDescription{ skip: 1, len: 4, alignment: Alignment::Full};
+        let desc = FieldDescription {
+            skip: 1,
+            len: 4,
+            alignment: Alignment::Full,
+        };
         let actual: f32 = " 3.14 ".parse_with(&desc).unwrap();
         let expected: f32 = 3.14;
         assert_eq!(actual, expected);
 
-        let desc = FieldDescription{ skip: 0, len: 6, alignment: Alignment::Full};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 6,
+            alignment: Alignment::Full,
+        };
         let actual: Result<f32, DataError> = " 3.14 ".parse_with(&desc);
 
         assert!(actual.is_err()); // TODO: check the error type
@@ -479,12 +570,20 @@ mod tests {
 
     #[test]
     fn extract_f32_left() {
-        let desc = FieldDescription{ skip: 1, len: 5, alignment: Alignment::Left};
+        let desc = FieldDescription {
+            skip: 1,
+            len: 5,
+            alignment: Alignment::Left,
+        };
         let actual: f32 = " 3.14 ".parse_with(&desc).unwrap();
         let expected: f32 = 3.14;
         assert_eq!(actual, expected);
 
-        let desc = FieldDescription{ skip: 2, len: 4, alignment: Alignment::Left};
+        let desc = FieldDescription {
+            skip: 2,
+            len: 4,
+            alignment: Alignment::Left,
+        };
         let actual: f32 = " 3.14 ".parse_with(&desc).unwrap();
         let expected: f32 = 0.14;
         assert_eq!(actual, expected);
@@ -492,7 +591,11 @@ mod tests {
 
     #[test]
     fn extract_f32_right() {
-        let desc = FieldDescription{ skip: 0, len: 5, alignment: Alignment::Right};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Right,
+        };
         let actual: f32 = " 3.14 ".parse_with(&desc).unwrap();
         let expected: f32 = 3.14;
         assert_eq!(actual, expected);
@@ -500,7 +603,11 @@ mod tests {
 
     #[test]
     fn extract_f32_bad() {
-        let desc = FieldDescription{ skip: 0, len: 5, alignment: Alignment::Right};
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Right,
+        };
         let actual: Result<f32, DataError> = " 3a14 ".parse_with(&desc);
         let expected = "Error decoding data from \"3a14\": invalid float literal\n";
         assert_eq!(actual.unwrap_err().to_string(), expected);
