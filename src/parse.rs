@@ -142,11 +142,24 @@ use crate::error::{DataError, InnerError};
 ///     fn parse_with(&self, desc: &FieldDescription) -> Result<Birthday, DataError> {
 ///         let text = &self[desc.skip..desc.skip+desc.len];
 ///         let mut parts = text.split(' ').filter(|x| *x != "");
-///         let dt = NaiveDate::from_ymd_opt(
-///             parts.next().unwrap().parse().map_err(|e| DataError::custom(&text, "Could not find year"))?,
-///             parts.next().unwrap().parse().map_err(|e| DataError::custom(&text, "Could not find month"))?,
-///             parts.next().unwrap().parse().map_err(|e| DataError::custom(&text, "Could not find day"))?, 
-///         ).ok_or(DataError::custom(&text, "Did not recognize a date"))?;
+/// 
+///         let year = parts.next()
+///             .ok_or(DataError::custom(&text, "Could not find year"))?
+///             .parse()
+///             .map_err(|e| DataError::custom(&text, "Could not decode year"))?;
+/// 
+///         let month = parts.next()
+///             .ok_or(DataError::custom(&text, "Could not find month"))?
+///             .parse()
+///             .map_err(|e| DataError::custom(&text, "Could not decode month"))?;
+/// 
+///         let day = parts.next()
+///             .ok_or(DataError::custom(&text, "Could not find day"))?
+///             .parse()
+///             .map_err(|e| DataError::custom(&text, "Could not decode day"))?;
+/// 
+///         let dt = NaiveDate::from_ymd_opt(year, month, day)
+///             .ok_or(DataError::custom(&text, "Did not recognize a date"))?;
 /// 
 ///         Ok(Birthday(dt))
 ///     }
@@ -170,9 +183,8 @@ use crate::error::{DataError, InnerError};
 /// #         birthday: Birthday(NaiveDate::from_ymd_opt(2001, 11, 26).unwrap())
 /// #     },
 /// # ]);
-
 /// ```
-pub trait FixedDeserializer<T : Sized> {
+pub trait FixedDeserializer<T: Sized> {
     /// Read an object of type `T` from the current object.
     /// 
     /// Uses the provided [`FieldDescription`] to determine how to parse a data field
