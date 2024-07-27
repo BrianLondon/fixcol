@@ -1,16 +1,16 @@
 //! A crate used for fixed width column serialization and deserialization
+pub mod error;
 mod fixed;
 mod format;
 mod parse;
 mod write;
-pub mod error;
 
 extern crate fixed_derive;
 
-pub use fixed::{ReadFixed, WriteFixed, Iter};
+pub use fixed::{Iter, ReadFixed, WriteFixed};
+pub use format::{Alignment, FieldDescription};
 pub use parse::FixedDeserializer;
 pub use write::FixedSerializer;
-pub use format::{Alignment, FieldDescription};
 
 // TODO: should we support custom deserialization functions on individual columns?
 
@@ -29,8 +29,7 @@ mod tests {
 
     #[test]
     fn test_helper() {
-        let buf: [u8; 13] =
-            [72, 101, 108, 108, 111, 44, 32, 87, 111, 114, 108, 100, 33];
+        let buf: [u8; 13] = [72, 101, 108, 108, 111, 44, 32, 87, 111, 114, 108, 100, 33];
 
         let mut v = Vec::new();
         let _ = v.write(&buf);
@@ -74,21 +73,26 @@ mod tests {
 
     impl ReadFixed for NumWord {
         fn read_fixed<R: Read>(buf: &mut R) -> Result<Self, Error>
-                where Self: Sized {
+        where
+            Self: Sized,
+        {
             let mut s = String::new();
             let _ = buf.read_to_string(&mut s);
 
             let name = s[0..10].trim_end().to_string();
             let num = s[10..].to_string();
             let value = num.trim_start().parse::<u8>().unwrap();
-            
+
             Ok(NumWord { name, value })
         }
     }
 
     #[test]
     fn custom_struct_write() {
-        let three = NumWord { name: "three".to_string(), value: 3 };
+        let three = NumWord {
+            name: "three".to_string(),
+            value: 3,
+        };
 
         let mut v = Vec::new();
         let res = three.write_fixed(&mut v);
@@ -99,7 +103,10 @@ mod tests {
 
     #[test]
     fn custom_struct_read() {
-        let three = NumWord { name: "three".to_string(), value: 3 };
+        let three = NumWord {
+            name: "three".to_string(),
+            value: 3,
+        };
 
         let mut buf = "three       3".as_bytes();
         let decoded = NumWord::read_fixed(&mut buf).unwrap();

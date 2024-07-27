@@ -1,25 +1,25 @@
 //! Type definitions and helpers for error handling in the `fixed` library.
-//! 
+//!
 //! The main data type for this module is [`Error`] which will frequently be the
-//! only type encountered by application authors, unless they are defining 
+//! only type encountered by application authors, unless they are defining
 //! custom deserialization logic, parsing nested types, etc. [`Error`] captures
 //! deserialization errors encountered using `fixed` and many of the methods
 //! provided by [`ReadFixed`] and [`WriteFixed`] return a [`Result<T, Error>`].
-//! 
+//!
 //! Typical usage of the library in a command line application will have the
 //! application print the error and exit. The error should have information
 //! sufficient to identify where in the data file and on what data the error
 //! occured.
-//! 
+//!
 //! # Example
-//! 
+//!
 //! ```
 //! use fixed_derive::ReadFixed;
 //! #[derive(ReadFixed)]
 //! struct MyType {
 //!     // Fields here
 //! }
-//! 
+//!
 //! use fixed::ReadFixed;
 //! use std::fs::File;
 //! # fn f() {
@@ -43,27 +43,27 @@ use std::num::{ParseFloatError, ParseIntError};
 use std::str::Utf8Error;
 
 /// The standard error for the `fixed` library.
-/// 
+///
 /// `Error` captures both I/O errors and errors resulting from malformed inputs
 /// that do not meet the expected format specification. Many of the methods
 /// provided by [`ReadFixed`] and [`WriteFixed`] return a [`Result<T, Error>`].
 /// While the `Error` contains structured data that can be used programatically
 /// to identify what went wrong, it also can format (via [`to_string`]) to print
 /// diagnostic errors to the user.
-/// 
+///
 /// Note that there are factory methods like [`from_utf8_error`] that need to
 /// be public because they are inserted by the derive macros, but should essentially
 /// never be used directly by application authors.
-/// 
+///
 /// # Example
-/// 
+///
 /// ```
 /// use fixed_derive::ReadFixed;
 /// #[derive(ReadFixed)]
 /// struct MyType {
 ///     // Fields here
 /// }
-/// 
+///
 /// use fixed::ReadFixed;
 /// use std::fs::File;
 /// # fn f() {
@@ -81,10 +81,10 @@ use std::str::Utf8Error;
 /// }
 /// # }
 /// ```
-/// 
+///
 /// If the above example encounters an error it would print a message that
 /// resembles the following.
-/// 
+///
 /// ```text
 /// Error decoding data from "123x6": invalid digit found in string
 /// Error occured on line 56
@@ -94,17 +94,17 @@ pub enum Error {
     /// An error that occured while parsing the formatted data
     DataError(DataError),
     /// An error that occured while reading or writing the data.
-    /// 
+    ///
     /// This variant is a thin wrapper around [`std::io::Error`].
     IoError(io::Error),
 }
 
 impl Display for Error {
     /// Formats the error in a human-readable way.
-    /// 
+    ///
     /// Creates a user facing diagnostic message to aid in troubleshooting a
     /// corrupted input or incorrectly annotated type with `#[derive(ReadFixed)]`.
-    /// 
+    ///
     /// See [`Display::fmt`] docs for more information.
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -138,7 +138,7 @@ impl Error {
         let (good_bytes, _) = bytes.split_at(err.valid_up_to());
         let text: String = String::from_utf8_lossy(good_bytes).into_owned();
 
-        Self::DataError(DataError{
+        Self::DataError(DataError {
             text: text,
             line: None,
             inner_error: err.into(),
@@ -155,37 +155,38 @@ pub struct DataError {
 }
 
 impl DataError {
-    pub(crate) fn new_err<Err>(text: String, err: Err) -> Self 
-        where Err: Into<InnerError>
+    pub(crate) fn new_err<Err>(text: String, err: Err) -> Self
+    where
+        Err: Into<InnerError>,
     {
         DataError {
             text: text,
-            line: None, 
+            line: None,
             inner_error: err.into(),
         }
     }
 
     /// Creates a new custom `DataError`
-    /// 
+    ///
     /// This method will typically be used when implementing custom deserialization
     /// logic through a [`FixedDeserializer`] implementation that also requires
     /// custom error handling to provide useful error messages.
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// Consider a data file that contains a one character column with a nullable
-    /// boolean (tri-state value) encoded as `'Y'` to mean true, `'N'` to mean 
+    /// boolean (tri-state value) encoded as `'Y'` to mean true, `'N'` to mean
     /// false, or an empty column `' '` to mean null.
-    /// 
+    ///
     /// We could create a new type with a custom parser to read that column and
     /// use `DataError::custom` to provide error context.
-    /// 
+    ///
     /// ```
     /// use fixed::{FixedDeserializer, FieldDescription};
     /// use fixed::error::DataError;
-    /// 
+    ///
     /// struct TriState(Option<bool>);
-    /// 
+    ///
     /// impl FixedDeserializer<TriState> for &str {
     ///     fn parse_with(&self, desc: &FieldDescription) -> Result<TriState, DataError> {
     ///         // We've defined this type as always having one column so confirm that
@@ -219,7 +220,7 @@ impl DataError {
 }
 
 impl Display for DataError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {     
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         fn fmt_err(text: &String, f: &mut Formatter<'_>) -> std::fmt::Result {
             write!(f, "Error decoding data from \"{}\": ", text)
         }
@@ -229,19 +230,19 @@ impl Display for DataError {
             InnerError::Custom(s) => {
                 fmt_err(&self.text, f)?;
                 s.fmt(f)?;
-            },
+            }
             InnerError::ParseIntError(e) => {
                 fmt_err(&self.text, f)?;
                 e.fmt(f)?;
-            },
+            }
             InnerError::ParseFloatError(e) => {
                 fmt_err(&self.text, f)?;
                 e.fmt(f)?;
-            },
+            }
             InnerError::Utf8Error(e) => {
                 fmt_err(&self.text, f)?;
                 e.fmt(f)?;
-            },
+            }
         }
 
         if let Some(line) = self.line {
@@ -258,7 +259,7 @@ impl Display for DataError {
 #[derive(Debug, Clone)]
 pub enum InnerError {
     // TODO: revisit this. It seemed like we'd need this no-inner-error case but not used now
-    // None, 
+    // None,
     Custom(String),
     ParseIntError(ParseIntError),
     ParseFloatError(ParseFloatError),

@@ -4,14 +4,13 @@ use std::{fmt::Display, str::FromStr};
 use proc_macro2::{TokenStream, TokenTree};
 use syn::{Attribute, Meta, Path};
 
-
 const FIXED_ATTR_KEY: &'static str = "fixed";
-
 
 // Extracts the ident name from a path
 fn ident_from_path(path: &Path) -> String {
-    path.segments.first()
-        .map(|seg| {seg.ident.to_string()})
+    path.segments
+        .first()
+        .map(|seg| seg.ident.to_string())
         .unwrap_or("".to_string())
 }
 
@@ -61,43 +60,52 @@ impl Display for ExpectedTokenState {
     }
 }
 
-fn parse_next_token(state: ExpectedTokenState, tt: TokenTree) -> 
-        (ExpectedTokenState, Option<FieldParam>) 
-{
+fn parse_next_token(
+    state: ExpectedTokenState,
+    tt: TokenTree,
+) -> (ExpectedTokenState, Option<FieldParam>) {
     match (state, tt) {
         (ExpectedTokenState::Key, TokenTree::Ident(ident)) => {
             (ExpectedTokenState::Equals(ident.to_string()), None)
-        },
+        }
         (ExpectedTokenState::Key, t) => {
-            panic!("Expected identifier. Found {}.", 
-                t.to_string());
-        },
+            panic!("Expected identifier. Found {}.", t.to_string());
+        }
         (ExpectedTokenState::Equals(key), TokenTree::Punct(p)) if p.as_char() == '=' => {
             (ExpectedTokenState::Value(key), None)
-        },        
+        }
         (ExpectedTokenState::Equals(_), t) => {
-            panic!("Expected assignmen ('=' character). Found {}.", 
-                t.to_string());
-        },
+            panic!(
+                "Expected assignmen ('=' character). Found {}.",
+                t.to_string()
+            );
+        }
         (ExpectedTokenState::Value(key), TokenTree::Ident(ident)) => {
             let value = ident.to_string();
-            (ExpectedTokenState::Separator, Some(FieldParam::new(key.to_string(), value)))
-        },
+            (
+                ExpectedTokenState::Separator,
+                Some(FieldParam::new(key.to_string(), value)),
+            )
+        }
         (ExpectedTokenState::Value(key), TokenTree::Literal(literal)) => {
             let value = literal.to_string();
-            (ExpectedTokenState::Separator, Some(FieldParam::new(key, value)))
-        },
+            (
+                ExpectedTokenState::Separator,
+                Some(FieldParam::new(key, value)),
+            )
+        }
         (ExpectedTokenState::Value(_), t) => {
-            panic!("Expected identifier or literal. Found {}.", 
-                t.to_string());
-        },
+            panic!("Expected identifier or literal. Found {}.", t.to_string());
+        }
         (ExpectedTokenState::Separator, TokenTree::Punct(p)) if p.as_char() == ',' => {
             (ExpectedTokenState::Key, None)
-        },
+        }
         (ExpectedTokenState::Separator, t) => {
-            panic!("Expected separator (',' character) or end of sequence. Found {:?}.",
-                t.to_string());
-        },
+            panic!(
+                "Expected separator (',' character) or end of sequence. Found {:?}.",
+                t.to_string()
+            );
+        }
     }
 }
 
@@ -121,7 +129,6 @@ fn get_config_params(tokens: TokenStream) -> Vec<FieldParam> {
 
     field_params
 }
-
 
 pub enum Align {
     Left,
@@ -165,16 +172,14 @@ impl FieldConfigBuilder {
 }
 
 pub fn parse_attributes(attrs: &Vec<Attribute>) -> FieldConfig {
-    let params = attrs.iter()
-        .filter(|a| is_fixed_attr(*a))
-        .flat_map(|a| {
-            let tokens = match &a.meta {
-                Meta::Path(_) => todo!(),
-                Meta::List(m) => &m.tokens,
-                Meta::NameValue(_) => todo!(),
-            };
-            get_config_params(tokens.clone())
-        });
+    let params = attrs.iter().filter(|a| is_fixed_attr(*a)).flat_map(|a| {
+        let tokens = match &a.meta {
+            Meta::Path(_) => todo!(),
+            Meta::List(m) => &m.tokens,
+            Meta::NameValue(_) => todo!(),
+        };
+        get_config_params(tokens.clone())
+    });
 
     let mut conf = FieldConfigBuilder::new();
 
@@ -186,21 +191,21 @@ pub fn parse_attributes(attrs: &Vec<Attribute>) -> FieldConfig {
                 } else {
                     panic!("Duplicate values for skip");
                 }
-            },
+            }
             "width" => {
                 if conf.width.is_none() {
                     conf.width = Some(param.value.parse().unwrap());
                 } else {
                     panic!("Duplicate values for width");
                 }
-            },
+            }
             "align" => {
                 if conf.align.is_none() {
                     conf.align = Some(param.value.parse().unwrap());
                 } else {
                     panic!("Duplicate values for align");
                 }
-            },
+            }
             key => panic!("Unrecognized parameter {}", key),
         }
     }
@@ -234,8 +239,8 @@ mod tests {
 
     #[test]
     fn parse_one_field_param() {
-        let expected = FieldParam { 
-            key: "align".to_owned(), 
+        let expected = FieldParam {
+            key: "align".to_owned(),
             value: "right".to_owned(),
         };
         let code: MetaList = syn::parse_str("fixed(align=right)").unwrap();
@@ -252,8 +257,8 @@ mod tests {
                 key: "width".to_owned(),
                 value: "3".to_owned(),
             },
-            FieldParam { 
-                key: "align".to_owned(), 
+            FieldParam {
+                key: "align".to_owned(),
                 value: "right".to_owned(),
             },
         ];
@@ -274,8 +279,8 @@ mod tests {
                 key: "width".to_owned(),
                 value: "3".to_owned(),
             },
-            FieldParam { 
-                key: "align".to_owned(), 
+            FieldParam {
+                key: "align".to_owned(),
                 value: "right".to_owned(),
             },
         ];
@@ -287,8 +292,8 @@ mod tests {
 
     #[test]
     fn parse_with_quotes() {
-        let expected = FieldParam { 
-            key: "align".to_owned(), 
+        let expected = FieldParam {
+            key: "align".to_owned(),
             value: "\"right\"".to_owned(),
         };
         let code: MetaList = syn::parse_str("fixed(align=\"right\")").unwrap();
@@ -299,7 +304,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected="Expected assignment found end of input.")]
+    #[should_panic(expected = "Expected assignment found end of input.")]
     fn parse_params_ident_only() {
         let code: MetaList = syn::parse_str("fixed(width)").unwrap();
         let x: Vec<FieldParam> = get_config_params(code.tokens);
@@ -307,7 +312,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected="Expected value found end of input.")]
+    #[should_panic(expected = "Expected value found end of input.")]
     fn parse_params_ident_equal_only() {
         let code: MetaList = syn::parse_str("fixed(width=)").unwrap();
         let x: Vec<FieldParam> = get_config_params(code.tokens);
@@ -315,14 +320,18 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected="Expected separator (',' character) or end of sequence. Found \"align\".")]
+    #[should_panic(
+        expected = "Expected separator (',' character) or end of sequence. Found \"align\"."
+    )]
     fn parse_params_missing_comma() {
         let code: MetaList = syn::parse_str("fixed(width=3 align = right)").unwrap();
         let _: Vec<FieldParam> = get_config_params(code.tokens);
     }
 
     #[test]
-    #[should_panic(expected="Expected separator (',' character) or end of sequence. Found \";\".")]
+    #[should_panic(
+        expected = "Expected separator (',' character) or end of sequence. Found \";\"."
+    )]
     fn parse_params_wrong_separator() {
         let code: MetaList = syn::parse_str("fixed(width=3; align = right)").unwrap();
         let _: Vec<FieldParam> = get_config_params(code.tokens);

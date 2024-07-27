@@ -8,12 +8,11 @@ extern crate syn;
 use attrs::FieldConfig;
 use proc_macro::TokenStream;
 
-use syn::{Data, DataStruct, DeriveInput, Fields};
 use quote::quote;
-
+use syn::{Data, DataStruct, DeriveInput, Fields};
 
 fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
-    let fields = match fields  {
+    let fields = match fields {
         Fields::Named(named_fields) => named_fields,
         Fields::Unnamed(_) => todo!(),
         Fields::Unit => todo!(),
@@ -23,18 +22,18 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
         let name = field.ident.as_ref().unwrap().clone();
 
         let config = attrs::parse_attributes(&field.attrs);
-        let FieldConfig {skip, width, align} = config;
+        let FieldConfig { skip, width, align } = config;
 
         let alignment = match align {
-            attrs::Align::Left => quote!{fixed::Alignment::Left},
-            attrs::Align::Right => quote!{fixed::Alignment::Right},
-            attrs::Align::Full => quote!{fixed::Alignment::Full},
+            attrs::Align::Left => quote! {fixed::Alignment::Left},
+            attrs::Align::Right => quote! {fixed::Alignment::Right},
+            attrs::Align::Full => quote! {fixed::Alignment::Full},
         };
 
         let buf_size = skip + width;
 
-        // TODO: we shouldn't need a String here at all 
-        quote!{
+        // TODO: we shouldn't need a String here at all
+        quote! {
             let mut s: [u8; #buf_size] = [0; #buf_size];
             buf.read_exact(&mut s).map_err(|e| fixed::error::Error::from(e))?;
             let #name = std::str::from_utf8(&s)
@@ -51,15 +50,15 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
 
     let struct_init = fields.named.iter().map(|field| {
         let name = field.ident.as_ref().unwrap().clone();
-        quote!{ 
+        quote! {
             #name,
         }
     });
 
     let mut field_names = proc_macro2::TokenStream::new();
     field_names.extend(struct_init.into_iter());
-    
-    quote!{
+
+    quote! {
         fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixed::error::Error> {
             use fixed::FixedDeserializer;
             #read_steps
@@ -97,7 +96,7 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
 
 // For now as a PoC we're just assuming ten characters per field
 fn struct_write(fields: Fields) -> proc_macro2::TokenStream {
-    let fields = match fields  {
+    let fields = match fields {
         Fields::Named(named_fields) => named_fields,
         Fields::Unnamed(_) => todo!(),
         Fields::Unit => todo!(),
@@ -106,15 +105,15 @@ fn struct_write(fields: Fields) -> proc_macro2::TokenStream {
     let field_writes = fields.named.iter().map(|field| {
         let name = field.ident.as_ref().unwrap().clone();
         let config = attrs::parse_attributes(&field.attrs);
-        let FieldConfig {skip, width, align} = config;
-    
+        let FieldConfig { skip, width, align } = config;
+
         let alignment = match align {
-            attrs::Align::Left => quote!{fixed::Alignment::Left},
-            attrs::Align::Right => quote!{fixed::Alignment::Right},
-            attrs::Align::Full => quote!{fixed::Alignment::Full},
+            attrs::Align::Left => quote! {fixed::Alignment::Left},
+            attrs::Align::Right => quote! {fixed::Alignment::Right},
+            attrs::Align::Full => quote! {fixed::Alignment::Full},
         };
 
-        quote!{            
+        quote! {
             let _ = self.#name.write_fixed(
                 buf,
                 &fixed::FieldDescription {
@@ -129,7 +128,7 @@ fn struct_write(fields: Fields) -> proc_macro2::TokenStream {
     let mut write_steps = proc_macro2::TokenStream::new();
     write_steps.extend(field_writes.into_iter());
 
-    quote!{
+    quote! {
         fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), ()> {
             use fixed::FixedSerializer;
 
