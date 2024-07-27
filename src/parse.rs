@@ -11,11 +11,17 @@ use crate::error::{DataError, InnerError};
 /// It may be useful to implement this for other `T` on &str if you would like
 /// to directly deserialize other primitives.
 /// 
+/// Additionally, it is possible to use custom `FixedDeserializer` implementations
+/// with the [new type](https://doc.rust-lang.org/rust-by-example/generics/new_types.html)
+/// pattern to define custom derserialization logic.
+/// 
 /// Custom error messages can be created with [`DataError::custom`].
 /// 
 /// [ReadFixed]: crate::ReadFixed
-///
-/// # Example
+/// 
+/// # Examples
+/// 
+/// ### Custom deserialization
 /// 
 /// ```
 /// # use fixed_derive::ReadFixed;
@@ -35,7 +41,7 @@ use crate::error::{DataError, InnerError};
 ///             "Bl" => Ok(EyeColor::Blue),
 ///             "Br" => Ok(EyeColor::Brown),
 ///             "Gr" => Ok(EyeColor::Green),
-///             _ => Err(DataError::custom(self.to_string(), "Unrecognized eye color".to_string())),
+///             _ => Err(DataError::custom(self, "Unrecognized eye color")),
 ///         }
 ///     }
 /// }
@@ -53,6 +59,130 @@ use crate::error::{DataError, InnerError};
 /// # use fixed::ReadFixed;
 /// let person = Person::read_fixed_str("Harold     42Gr").unwrap();
 /// assert_eq!(person.eye_color, EyeColor::Green);
+/// ```
+/// 
+/// ### Multiple deserialization approached
+/// 
+/// Here we use a few different approaches to deserializing a fixed column 
+/// data file. Documentation of the file structure follows.
+/// 
+/// ```text
+///     Name      Birthday
+/// /----------\ /--------\
+/// XXXXXXXXXXXX YYYY MM DD
+///       \        \   \  \--- Day   (numeric)
+///        \        \   \----- Month (numeric)
+///         \        \-------- Year  (numeric)
+///          \
+///           \--------------- Name  (alphabetic)
+/// 
+/// Example rows
+/// George       1989  3 12     
+/// Claire       2001 11 26
+/// ```
+/// 
+/// Naive implementation
+/// 
+/// ```
+/// # use fixed_derive::ReadFixed;
+/// # use fixed::FixedDeserializer;
+/// # use fixed::FieldDescription;
+/// # use std::fs::File;
+/// #[derive(ReadFixed)]
+/// # #[derive(Eq, PartialEq, Debug)]
+/// struct Person {
+///     #[fixed(width=12)]
+///     name: String,
+///     #[fixed(width=4, skip=1, align="right")]
+///     birth_year: u16,
+///     #[fixed(width=2, skip=1, align="right")]
+///     birth_month: u8,
+///     #[fixed(width=2, skip=1, align="right")]
+///     birth_date: u8,
+/// }
+/// 
+/// // Note we are being sloppy with error handling to keep the example simple
+/// # use fixed::ReadFixed;
+/// # fn f() {
+/// let mut file = File::open("my_file.txt").unwrap();
+/// # }
+/// # let mut file = "George       1989  3 12\nClaire       2001 11 26".as_bytes();
+/// let people: Vec<Person> = Person::read_fixed_all(file)
+///     .map(|res| res.unwrap())
+///     .collect();
+/// # assert_eq!(people, vec![
+/// #     Person{name: "George".to_string(), birth_year: 1989, birth_month: 3, birth_date: 12},
+/// #     Person{name: "Claire".to_string(), birth_year: 2001, birth_month: 11, birth_date: 26},
+/// # ]);
+/// ```
+/// 
+/// Same data file, but this time using a custom `FixedDeserializer` to decode the date.
+/// We use a `Birthday` new type around a [`chrono::NaiveDate`].
+/// 
+/// ```
+/// # use fixed_derive::ReadFixed;
+/// # use fixed::FixedDeserializer;
+/// # use fixed::FieldDescription;
+/// # use fixed::error::DataError;
+/// # use std::fs::File;
+/// #[derive(ReadFixed)]
+/// # #[derive(Eq, PartialEq, Debug)]
+/// struct Person {
+///     #[fixed(width=12)]
+///     name: String,
+///     #[fixed(width=10, skip=1)]
+///     birthday: Birthday,
+/// }
+/// 
+/// use chrono::NaiveDate;
+/// # #[derive(Eq, PartialEq, Debug)]
+/// struct Birthday(NaiveDate);
+/// 
+/// impl FixedDeserializer<Birthday> for &str {
+///     fn parse_with(&self, desc: &FieldDescription) -> Result<Birthday, DataError> {
+///         let text = &self[desc.skip..desc.skip+desc.len];
+///         let mut parts = text.split(' ').filter(|x| *x != "");
+/// 
+///         let year = parts.next()
+///             .ok_or(DataError::custom(&text, "Could not find year"))?
+///             .parse()
+///             .map_err(|e| DataError::custom(&text, "Could not decode year"))?;
+/// 
+///         let month = parts.next()
+///             .ok_or(DataError::custom(&text, "Could not find month"))?
+///             .parse()
+///             .map_err(|e| DataError::custom(&text, "Could not decode month"))?;
+/// 
+///         let day = parts.next()
+///             .ok_or(DataError::custom(&text, "Could not find day"))?
+///             .parse()
+///             .map_err(|e| DataError::custom(&text, "Could not decode day"))?;
+/// 
+///         let dt = NaiveDate::from_ymd_opt(year, month, day)
+///             .ok_or(DataError::custom(&text, "Did not recognize a date"))?;
+/// 
+///         Ok(Birthday(dt))
+///     }
+/// }
+/// 
+/// # use fixed::ReadFixed;
+/// # fn f() {
+/// let mut file = File::open("my_file.txt").unwrap();
+/// # }
+/// # let mut file = "George       1989  3 12\nClaire       2001 11 26".as_bytes();
+/// let people: Vec<Person> = Person::read_fixed_all(file)
+///     .map(|res| res.unwrap())
+///     .collect();
+/// # assert_eq!(people, vec![
+/// #     Person {
+/// #         name: "George".to_string(), 
+/// #         birthday: Birthday(NaiveDate::from_ymd_opt(1989, 3, 12).unwrap())
+/// #     },
+/// #     Person {
+/// #         name: "Claire".to_string(),
+/// #         birthday: Birthday(NaiveDate::from_ymd_opt(2001, 11, 26).unwrap())
+/// #     },
+/// # ]);
 /// ```
 pub trait FixedDeserializer<T: Sized> {
     /// Read an object of type `T` from the current object.
@@ -372,7 +502,7 @@ mod tests {
     fn extract_f32_bad() {
         let desc = FieldDescription{ skip: 0, len: 5, alignment: Alignment::Right};
         let actual: Result<f32, DataError> = " 3a14 ".parse_with(&desc);
-        let expected = "Error decoding data \"3a14\"\ninvalid float literal\n";
+        let expected = "Error decoding data from \"3a14\": invalid float literal\n";
         assert_eq!(actual.unwrap_err().to_string(), expected);
     }
 }

@@ -3,8 +3,11 @@ name = "fixed"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = ["fixed-derive"]
+
 [dependencies]
 fixed-derive = {path = "fixed-derive"}
 
-[workspace]
-members = ["fixed-derive"]
+[dev-dependencies]
+chrono = "0.4.38"

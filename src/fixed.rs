@@ -11,7 +11,7 @@ pub trait WriteFixed {
 /// 
 /// Implements [`Iterator`] for `T`.
 pub struct Iter<T, R>
-    where T: Sized + ReadFixed, R: Read
+    where T: ReadFixed, R: Read
 {
     // TODO: it might be more performant do operate at a slighly lower level
     // than mapping over ther BufReader lines iterator. If we did that, we'd use
@@ -25,7 +25,7 @@ pub struct Iter<T, R>
     t: PhantomData<T>,
 }
 
-impl<T: Sized + ReadFixed, R: Read>  Iter<T, R> {
+impl<T:ReadFixed, R: Read>  Iter<T, R> {
     fn new(read: R) -> Self {
         Self {
             lines: BufReader::new(read).lines(),
@@ -36,7 +36,7 @@ impl<T: Sized + ReadFixed, R: Read>  Iter<T, R> {
     }
 }
 
-impl<T: Sized + ReadFixed, R: Read> Iterator for Iter<T, R> {
+impl<T: ReadFixed, R: Read> Iterator for Iter<T, R> {
     type Item = Result<T, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -67,6 +67,11 @@ impl<T: Sized + ReadFixed, R: Read> Iterator for Iter<T, R> {
 }
 
 /// Trait for reading from fixed width (column based) serializaiton
+/// 
+/// This trait is the main entry point to using `fixed` for deserializing
+/// column delimited data files. This trait is not normally implemented manually
+/// but derived using the [`fixed_derive`] crate. The deserialization behavior
+/// of individual columns is defined using the `#[fixed(...)]` annotation.
 pub trait ReadFixed {
     /// Reads an instance of the object from the supplied buffer
     /// 
