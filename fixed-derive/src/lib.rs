@@ -19,11 +19,23 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
     }
 }
 
-fn config_align(config: &FieldConfig) -> proc_macro2::TokenStream {
-    match &config.align {
-        attrs::Align::Left => quote! { fixed::Alignment::Left },
-        attrs::Align::Right => quote! { fixed::Alignment::Right },
-        attrs::Align::Full => quote! { fixed::Alignment::Full },
+impl quote::ToTokens for FieldConfig {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        let FieldConfig { skip, width, align } = &self;
+
+        let alignment = match &align {
+            attrs::Align::Left => quote! { fixed::Alignment::Left },
+            attrs::Align::Right => quote! { fixed::Alignment::Right },
+            attrs::Align::Full => quote! { fixed::Alignment::Full },
+        };
+
+        tokens.extend(quote! {
+            &fixed::FieldDescription {
+                skip: #skip,
+                len: #width,
+                alignment: #alignment,
+            }
+        });
     }
 }
 
@@ -36,7 +48,6 @@ fn tuple_struct_read_fields(fields: syn::FieldsUnnamed) -> proc_macro2::TokenStr
         let config = attrs::parse_attributes(&field.attrs);
         let FieldConfig { skip, width, align: _ } = config;
 
-        let alignment = config_align(&config);
         let buf_size = skip + width;
 
         // TODO: we shouldn't need a String here at all
@@ -45,11 +56,8 @@ fn tuple_struct_read_fields(fields: syn::FieldsUnnamed) -> proc_macro2::TokenStr
             buf.read_exact(&mut s).map_err(|e| fixed::error::Error::from(e))?;
             let #ident = std::str::from_utf8(&s)
                 .map_err(|e| fixed::error::Error::from_utf8_error(&s, e))?
-                .parse_with(&fixed::FieldDescription {
-                    skip: #skip,
-                    len: #width,
-                    alignment: #alignment,
-                }).map_err(|e| fixed::error::Error::from(e))?;
+                .parse_with(#config)
+                .map_err(|e| fixed::error::Error::from(e))?;
         };
 
         (ident, read)
@@ -74,8 +82,6 @@ fn struct_read_fields(fields: syn::FieldsNamed) -> proc_macro2::TokenStream {
         let config = attrs::parse_attributes(&field.attrs);
         let FieldConfig { skip, width, align: _ } = config;
 
-        let alignment = config_align(&config);
-
         let buf_size = skip + width;
 
         // TODO: we shouldn't need a String here at all
@@ -84,11 +90,8 @@ fn struct_read_fields(fields: syn::FieldsNamed) -> proc_macro2::TokenStream {
             buf.read_exact(&mut s).map_err(|e| fixed::error::Error::from(e))?;
             let #name = std::str::from_utf8(&s)
                 .map_err(|e| fixed::error::Error::from_utf8_error(&s, e))?
-                .parse_with(&fixed::FieldDescription {
-                    skip: #skip,
-                    len: #width,
-                    alignment: #alignment,
-                }).map_err(|e| fixed::error::Error::from(e))?;
+                .parse_with(#config)
+                .map_err(|e| fixed::error::Error::from(e))?;
         }
     });
 
@@ -132,18 +135,11 @@ fn write_named_fields(fields: FieldsNamed) -> proc_macro2::TokenStream {
     let field_writes = fields.named.iter().map(|field| {
         let name = field.ident.as_ref().unwrap().clone();
         let config = attrs::parse_attributes(&field.attrs);
-        let FieldConfig { skip, width, align: _ } = config;
-
-        let alignment = config_align(&config);
 
         quote! {
             let _ = self.#name.write_fixed(
                 buf,
-                &fixed::FieldDescription {
-                    skip: #skip,
-                    len: #width,
-                    alignment: #alignment,
-                }
+                #config
             ).unwrap();
         }
     });
@@ -158,24 +154,18 @@ fn write_named_fields(fields: FieldsNamed) -> proc_macro2::TokenStream {
         }
     }
 }
+
 
 fn write_unnamed_fields(fields: FieldsUnnamed) -> proc_macro2::TokenStream {
     let field_writes = fields.unnamed.iter().enumerate().map(|f| {
         let (num, field) = f;
         let name = syn::Index::from(num);
         let config = attrs::parse_attributes(&field.attrs);
-        let FieldConfig { skip, width, align: _ } = config;
-
-        let alignment = config_align(&config);
 
         quote! {
             let _ = self.#name.write_fixed(
                 buf,
-                &fixed::FieldDescription {
-                    skip: #skip,
-                    len: #width,
-                    alignment: #alignment,
-                }
+                #config
             ).unwrap();
         }
     });
@@ -191,7 +181,6 @@ fn write_unnamed_fields(fields: FieldsUnnamed) -> proc_macro2::TokenStream {
     }
 }
 
-// For now as a PoC we're just assuming ten characters per field
 fn struct_write(fields: Fields) -> proc_macro2::TokenStream {
     match fields {
         Fields::Named(named_fields) => write_named_fields(named_fields),
