@@ -21,9 +21,9 @@ fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
 
 fn config_align(config: &FieldConfig) -> proc_macro2::TokenStream {
     match &config.align {
-        attrs::Align::Left => quote! {fixed::Alignment::Left},
-        attrs::Align::Right => quote! {fixed::Alignment::Right},
-        attrs::Align::Full => quote! {fixed::Alignment::Full},
+        attrs::Align::Left => quote! { fixed::Alignment::Left },
+        attrs::Align::Right => quote! { fixed::Alignment::Right },
+        attrs::Align::Full => quote! { fixed::Alignment::Full },
     }
 }
 
@@ -57,18 +57,12 @@ fn tuple_struct_read_fields(fields: syn::FieldsUnnamed) -> proc_macro2::TokenStr
 
     let (names, reads): (Vec<proc_macro2::Ident>, Vec<proc_macro2::TokenStream>) = field_reads.unzip();
 
-    let mut read_steps = proc_macro2::TokenStream::new();
-    read_steps.extend(reads.into_iter());
-
-    let mut name_steps = proc_macro2::TokenStream::new();
-    name_steps.extend(names.into_iter().map(|f| quote! { #f , }));
-
     quote! {
         fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixed::error::Error> {
             use fixed::FixedDeserializer;
-            #read_steps
+            #( #reads )*
 
-            Ok(Self(#name_steps))
+            Ok(Self(#(#names),*))
         }
     }
 }
@@ -97,26 +91,16 @@ fn struct_read_fields(fields: syn::FieldsNamed) -> proc_macro2::TokenStream {
                 }).map_err(|e| fixed::error::Error::from(e))?;
         }
     });
-    let mut read_steps = proc_macro2::TokenStream::new();
-    read_steps.extend(field_reads.into_iter());
 
-    let struct_init = fields.named.iter().map(|field| {
-        let name = field.ident.as_ref().unwrap().clone();
-        quote! {
-            #name,
-        }
-    });
-
-    let mut field_names = proc_macro2::TokenStream::new();
-    field_names.extend(struct_init.into_iter());
+    let field_names = fields.named.iter().map(|f| f.ident.clone());
 
     quote! {
         fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixed::error::Error> {
             use fixed::FixedDeserializer;
-            #read_steps
+            #(#field_reads)*
 
             Ok(Self {
-                #field_names
+                #(#field_names),*
             })
         }
     }
@@ -141,8 +125,6 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
         }
     };
 
-    // println!("{}", gen);
-
     gen.into()
 }
 
@@ -166,19 +148,17 @@ fn write_named_fields(fields: FieldsNamed) -> proc_macro2::TokenStream {
         }
     });
 
-    let mut write_steps = proc_macro2::TokenStream::new();
-    write_steps.extend(field_writes.into_iter());
-
     quote! {
         fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), ()> {
             use fixed::FixedSerializer;
 
-            #write_steps
+            #( #field_writes )*
 
             Ok(())
         }
     }
 }
+
 fn write_unnamed_fields(fields: FieldsUnnamed) -> proc_macro2::TokenStream {
     let field_writes = fields.unnamed.iter().enumerate().map(|f| {
         let (num, field) = f;
@@ -200,14 +180,11 @@ fn write_unnamed_fields(fields: FieldsUnnamed) -> proc_macro2::TokenStream {
         }
     });
 
-    let mut write_steps = proc_macro2::TokenStream::new();
-    write_steps.extend(field_writes.into_iter());
-
     quote! {
         fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), ()> {
             use fixed::FixedSerializer;
 
-            #write_steps
+            #( #field_writes )*
 
             Ok(())
         }
@@ -242,8 +219,6 @@ pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
             #function_impl
         }
     };
-
-    // println!("{}", gen);
 
     gen.into()
 }
