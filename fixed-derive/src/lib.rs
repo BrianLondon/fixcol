@@ -1,4 +1,7 @@
 mod attrs;
+mod enums;
+mod fields;
+mod structs;
 
 extern crate proc_macro;
 extern crate proc_macro2;
@@ -9,64 +12,31 @@ use attrs::FieldConfig;
 use proc_macro::TokenStream;
 
 use quote::quote;
-use syn::{Data, DataStruct, DeriveInput, Fields};
+use syn::{Data, DataEnum, DataStruct, DeriveInput};
 
-fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
-    let fields = match fields {
-        Fields::Named(named_fields) => named_fields,
-        Fields::Unnamed(_) => todo!(),
-        Fields::Unit => todo!(),
-    };
+use crate::enums::enum_read;
+use crate::structs::{struct_read, struct_write};
 
-    let field_reads = fields.named.iter().map(|field| {
-        let name = field.ident.as_ref().unwrap().clone();
+// This doesn't really belong here, but there's not a better place
+// it's function spans the arg parsing and code generating steps
+// Maybe in fields.rs?
+impl quote::ToTokens for FieldConfig {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        let FieldConfig { skip, width, align } = &self;
 
-        let config = attrs::parse_attributes(&field.attrs);
-        let FieldConfig { skip, width, align } = config;
-
-        let alignment = match align {
-            attrs::Align::Left => quote! {fixed::Alignment::Left},
-            attrs::Align::Right => quote! {fixed::Alignment::Right},
-            attrs::Align::Full => quote! {fixed::Alignment::Full},
+        let alignment = match &align {
+            attrs::Align::Left => quote! { fixed::Alignment::Left },
+            attrs::Align::Right => quote! { fixed::Alignment::Right },
+            attrs::Align::Full => quote! { fixed::Alignment::Full },
         };
 
-        let buf_size = skip + width;
-
-        // TODO: we shouldn't need a String here at all
-        quote! {
-            let mut s: [u8; #buf_size] = [0; #buf_size];
-            buf.read_exact(&mut s).map_err(|e| fixed::error::Error::from(e))?;
-            let #name = std::str::from_utf8(&s)
-                .map_err(|e| fixed::error::Error::from_utf8_error(&s, e))?
-                .parse_with(&fixed::FieldDescription {
-                    skip: #skip,
-                    len: #width,
-                    alignment: #alignment,
-                }).map_err(|e| fixed::error::Error::from(e))?;
-        }
-    });
-    let mut read_steps = proc_macro2::TokenStream::new();
-    read_steps.extend(field_reads.into_iter());
-
-    let struct_init = fields.named.iter().map(|field| {
-        let name = field.ident.as_ref().unwrap().clone();
-        quote! {
-            #name,
-        }
-    });
-
-    let mut field_names = proc_macro2::TokenStream::new();
-    field_names.extend(struct_init.into_iter());
-
-    quote! {
-        fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixed::error::Error> {
-            use fixed::FixedDeserializer;
-            #read_steps
-
-            Ok(Self {
-                #field_names
-            })
-        }
+        tokens.extend(quote! {
+            &fixed::FieldDescription {
+                skip: #skip,
+                len: #width,
+                alignment: #alignment,
+            }
+        });
     }
 }
 
@@ -75,11 +45,12 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
     let ast: DeriveInput = syn::parse(input).unwrap();
 
     let name = &ast.ident;
+    let attrs = &ast.attrs;
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
 
     let function_impl = match ast.data {
-        Data::Struct(DataStruct { fields, .. }) => struct_read(fields),
-        Data::Enum(_) => panic!("Deriving ReadFixed on enums is not supported"),
+        Data::Struct(DataStruct { fields, .. }) => struct_read(name, attrs, fields),
+        Data::Enum(DataEnum { variants, ..}) => enum_read(name, attrs, variants.iter().collect()),
         Data::Union(_) => panic!("Deriving ReadFixed on unions is not supported"),
     };
 
@@ -89,54 +60,7 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
         }
     };
 
-    // println!("{}", gen);
-
     gen.into()
-}
-
-// For now as a PoC we're just assuming ten characters per field
-fn struct_write(fields: Fields) -> proc_macro2::TokenStream {
-    let fields = match fields {
-        Fields::Named(named_fields) => named_fields,
-        Fields::Unnamed(_) => todo!(),
-        Fields::Unit => todo!(),
-    };
-
-    let field_writes = fields.named.iter().map(|field| {
-        let name = field.ident.as_ref().unwrap().clone();
-        let config = attrs::parse_attributes(&field.attrs);
-        let FieldConfig { skip, width, align } = config;
-
-        let alignment = match align {
-            attrs::Align::Left => quote! {fixed::Alignment::Left},
-            attrs::Align::Right => quote! {fixed::Alignment::Right},
-            attrs::Align::Full => quote! {fixed::Alignment::Full},
-        };
-
-        quote! {
-            let _ = self.#name.write_fixed(
-                buf,
-                &fixed::FieldDescription {
-                    skip: #skip,
-                    len: #width,
-                    alignment: #alignment,
-                }
-            ).unwrap();
-        }
-    });
-
-    let mut write_steps = proc_macro2::TokenStream::new();
-    write_steps.extend(field_writes.into_iter());
-
-    quote! {
-        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), ()> {
-            use fixed::FixedSerializer;
-
-            #write_steps
-
-            Ok(())
-        }
-    }
 }
 
 #[proc_macro_derive(WriteFixed, attributes(fixed))]
@@ -157,8 +81,6 @@ pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
             #function_impl
         }
     };
-
-    // println!("{}", gen);
 
     gen.into()
 }
