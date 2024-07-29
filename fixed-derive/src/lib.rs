@@ -1,4 +1,6 @@
 mod attrs;
+mod enums;
+mod fields;
 mod structs;
 
 extern crate proc_macro;
@@ -10,8 +12,9 @@ use attrs::FieldConfig;
 use proc_macro::TokenStream;
 
 use quote::quote;
-use syn::{Data, DataStruct, DeriveInput};
+use syn::{Data, DataEnum, DataStruct, DeriveInput};
 
+use crate::enums::enum_read;
 use crate::structs::{struct_read, struct_write};
 
 // This doesn't really belong here, but there's not a better place
@@ -41,11 +44,12 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
     let ast: DeriveInput = syn::parse(input).unwrap();
 
     let name = &ast.ident;
+    let attrs = &ast.attrs;
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
 
     let function_impl = match ast.data {
-        Data::Struct(DataStruct { fields, .. }) => struct_read(fields),
-        Data::Enum(_) => panic!("Deriving ReadFixed on enums is not supported"),
+        Data::Struct(DataStruct { fields, .. }) => struct_read(name, attrs, fields),
+        Data::Enum(DataEnum { variants, ..}) => enum_read(name, attrs, variants.iter().collect()),
         Data::Union(_) => panic!("Deriving ReadFixed on unions is not supported"),
     };
 

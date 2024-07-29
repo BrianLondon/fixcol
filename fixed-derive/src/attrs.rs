@@ -109,6 +109,18 @@ fn parse_next_token(
     }
 }
 
+fn parse_attributes(attrs: &Vec<Attribute>) -> Vec<FieldParam> {
+    attrs.iter().filter(|a| is_fixed_attr(*a)).flat_map(|a| {
+        let tokens = match &a.meta {
+            Meta::Path(_) => unimplemented!("Could not parse Meta::Path -- unreachable?"),
+            Meta::List(m) => &m.tokens,
+            Meta::NameValue(_) => unimplemented!("Could not parse Meta::NameValue"),
+        };
+
+        get_config_params(tokens.clone())
+    }).collect()
+}
+
 fn get_config_params(tokens: TokenStream) -> Vec<FieldParam> {
     let mut any_tokens = false;
     let mut state = ExpectedTokenState::Key;
@@ -171,38 +183,30 @@ impl FieldConfigBuilder {
     }
 }
 
-pub fn parse_attributes(attrs: &Vec<Attribute>) -> FieldConfig {
-    let params = attrs.iter().filter(|a| is_fixed_attr(*a)).flat_map(|a| {
-        let tokens = match &a.meta {
-            Meta::Path(_) => todo!(),
-            Meta::List(m) => &m.tokens,
-            Meta::NameValue(_) => todo!(),
-        };
-        get_config_params(tokens.clone())
-    });
-
+pub fn parse_field_attributes(attrs: &Vec<Attribute>) -> FieldConfig {
+    let params = parse_attributes(attrs);
     let mut conf = FieldConfigBuilder::new();
 
     for param in params {
         match param.key.as_str() {
             "skip" => {
-                if conf.skip.is_none() {
-                    conf.skip = Some(param.value.parse().unwrap());
-                } else {
+                let err = format!("Expected numeric value for skip. Found {}", param.value);
+                let old = conf.skip.replace(param.value.parse().expect(err.as_str()));
+                if old.is_some() {
                     panic!("Duplicate values for skip");
                 }
             }
             "width" => {
-                if conf.width.is_none() {
-                    conf.width = Some(param.value.parse().unwrap());
-                } else {
+                let err = format!("Expected numeric value for width. Found {}", param.value);
+                let old = conf.width.replace(param.value.parse().expect(err.as_str()));
+                if old.is_some() {
                     panic!("Duplicate values for width");
                 }
             }
             "align" => {
-                if conf.align.is_none() {
-                    conf.align = Some(param.value.parse().unwrap());
-                } else {
+                let err = "Expected values for align are \"left\", \"right\", or \"full\".";
+                let old = conf.align.replace(param.value.parse().expect(err));
+                if old.is_some() {
                     panic!("Duplicate values for align");
                 }
             }
@@ -221,6 +225,94 @@ pub fn parse_attributes(attrs: &Vec<Attribute>) -> FieldConfig {
         width: width,
     }
 }
+
+pub(crate) struct EnumConfigBuilder {
+    ignore_others: Option<bool>,
+    key_width: Option<usize>,
+}
+
+impl EnumConfigBuilder {
+    pub fn new() -> Self {
+        Self {
+            ignore_others: None,
+            key_width: None,
+        }
+    }
+}
+
+pub(crate) struct EnumConfig {
+    ignore_others: bool,
+    key_width: usize,
+}
+
+pub(crate) fn parse_enum_attributes(attrs: &Vec<Attribute>) -> EnumConfig {
+    let params = parse_attributes(attrs);
+    let mut conf = EnumConfigBuilder::new();
+
+    for param in params {
+        match param.key.as_str() {
+            "ignore_others" => {
+                let err = format!("Expected true or false for ignoer_others. Found {}", param.value);
+                let old = conf.ignore_others.replace(param.value.parse().expect(err.as_str()));
+                if old.is_some() {
+                    panic!("Duplicate values for ignore_others");
+                }
+            }
+            "key_width" => {
+                let err = format!("Expected numeric value for key_width. Found {}", param.value);
+                let old = conf.key_width.replace(param.value.parse().expect(err.as_str()));
+                if old.is_some() {
+                    panic!("Duplicate values for key_width");
+                }
+            }
+            key => panic!("Unrecognized parameter {}", key),
+        }
+    }
+
+    EnumConfig {
+        ignore_others: conf.ignore_others.unwrap_or(false),
+        key_width: conf.key_width.expect("The parameter key_width must be provided for enums."),
+    }
+}
+
+pub(crate) struct VariantConfigBuilder {
+    key: Option<String>,
+}
+
+impl VariantConfigBuilder {
+    pub fn new() -> Self {
+        Self {
+            key: None,
+        }
+    }
+}
+
+pub(crate) struct VariantConfig {
+    pub key: String,
+}
+
+
+pub(crate) fn parse_variant_attributes(attrs: &Vec<Attribute>) -> VariantConfig {
+    let params = parse_attributes(attrs);
+    let mut conf = VariantConfigBuilder::new();
+
+    for param in params {
+        match param.key.as_str() {
+            "key" => {
+                let old = conf.key.replace(param.value);
+                if old.is_some() {
+                    panic!("Duplicate values for key");
+                }
+            },
+            key => panic!("Unrecognized parameter {}", key),
+        }
+    }
+
+    VariantConfig { 
+        key: conf.key.expect("The parameter key must be provided for all enum variants."),
+    }
+}
+
 
 #[cfg(test)]
 mod tests {

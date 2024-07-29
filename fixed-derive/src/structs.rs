@@ -1,46 +1,23 @@
-use crate::attrs::{self, FieldConfig};
+use crate::{attrs::{self, FieldConfig}, fields::{read_named_fields, read_unnamed_fields}};
 
 use quote::{format_ident, quote};
-use syn::{Fields, FieldsNamed, FieldsUnnamed};
+use syn::{Attribute, Fields, FieldsNamed, FieldsUnnamed, Ident};
 
 
 //
 // Reads
 /////////////////////////////
 
-pub(crate) fn struct_read(fields: Fields) -> proc_macro2::TokenStream {
+pub(crate) fn struct_read(name: &Ident, attrs: &Vec<Attribute>, fields: Fields) -> proc_macro2::TokenStream {
     match fields {
-        Fields::Named(named_fields) => struct_read_fields(named_fields),
-        Fields::Unnamed(unnamed_fields) => tuple_struct_read_fields(unnamed_fields),
+        Fields::Named(named_fields) => struct_read_fixed(named_fields),
+        Fields::Unnamed(unnamed_fields) => tuple_struct_read_fixed(unnamed_fields),
         Fields::Unit => panic!("Cannot deserialize type with no inner data"),
     }
 }
 
-fn tuple_struct_read_fields(fields: syn::FieldsUnnamed) -> proc_macro2::TokenStream {
-    let field_reads = fields.unnamed.iter().enumerate().map(|item| {
-        let (field_num, field) = item;
-
-        let ident = format_ident!("f{}", field_num);
-
-        let config = attrs::parse_attributes(&field.attrs);
-        let FieldConfig { skip, width, align: _ } = config;
-
-        let buf_size = skip + width;
-
-        // TODO: we shouldn't need a String here at all
-        let read = quote! {
-            let mut s: [u8; #buf_size] = [0; #buf_size];
-            buf.read_exact(&mut s).map_err(|e| fixed::error::Error::from(e))?;
-            let #ident = std::str::from_utf8(&s)
-                .map_err(|e| fixed::error::Error::from_utf8_error(&s, e))?
-                .parse_with(#config)
-                .map_err(|e| fixed::error::Error::from(e))?;
-        };
-
-        (ident, read)
-    });
-
-    let (names, reads): (Vec<proc_macro2::Ident>, Vec<proc_macro2::TokenStream>) = field_reads.unzip();
+fn tuple_struct_read_fixed(fields: syn::FieldsUnnamed) -> proc_macro2::TokenStream {
+    let (names, reads) = read_unnamed_fields(fields);
 
     quote! {
         fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixed::error::Error> {
@@ -52,27 +29,8 @@ fn tuple_struct_read_fields(fields: syn::FieldsUnnamed) -> proc_macro2::TokenStr
     }
 }
 
-fn struct_read_fields(fields: syn::FieldsNamed) -> proc_macro2::TokenStream {
-    let field_reads = fields.named.iter().map(|field| {
-        let name = field.ident.as_ref().unwrap().clone();
-
-        let config = attrs::parse_attributes(&field.attrs);
-        let FieldConfig { skip, width, align: _ } = config;
-
-        let buf_size = skip + width;
-
-        // TODO: we shouldn't need a String here at all
-        quote! {
-            let mut s: [u8; #buf_size] = [0; #buf_size];
-            buf.read_exact(&mut s).map_err(|e| fixed::error::Error::from(e))?;
-            let #name = std::str::from_utf8(&s)
-                .map_err(|e| fixed::error::Error::from_utf8_error(&s, e))?
-                .parse_with(#config)
-                .map_err(|e| fixed::error::Error::from(e))?;
-        }
-    });
-
-    let field_names = fields.named.iter().map(|f| f.ident.clone());
+fn struct_read_fixed(fields: syn::FieldsNamed) -> proc_macro2::TokenStream {
+    let (field_names, field_reads) = read_named_fields(fields);
 
     quote! {
         fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixed::error::Error> {
@@ -103,7 +61,7 @@ pub(crate) fn struct_write(fields: Fields) -> proc_macro2::TokenStream {
 fn write_named_fields(fields: FieldsNamed) -> proc_macro2::TokenStream {
     let field_writes = fields.named.iter().map(|field| {
         let name = field.ident.as_ref().unwrap().clone();
-        let config = attrs::parse_attributes(&field.attrs);
+        let config = attrs::parse_field_attributes(&field.attrs);
 
         quote! {
             let _ = self.#name.write_fixed(
@@ -129,7 +87,7 @@ fn write_unnamed_fields(fields: FieldsUnnamed) -> proc_macro2::TokenStream {
     let field_writes = fields.unnamed.iter().enumerate().map(|f| {
         let (num, field) = f;
         let name = syn::Index::from(num);
-        let config = attrs::parse_attributes(&field.attrs);
+        let config = attrs::parse_field_attributes(&field.attrs);
 
         quote! {
             let _ = self.#name.write_fixed(
