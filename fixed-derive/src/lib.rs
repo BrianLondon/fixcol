@@ -19,6 +19,7 @@ use crate::structs::{struct_read, struct_write};
 
 // This doesn't really belong here, but there's not a better place
 // it's function spans the arg parsing and code generating steps
+// Maybe in fields.rs?
 impl quote::ToTokens for FieldConfig {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let FieldConfig { skip, width, align } = &self;

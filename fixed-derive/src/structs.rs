@@ -17,7 +17,7 @@ pub(crate) fn struct_read(name: &Ident, attrs: &Vec<Attribute>, fields: Fields) 
 }
 
 fn tuple_struct_read_fixed(fields: syn::FieldsUnnamed) -> proc_macro2::TokenStream {
-    let (names, reads) = read_unnamed_fields(fields);
+    let (names, reads) = read_unnamed_fields(&fields);
 
     quote! {
         fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixed::error::Error> {
@@ -30,7 +30,7 @@ fn tuple_struct_read_fixed(fields: syn::FieldsUnnamed) -> proc_macro2::TokenStre
 }
 
 fn struct_read_fixed(fields: syn::FieldsNamed) -> proc_macro2::TokenStream {
-    let (field_names, field_reads) = read_named_fields(fields);
+    let (field_names, field_reads) = read_named_fields(&fields);
 
     quote! {
         fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixed::error::Error> {

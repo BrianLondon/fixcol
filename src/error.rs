@@ -144,6 +144,14 @@ impl Error {
             inner_error: err.into(),
         })
     }
+
+    pub fn unknown_key_error(key: String) -> Self {
+        Self::DataError(DataError { 
+            text: key.to_owned(),
+            line: None,
+            inner_error: InnerError::UnknownKey,
+        })
+    }
 }
 
 /// Error indicating `fixed` failed to parse the supplied input
@@ -243,6 +251,10 @@ impl Display for DataError {
                 fmt_err(&self.text, f)?;
                 e.fmt(f)?;
             }
+            InnerError::UnknownKey => {
+                fmt_err(&self.text, f)?;
+                write!(f, "Unrecognized enum key")?;
+            }
         }
 
         if let Some(line) = self.line {
@@ -258,12 +270,11 @@ impl Display for DataError {
 /// Wrapper type for the known errors that can cause a [`DataError`].
 #[derive(Debug, Clone)]
 pub enum InnerError {
-    // TODO: revisit this. It seemed like we'd need this no-inner-error case but not used now
-    // None,
     Custom(String),
     ParseIntError(ParseIntError),
     ParseFloatError(ParseFloatError),
     Utf8Error(Utf8Error),
+    UnknownKey,
 }
 
 impl From<ParseFloatError> for InnerError {

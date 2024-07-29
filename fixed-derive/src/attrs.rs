@@ -60,6 +60,10 @@ impl Display for ExpectedTokenState {
     }
 }
 
+fn strip_quotes(s: String) -> String {
+    s.trim_end_matches('\"').trim_start_matches('\"').to_string()
+}
+
 fn parse_next_token(
     state: ExpectedTokenState,
     tt: TokenTree,
@@ -88,7 +92,7 @@ fn parse_next_token(
             )
         }
         (ExpectedTokenState::Value(key), TokenTree::Literal(literal)) => {
-            let value = literal.to_string();
+            let value = strip_quotes(literal.to_string());
             (
                 ExpectedTokenState::Separator,
                 Some(FieldParam::new(key, value)),
@@ -153,9 +157,9 @@ impl FromStr for Align {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "left" | "\"left\"" => Ok(Align::Left),
-            "right" | "\"right\"" => Ok(Align::Right),
-            "full" | "\"full\"" => Ok(Align::Full),
+            "left" => Ok(Align::Left),
+            "right" => Ok(Align::Right),
+            "full" => Ok(Align::Full),
             other => Err(format!("Unknown alignment type {}", other)),
         }
     }
@@ -241,8 +245,8 @@ impl EnumConfigBuilder {
 }
 
 pub(crate) struct EnumConfig {
-    ignore_others: bool,
-    key_width: usize,
+    pub ignore_others: bool,
+    pub key_width: usize,
 }
 
 pub(crate) fn parse_enum_attributes(attrs: &Vec<Attribute>) -> EnumConfig {
@@ -322,6 +326,26 @@ mod tests {
     use super::*;
 
     #[test]
+    fn strip_quotes_strip() {
+        let inp = String::from("\"foo\"");
+
+        let actual = strip_quotes(inp);
+        let expected = String::from("foo");
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn strip_quotes_ignore() {
+        let inp = String::from("1");
+
+        let actual = strip_quotes(inp);
+        let expected = String::from("1");
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
     fn parse_zero_field_params() {
         let code: MetaList = syn::parse_str("fixed()").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens);
@@ -386,7 +410,7 @@ mod tests {
     fn parse_with_quotes() {
         let expected = FieldParam {
             key: "align".to_owned(),
-            value: "\"right\"".to_owned(),
+            value: "right".to_owned(),
         };
         let code: MetaList = syn::parse_str("fixed(align=\"right\")").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens);

@@ -6,7 +6,7 @@ use syn::{FieldsNamed, FieldsUnnamed};
 use crate::attrs::{self, FieldConfig};
 
 pub(crate) fn read_unnamed_fields(
-    fields: FieldsUnnamed
+    fields: &FieldsUnnamed
 ) -> (Vec<Ident>, Vec<TokenStream>) {
     let field_reads = fields.unnamed.iter().enumerate().map(|item| {
         let (field_num, field) = item;
@@ -36,7 +36,7 @@ pub(crate) fn read_unnamed_fields(
 
 /// Retuns field names and code to read those fields
 pub(crate) fn read_named_fields(
-    fields: FieldsNamed,
+    fields: &FieldsNamed,
 ) -> (Vec<Ident>, Vec<TokenStream>) {
     let field_reads = fields.named.iter().map(|field| {
         let name = field.ident.as_ref().unwrap().clone();
