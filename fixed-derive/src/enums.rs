@@ -1,8 +1,6 @@
-use proc_macro2::{TokenStream};
+use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{punctuated::Punctuated, token::Token, Attribute, FieldsNamed, FieldsUnnamed, Ident, Variant};
-use syn::token::Comma;
-use syn::Field;
+use syn::{Attribute, FieldsNamed, FieldsUnnamed, Ident, Variant};
 
 use crate::attrs::{self, parse_variant_attributes, VariantConfig};
 use crate::fields::{read_named_fields, read_unnamed_fields};
