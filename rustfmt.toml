@@ -1,0 +1,7 @@
+struct_lit_width = 40
+
+# Other items we'd include when stable
+# imports_granularity = "Module"
+# group_imports = "StdExternalCrate"
+# report_todo = "Always"
+# format_code_in_doc_comments = true

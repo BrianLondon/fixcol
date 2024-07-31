@@ -89,10 +89,7 @@ mod tests {
 
     #[test]
     fn custom_struct_write() {
-        let three = NumWord {
-            name: "three".to_string(),
-            value: 3,
-        };
+        let three = NumWord { name: "three".to_string(), value: 3 };
 
         let mut v = Vec::new();
         let res = three.write_fixed(&mut v);
@@ -103,10 +100,7 @@ mod tests {
 
     #[test]
     fn custom_struct_read() {
-        let three = NumWord {
-            name: "three".to_string(),
-            value: 3,
-        };
+        let three = NumWord { name: "three".to_string(), value: 3 };
 
         let mut buf = "three       3".as_bytes();
         let decoded = NumWord::read_fixed(&mut buf).unwrap();

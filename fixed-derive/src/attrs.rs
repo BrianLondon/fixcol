@@ -185,11 +185,7 @@ struct FieldConfigBuilder {
 
 impl FieldConfigBuilder {
     fn new() -> Self {
-        Self {
-            width: None,
-            skip: None,
-            align: None,
-        }
+        Self { width: None, skip: None, align: None }
     }
 }
 
@@ -243,10 +239,7 @@ pub(crate) struct EnumConfigBuilder {
 
 impl EnumConfigBuilder {
     pub fn new() -> Self {
-        Self {
-            ignore_others: None,
-            key_width: None,
-        }
+        Self { ignore_others: None, key_width: None }
     }
 }
 

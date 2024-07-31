@@ -3,7 +3,6 @@ use std::marker::PhantomData;
 
 use crate::error::Error;
 
-
 /// Trait for writing to fixed width (column based) serialization
 pub trait WriteFixed {
     /// Writes the object into the supplied buffer
@@ -252,7 +251,6 @@ mod tests {
 
     use super::*;
     use crate::error::Error;
-    use crate::Alignment;
 
     #[derive(Debug, PartialEq, Eq)]
     struct Foo {
@@ -275,24 +273,14 @@ mod tests {
     #[test]
     fn read_fixed_str() {
         let foo = Foo::read_fixed_str("bar");
-        assert_eq!(
-            foo.unwrap(),
-            Foo {
-                foo: "bar".to_string()
-            }
-        );
+        assert_eq!(foo.unwrap(), Foo { foo: "bar".to_string() });
     }
 
     #[test]
     fn read_fixed_string() {
         let s: String = "bar".to_string();
         let foo = Foo::read_fixed_string(s);
-        assert_eq!(
-            foo.unwrap(),
-            Foo {
-                foo: "bar".to_string()
-            }
-        );
+        assert_eq!(foo.unwrap(), Foo { foo: "bar".to_string() });
     }
 
     #[test]
@@ -300,15 +288,9 @@ mod tests {
         let buf = "foo\nbar\nbaz\n";
 
         let expected = vec![
-            Foo {
-                foo: "foo".to_string(),
-            },
-            Foo {
-                foo: "bar".to_string(),
-            },
-            Foo {
-                foo: "baz".to_string(),
-            },
+            Foo { foo: "foo".to_string() },
+            Foo { foo: "bar".to_string() },
+            Foo { foo: "baz".to_string() },
         ];
 
         let actual: Vec<Foo> = Foo::read_fixed_all(buf.as_bytes())
@@ -323,15 +305,9 @@ mod tests {
         let buf = "foo\nbar\nbaz";
 
         let expected = vec![
-            Foo {
-                foo: "foo".to_string(),
-            },
-            Foo {
-                foo: "bar".to_string(),
-            },
-            Foo {
-                foo: "baz".to_string(),
-            },
+            Foo { foo: "foo".to_string() },
+            Foo { foo: "bar".to_string() },
+            Foo { foo: "baz".to_string() },
         ];
 
         let actual: Vec<Foo> = Foo::read_fixed_all(buf.as_bytes())
