@@ -1,13 +1,27 @@
 use crate::error::Error;
 use std::{
-    io::{BufRead, BufReader, Lines, Read, Write},
-    marker::PhantomData,
+    future::IntoFuture, io::{BufRead, BufReader, Lines, Read, Write}, marker::PhantomData
 };
 
 /// Trait for writing to fixed width (column based) serialization
 pub trait WriteFixed {
     /// Writes the object into the supplied buffer
     fn write_fixed<W: Write>(&self, buf: &mut W) -> Result<(), ()>;
+}
+
+pub trait WriteFixedAll {
+    /// Writes a set of objects to the supplied buffer (newline delimited)
+    fn write_fixed_all<W: Write>(self, buf: &mut W) -> Result<(), ()>;
+}
+
+impl<T: WriteFixed, Iter: IntoIterator<Item = T>> WriteFixedAll for Iter {
+    fn write_fixed_all<W: Write>(self, buf: &mut W) -> Result<(), ()> {
+        for item in self.into_iter() {
+            item.write_fixed(buf)?;
+            buf.write("\n".as_bytes()).map_err(|_| ())?;
+        }
+        Ok(())
+    }
 }
 
 /// Iterator over the deserialized lines of a fixed column file
