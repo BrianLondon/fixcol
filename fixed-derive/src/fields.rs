@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, TokenStream};
-use quote::{quote, format_ident};
-use syn::{FieldsNamed, FieldsUnnamed};
+use quote::{format_ident, quote, ToTokens};
+use syn::{FieldsNamed, FieldsUnnamed, Index};
 
 // TODO: should FieldConfig live here? yes if it doesnt cause circular
 use crate::attrs::{self, FieldConfig};
@@ -60,4 +60,27 @@ pub(crate) fn read_named_fields(
     });
 
     field_reads.unzip()
+}
+
+pub(crate) fn write_named_fields(
+    fields: &FieldsNamed
+) -> (Vec<Ident>, Vec<FieldConfig>) {
+    fields.named.iter().map(|field| {
+        let name = field.ident.as_ref().unwrap().clone();
+        let config = attrs::parse_field_attributes(&field.attrs);
+
+        (name, config)
+    }).unzip()
+}
+
+pub(crate) fn write_unnamed_fields(
+    fields: &FieldsUnnamed
+) -> (Vec<Index>, Vec<FieldConfig>) {
+    fields.unnamed.iter().enumerate().map(|field| {
+
+        let name = syn::Index::from(field.0);
+        let config = attrs::parse_field_attributes(&field.1.attrs);
+
+        (name, config)
+    }).unzip()
 }

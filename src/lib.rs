@@ -7,7 +7,7 @@ mod write;
 
 extern crate fixed_derive;
 
-pub use fixed::{Iter, ReadFixed, WriteFixed};
+pub use fixed::{Iter, ReadFixed, WriteFixed, WriteFixedAll};
 pub use format::{Alignment, FieldDescription};
 pub use parse::FixedDeserializer;
 pub use write::FixedSerializer;
