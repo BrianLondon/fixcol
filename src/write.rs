@@ -1,7 +1,6 @@
-use std::fmt::Display;
 use std::io::Write;
 
-use crate::format::{Alignment, FieldDescription};
+use crate::{format::{Alignment, FieldDescription}, WriteFixed};
 
 /// A trait that represents the field types that can be encoded to fix len strings
 pub trait FixedSerializer {
@@ -10,7 +9,7 @@ pub trait FixedSerializer {
     /// Uses the provided [`FieldDescription`] to determine how to serialize a fixed
     /// with representation of `self` and writes that representation to the supplie
     /// buffer `buf`.
-    fn write_fixed<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), ()>;
+    fn write_fixed_field<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), ()>;
 }
 
 const SPACES: [u8; 256] = [b' '; 256];
@@ -20,7 +19,7 @@ fn to_unit<T>(_: T) -> () {
 }
 
 impl FixedSerializer for String {
-    fn write_fixed<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), ()> {
+    fn write_fixed_field<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), ()> {
         if desc.skip > 256 {
             // TODO: Fix this (also in the FieldDescription docs)
             panic!("Do not currently support skips of more than 256");
@@ -57,49 +56,53 @@ impl FixedSerializer for String {
     }
 }
 
-// Dummy trait to limit application of generic FixedSerializer
-trait IntegerLike {}
+macro_rules! fixed_serializer_int_impl {
+    ($t:ty) => {
+        // TODO: make this handle overflows
+        impl FixedSerializer for $t {
+            fn write_fixed_field<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), ()> {
+                let mut s = self.to_string();
+                if s.len() > desc.len {
+                    s = s.as_str()[..desc.len].to_string();
+                }
 
-impl IntegerLike for u8 {}
-impl IntegerLike for u16 {}
-impl IntegerLike for u32 {}
-impl IntegerLike for u64 {}
+                let padding = desc.len - s.len();
 
-impl IntegerLike for i8 {}
-impl IntegerLike for i16 {}
-impl IntegerLike for i32 {}
-impl IntegerLike for i64 {}
+                match desc.alignment {
+                    Alignment::Left | Alignment::Full => {
+                        buf.write(&SPACES[..desc.skip]).map_err(to_unit)?;
+                        buf.write(s.as_bytes()).map_err(to_unit)?;
+                        buf.write(&SPACES[..padding]).map_err(to_unit)?;
+                    }
+                    Alignment::Right => {
+                        let skip = padding + desc.skip;
+                        buf.write(&SPACES[..skip]).map_err(to_unit)?;
+                        buf.write(s.as_bytes()).map_err(to_unit)?;
+                    }
+                }
 
-// TODO: make this handle overflows
-impl<D: Display + IntegerLike> FixedSerializer for D {
-    fn write_fixed<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), ()> {
-        let mut s = self.to_string();
-        if s.len() > desc.len {
-            s = s.as_str()[..desc.len].to_string();
-        }
-
-        let padding = desc.len - s.len();
-
-        match desc.alignment {
-            Alignment::Left | Alignment::Full => {
-                buf.write(&SPACES[..desc.skip]).map_err(to_unit)?;
-                buf.write(s.as_bytes()).map_err(to_unit)?;
-                buf.write(&SPACES[..padding]).map_err(to_unit)?;
-            }
-            Alignment::Right => {
-                let skip = padding + desc.skip;
-                buf.write(&SPACES[..skip]).map_err(to_unit)?;
-                buf.write(s.as_bytes()).map_err(to_unit)?;
+                Ok(())
             }
         }
-
-        Ok(())
     }
 }
 
+fixed_serializer_int_impl!(u8);
+fixed_serializer_int_impl!(u16);
+fixed_serializer_int_impl!(u32);
+fixed_serializer_int_impl!(u64);
+
+fixed_serializer_int_impl!(i8);
+fixed_serializer_int_impl!(i16);
+fixed_serializer_int_impl!(i32);
+fixed_serializer_int_impl!(i64);
+
+fixed_serializer_int_impl!(usize);
+fixed_serializer_int_impl!(isize);
+
 // TODO: These are likely completely broken and need to support fmt options
 impl FixedSerializer for f32 {
-    fn write_fixed<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), ()> {
+    fn write_fixed_field<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), ()> {
         let mut s = self.to_string();
         if s.len() > desc.len {
             s = s.as_str()[..desc.len].to_string();
@@ -125,7 +128,7 @@ impl FixedSerializer for f32 {
 }
 
 impl FixedSerializer for f64 {
-    fn write_fixed<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), ()> {
+    fn write_fixed_field<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), ()> {
         let mut s = self.to_string();
         if s.len() > desc.len {
             s = s.as_str()[..desc.len].to_string();
@@ -147,6 +150,12 @@ impl FixedSerializer for f64 {
         }
 
         Ok(())
+    }
+}
+
+impl<T: WriteFixed> FixedSerializer for T {
+    fn write_fixed_field<W: Write>(&self, buf: &mut W, _desc: &FieldDescription) -> Result<(), ()> {
+        self.write_fixed(buf)
     }
 }
 
@@ -174,7 +183,7 @@ mod tests {
         let foo = "foo".to_string();
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), "foo   ");
@@ -191,7 +200,7 @@ mod tests {
         let foo = "foo".to_string();
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), "   foo");
@@ -208,7 +217,7 @@ mod tests {
         let foo = "foo".to_string();
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), "foo   ");
@@ -225,7 +234,7 @@ mod tests {
         let foo = "foo".to_string();
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), " foo   ");
@@ -242,7 +251,7 @@ mod tests {
         let foo = "foo".to_string();
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), "    foo");
@@ -259,7 +268,7 @@ mod tests {
         let foo = "foo".to_string();
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), " foo   ");
@@ -276,7 +285,7 @@ mod tests {
         let foo = "abcdefg".to_string();
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), " abcd");
@@ -293,7 +302,7 @@ mod tests {
         let foo = "abcdefg".to_string();
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), " defg");
@@ -310,7 +319,7 @@ mod tests {
         let foo = "abcdefg".to_string();
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), " abcd");
@@ -331,7 +340,7 @@ mod tests {
         let foo: u16 = 12345;
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), " 12345 ");
@@ -348,7 +357,7 @@ mod tests {
         let foo: u16 = 12345;
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), "  12345");
@@ -365,7 +374,7 @@ mod tests {
         let foo: i16 = -12345;
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), " -12345  ");
@@ -382,7 +391,7 @@ mod tests {
         let foo: i16 = -12345;
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), "   -12345");
@@ -403,7 +412,7 @@ mod tests {
         let foo: f32 = 3.14;
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), " 3.14  ");
@@ -420,7 +429,7 @@ mod tests {
         let foo: f32 = 3.141592654;
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), " 3.1415"); // TODO: should end with 6
@@ -437,7 +446,7 @@ mod tests {
         let foo: f32 = 3.14;
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), " 3.14  ");
@@ -454,7 +463,7 @@ mod tests {
         let foo: f32 = 3.141592654;
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), " 3.1415"); // TODO: should end with 6
@@ -471,7 +480,7 @@ mod tests {
         let foo: f32 = 3.14;
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), "   3.14");
@@ -488,7 +497,7 @@ mod tests {
         let foo: f32 = 3.141592654;
 
         let mut v = Vec::new();
-        let res = foo.write_fixed(&mut v, &desc);
+        let res = foo.write_fixed_field(&mut v, &desc);
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), " 3.1415"); // TODO: should end with 6
