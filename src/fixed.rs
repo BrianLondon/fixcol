@@ -1,7 +1,8 @@
+use std::io::{BufRead, BufReader, Lines, Read, Write};
+use std::marker::PhantomData;
+
 use crate::error::Error;
-use std::{
-    future::IntoFuture, io::{BufRead, BufReader, Lines, Read, Write}, marker::PhantomData
-};
+
 
 /// Trait for writing to fixed width (column based) serialization
 pub trait WriteFixed {
@@ -249,9 +250,9 @@ pub trait ReadFixed {
 mod tests {
     use fixed_derive::{ReadFixed, WriteFixed};
 
-    use crate::Alignment;
-    use crate::error::Error;
     use super::*;
+    use crate::error::Error;
+    use crate::Alignment;
 
     #[derive(Debug, PartialEq, Eq)]
     struct Foo {
@@ -350,9 +351,9 @@ mod tests {
 
     #[derive(ReadFixed, WriteFixed, Eq, PartialEq, Debug)]
     struct MyStruct {
-        #[fixed(width=10)]
+        #[fixed(width = 10)]
         string: String,
-        #[fixed(width=10, align="right")]
+        #[fixed(width = 10, align = "right")]
         num: i64,
     }
 
@@ -389,19 +390,22 @@ mod tests {
 
     // Derive tests (enum)
     #[derive(ReadFixed, WriteFixed, Eq, PartialEq, Debug)]
-    #[fixed(key_width=2)]
+    #[fixed(key_width = 2)]
     enum MyEnum {
-        #[fixed(key="st")]
+        #[fixed(key = "st")]
         Struct {
-            #[fixed(width=10)]
+            #[fixed(width = 10)]
             string: String,
-            #[fixed(width=10, align="right")]
+            #[fixed(width = 10, align = "right")]
             num: i64,
         },
-        #[fixed(key="tu")]
-        Tuple(#[fixed(width=10)]String, #[fixed(width=10, align="right")]i64),
+        #[fixed(key = "tu")]
+        Tuple(
+            #[fixed(width = 10)] String,
+            #[fixed(width = 10, align = "right")] i64,
+        ),
         // TODO: Make this work
-        #[fixed(key="un")]
+        #[fixed(key = "un")]
         Unit,
     }
 

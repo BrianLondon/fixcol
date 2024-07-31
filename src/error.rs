@@ -146,7 +146,7 @@ impl Error {
     }
 
     pub fn unknown_key_error(key: String) -> Self {
-        Self::DataError(DataError { 
+        Self::DataError(DataError {
             text: key.to_owned(),
             line: None,
             inner_error: InnerError::UnknownKey,

@@ -3,7 +3,9 @@ use quote::{format_ident, quote};
 use syn::{Attribute, FieldsNamed, FieldsUnnamed, Ident, Variant};
 
 use crate::attrs::{parse_enum_attributes, parse_variant_attributes, VariantConfig};
-use crate::fields::{read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields};
+use crate::fields::{
+    read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields,
+};
 
 //
 // Reads
@@ -11,27 +13,27 @@ use crate::fields::{read_named_fields, read_unnamed_fields, write_named_fields, 
 
 pub(crate) fn enum_read(
     name: &Ident,
-    attrs: &Vec<Attribute>, 
-    variants: Vec<&Variant>
+    attrs: &Vec<Attribute>,
+    variants: Vec<&Variant>,
 ) -> proc_macro2::TokenStream {
     let enum_config = parse_enum_attributes(attrs);
 
-    let (var_name, var_read): (Vec<_>, Vec<_>) = variants.iter().map(|variant| {
-        let var_name = &variant.ident;
+    let (var_name, var_read): (Vec<_>, Vec<_>) = variants
+        .iter()
+        .map(|variant| {
+            let var_name = &variant.ident;
 
-        let VariantConfig { key } = parse_variant_attributes(&variant.attrs);
+            let VariantConfig { key } = parse_variant_attributes(&variant.attrs);
 
-        let read = match &variant.fields {
-            syn::Fields::Named(fields) => 
-                read_struct_variant(var_name, fields),
-            syn::Fields::Unnamed(fields) => 
-                read_tuple_variant(var_name, fields),
-            syn::Fields::Unit => 
-                read_unit_variant(var_name),
-        };
+            let read = match &variant.fields {
+                syn::Fields::Named(fields) => read_struct_variant(var_name, fields),
+                syn::Fields::Unnamed(fields) => read_tuple_variant(var_name, fields),
+                syn::Fields::Unit => read_unit_variant(var_name),
+            };
 
-        (key, read)
-    }).unzip();
+            (key, read)
+        })
+        .unzip();
 
     let key_width = enum_config.key_width;
 
@@ -88,22 +90,17 @@ fn read_unit_variant(
     }
 }
 
-
 //
 // Writes
 //////////////////////////
 
-pub(crate) fn enum_write(
-    variants: Vec<&Variant>
-) -> proc_macro2::TokenStream {
+pub(crate) fn enum_write(variants: Vec<&Variant>) -> proc_macro2::TokenStream {
     let write_variants = variants.iter().map(|variant| {
         let VariantConfig { key } = parse_variant_attributes(&variant.attrs);
 
         match &variant.fields {
-            syn::Fields::Named(fields) => 
-                write_struct_variant(&variant.ident, key, fields),
-            syn::Fields::Unnamed(fields) => 
-                write_tuple_variant(&variant.ident, key, fields),
+            syn::Fields::Named(fields) => write_struct_variant(&variant.ident, key, fields),
+            syn::Fields::Unnamed(fields) => write_tuple_variant(&variant.ident, key, fields),
             syn::Fields::Unit => write_unit_variant(&variant.ident, key),
         }
     });
@@ -118,14 +115,10 @@ pub(crate) fn enum_write(
 
             Ok(())
         }
-    }    
+    }
 }
 
-fn write_struct_variant(
-    ident: &Ident, 
-    key: String, 
-    fields: &FieldsNamed
-) -> TokenStream {
+fn write_struct_variant(ident: &Ident, key: String, fields: &FieldsNamed) -> TokenStream {
     let (names, configs) = write_named_fields(&fields);
 
     let key_len = key.len();
@@ -145,17 +138,14 @@ fn write_struct_variant(
     }
 }
 
-
-fn write_tuple_variant(
-    ident: &Ident, 
-    key: String, 
-    fields: &FieldsUnnamed
-) -> TokenStream {
+fn write_tuple_variant(ident: &Ident, key: String, fields: &FieldsUnnamed) -> TokenStream {
     let (_, configs) = write_unnamed_fields(&fields);
 
-    let named_fields: Vec<Ident> = configs.iter().enumerate().map(|f| {
-        format_ident!("f_{}", f.0)
-    }).collect();
+    let named_fields: Vec<Ident> = configs
+        .iter()
+        .enumerate()
+        .map(|f| format_ident!("f_{}", f.0))
+        .collect();
 
     let key_len = key.len();
 
