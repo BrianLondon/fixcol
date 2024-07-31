@@ -1,6 +1,7 @@
 use std::io::Write;
 
-use crate::{format::{Alignment, FieldDescription}, WriteFixed};
+use crate::format::{Alignment, FieldDescription};
+use crate::WriteFixed;
 
 /// A trait that represents the field types that can be encoded to fix len strings
 pub trait FixedSerializer {
@@ -60,7 +61,11 @@ macro_rules! fixed_serializer_int_impl {
     ($t:ty) => {
         // TODO: make this handle overflows
         impl FixedSerializer for $t {
-            fn write_fixed_field<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), ()> {
+            fn write_fixed_field<W: Write>(
+                &self,
+                buf: &mut W,
+                desc: &FieldDescription,
+            ) -> Result<(), ()> {
                 let mut s = self.to_string();
                 if s.len() > desc.len {
                     s = s.as_str()[..desc.len].to_string();
@@ -84,7 +89,7 @@ macro_rules! fixed_serializer_int_impl {
                 Ok(())
             }
         }
-    }
+    };
 }
 
 fixed_serializer_int_impl!(u8);

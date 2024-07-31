@@ -1,4 +1,4 @@
-use crate::error::{Error, DataError, InnerError};
+use crate::error::{DataError, Error, InnerError};
 use crate::format::{Alignment, FieldDescription};
 use crate::ReadFixed;
 
@@ -254,15 +254,12 @@ impl FixedDeserializer<String> for &str {
 
 impl<T: ReadFixed> FixedDeserializer<T> for &str {
     fn parse_with(&self, _desc: &FieldDescription) -> Result<T, DataError> {
-        let obj = T::read_fixed_str(&self)
-            .map_err(|e| {
-                match e {
-                    Error::DataError(e) => e,
-                    Error::IoError(e) => {
-                        panic!("I/O error while reading internal memory: {:?}", e);
-                    }
-                }
-            })?;
+        let obj = T::read_fixed_str(&self).map_err(|e| match e {
+            Error::DataError(e) => e,
+            Error::IoError(e) => {
+                panic!("I/O error while reading internal memory: {:?}", e);
+            }
+        })?;
 
         Ok(obj)
     }

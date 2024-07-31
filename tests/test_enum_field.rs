@@ -6,11 +6,11 @@ use fixed_derive::{ReadFixed, WriteFixed};
 #[derive(Debug, Eq, PartialEq, ReadFixed, WriteFixed)]
 #[fixed(key_width = 1)]
 enum Color {
-    #[fixed(key="R")]
+    #[fixed(key = "R")]
     Red,
-    #[fixed(key="G")]
+    #[fixed(key = "G")]
     Green,
-    #[fixed(key="B")]
+    #[fixed(key = "B")]
     Blue,
 }
 
@@ -27,7 +27,7 @@ struct Light {
 }
 
 #[test]
-fn derive_read_struct() {
+fn derive_read() {
     use fixed::ReadFixed; // TODO: this double import is really ugly
 
     let expected = Light {
@@ -44,7 +44,7 @@ fn derive_read_struct() {
 }
 
 #[test]
-fn derive_write_struct() {
+fn derive_write() {
     use std::str;
 
     use fixed::WriteFixed;
@@ -56,7 +56,7 @@ fn derive_write_struct() {
         color: Color::Blue,
         pos_x: 174,
         pos_y: 34,
-    }; 
+    };
 
     let mut buf: Vec<u8> = Vec::new();
     let res = light.write_fixed(&mut buf);
