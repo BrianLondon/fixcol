@@ -3,7 +3,6 @@ use fixed_derive::{ReadFixed, WriteFixed};
 extern crate fixed;
 extern crate fixed_derive;
 
-
 const SAMPLE_DATA: &'static str = r#"NODE ME
 NODE NH
 EDGE ME NH  327819
@@ -19,27 +18,26 @@ EDGE CT RI     412
 EDGE RI MA 2948120
 "#;
 
-// TODO: Need a test case for unexpected EoF since that's usually a config error 
+// TODO: Need a test case for unexpected EoF since that's usually a config error
 // not actually an IO error despite being reported as such.
 
 // TODO: "Width must be specified for all fields" should we provid an "until end of line option"?
 
 #[derive(Debug, ReadFixed, WriteFixed, Eq, PartialEq)]
-#[fixed(key_width=4, ignore_others=true)]
+#[fixed(key_width = 4, ignore_others = true)]
 enum GraphObject {
-    #[fixed(key="NODE")]
-    Node(#[fixed(skip=1, width=2)]String),
-    #[fixed(key="EDGE")]
+    #[fixed(key = "NODE")]
+    Node(#[fixed(skip = 1, width = 2)] String),
+    #[fixed(key = "EDGE")]
     Edge {
-        #[fixed(skip=1, width=2)]
+        #[fixed(skip = 1, width = 2)]
         from: String,
-        #[fixed(skip=1, width=2)]
+        #[fixed(skip = 1, width = 2)]
         to: String,
-        #[fixed(skip=1, width=7, align="right")]
+        #[fixed(skip = 1, width = 7, align = "right")]
         weight: u64,
-    }
-    // #[fixed(key="XXXX")]
-    // Blank,
+    }, // #[fixed(key="XXXX")]
+       // Blank,
 }
 
 fn node(s: &str) -> GraphObject {
@@ -48,7 +46,7 @@ fn node(s: &str) -> GraphObject {
 
 fn edge(from: &str, to: &str, weight: u64) -> GraphObject {
     GraphObject::Edge {
-        from: from.to_owned(), 
+        from: from.to_owned(),
         to: to.to_owned(),
         weight: weight,
     }
@@ -61,7 +59,7 @@ fn read_enums() {
     let mut buf = SAMPLE_DATA.as_bytes();
     let data: Vec<_> = GraphObject::read_fixed_all(&mut buf).collect();
     println!("{:?}", data);
-        
+
     let graph: Vec<GraphObject> = data.into_iter().map(|o| o.unwrap()).collect();
 
     let expected = vec![

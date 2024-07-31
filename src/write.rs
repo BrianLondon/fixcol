@@ -1,7 +1,7 @@
-use crate::format::{Alignment, FieldDescription};
-
 use std::fmt::Display;
 use std::io::Write;
+
+use crate::format::{Alignment, FieldDescription};
 
 /// A trait that represents the field types that can be encoded to fix len strings
 pub trait FixedSerializer {

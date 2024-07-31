@@ -51,7 +51,7 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
 
     let function_impl = match ast.data {
         Data::Struct(DataStruct { fields, .. }) => struct_read(name, attrs, fields),
-        Data::Enum(DataEnum { variants, ..}) => enum_read(name, attrs, variants.iter().collect()),
+        Data::Enum(DataEnum { variants, .. }) => enum_read(name, attrs, variants.iter().collect()),
         Data::Union(_) => panic!("Deriving ReadFixed on unions is not supported"),
     };
 

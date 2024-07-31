@@ -61,7 +61,9 @@ impl Display for ExpectedTokenState {
 }
 
 fn strip_quotes(s: String) -> String {
-    s.trim_end_matches('\"').trim_start_matches('\"').to_string()
+    s.trim_end_matches('\"')
+        .trim_start_matches('\"')
+        .to_string()
 }
 
 fn parse_next_token(
@@ -114,15 +116,19 @@ fn parse_next_token(
 }
 
 fn parse_attributes(attrs: &Vec<Attribute>) -> Vec<FieldParam> {
-    attrs.iter().filter(|a| is_fixed_attr(*a)).flat_map(|a| {
-        let tokens = match &a.meta {
-            Meta::Path(_) => unimplemented!("Could not parse Meta::Path -- unreachable?"),
-            Meta::List(m) => &m.tokens,
-            Meta::NameValue(_) => unimplemented!("Could not parse Meta::NameValue"),
-        };
+    attrs
+        .iter()
+        .filter(|a| is_fixed_attr(*a))
+        .flat_map(|a| {
+            let tokens = match &a.meta {
+                Meta::Path(_) => unimplemented!("Could not parse Meta::Path -- unreachable?"),
+                Meta::List(m) => &m.tokens,
+                Meta::NameValue(_) => unimplemented!("Could not parse Meta::NameValue"),
+            };
 
-        get_config_params(tokens.clone())
-    }).collect()
+            get_config_params(tokens.clone())
+        })
+        .collect()
 }
 
 fn get_config_params(tokens: TokenStream) -> Vec<FieldParam> {
@@ -179,11 +185,7 @@ struct FieldConfigBuilder {
 
 impl FieldConfigBuilder {
     fn new() -> Self {
-        Self {
-            width: None,
-            skip: None,
-            align: None,
-        }
+        Self { width: None, skip: None, align: None }
     }
 }
 
@@ -237,10 +239,7 @@ pub(crate) struct EnumConfigBuilder {
 
 impl EnumConfigBuilder {
     pub fn new() -> Self {
-        Self {
-            ignore_others: None,
-            key_width: None,
-        }
+        Self { ignore_others: None, key_width: None }
     }
 }
 
@@ -256,15 +255,25 @@ pub(crate) fn parse_enum_attributes(attrs: &Vec<Attribute>) -> EnumConfig {
     for param in params {
         match param.key.as_str() {
             "ignore_others" => {
-                let err = format!("Expected true or false for ignoer_others. Found {}", param.value);
-                let old = conf.ignore_others.replace(param.value.parse().expect(err.as_str()));
+                let err = format!(
+                    "Expected true or false for ignoer_others. Found {}",
+                    param.value
+                );
+                let old = conf
+                    .ignore_others
+                    .replace(param.value.parse().expect(err.as_str()));
                 if old.is_some() {
                     panic!("Duplicate values for ignore_others");
                 }
             }
             "key_width" => {
-                let err = format!("Expected numeric value for key_width. Found {}", param.value);
-                let old = conf.key_width.replace(param.value.parse().expect(err.as_str()));
+                let err = format!(
+                    "Expected numeric value for key_width. Found {}",
+                    param.value
+                );
+                let old = conf
+                    .key_width
+                    .replace(param.value.parse().expect(err.as_str()));
                 if old.is_some() {
                     panic!("Duplicate values for key_width");
                 }
@@ -275,7 +284,9 @@ pub(crate) fn parse_enum_attributes(attrs: &Vec<Attribute>) -> EnumConfig {
 
     EnumConfig {
         ignore_others: conf.ignore_others.unwrap_or(false),
-        key_width: conf.key_width.expect("The parameter key_width must be provided for enums."),
+        key_width: conf
+            .key_width
+            .expect("The parameter key_width must be provided for enums."),
     }
 }
 
@@ -285,16 +296,13 @@ pub(crate) struct VariantConfigBuilder {
 
 impl VariantConfigBuilder {
     pub fn new() -> Self {
-        Self {
-            key: None,
-        }
+        Self { key: None }
     }
 }
 
 pub(crate) struct VariantConfig {
     pub key: String,
 }
-
 
 pub(crate) fn parse_variant_attributes(attrs: &Vec<Attribute>) -> VariantConfig {
     let params = parse_attributes(attrs);
@@ -307,16 +315,17 @@ pub(crate) fn parse_variant_attributes(attrs: &Vec<Attribute>) -> VariantConfig 
                 if old.is_some() {
                     panic!("Duplicate values for key");
                 }
-            },
+            }
             key => panic!("Unrecognized parameter {}", key),
         }
     }
 
-    VariantConfig { 
-        key: conf.key.expect("The parameter key must be provided for all enum variants."),
+    VariantConfig {
+        key: conf
+            .key
+            .expect("The parameter key must be provided for all enum variants."),
     }
 }
-
 
 #[cfg(test)]
 mod tests {

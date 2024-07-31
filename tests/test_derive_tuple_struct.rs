@@ -5,12 +5,9 @@ use fixed_derive::{ReadFixed, WriteFixed};
 
 #[derive(Debug, Eq, PartialEq, ReadFixed, WriteFixed)]
 struct Color(
-    #[fixed(width = 3, align = "right")]
-    u8,
-    #[fixed(skip = 1, width = 3, align = "right")]
-    u8,
-    #[fixed(skip = 1, width = 3, align = "right")]
-    u8
+    #[fixed(width = 3, align = "right")] u8,
+    #[fixed(skip = 1, width = 3, align = "right")] u8,
+    #[fixed(skip = 1, width = 3, align = "right")] u8,
 );
 
 #[test]

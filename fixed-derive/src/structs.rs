@@ -1,15 +1,20 @@
 use crate::attrs;
-use crate::fields::{read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields};
+use crate::fields::{
+    read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields,
+};
 
 use quote::quote;
 use syn::{Attribute, Fields, FieldsNamed, FieldsUnnamed, Ident};
-
 
 //
 // Reads
 /////////////////////////////
 
-pub(crate) fn struct_read(name: &Ident, attrs: &Vec<Attribute>, fields: Fields) -> proc_macro2::TokenStream {
+pub(crate) fn struct_read(
+    name: &Ident,
+    attrs: &Vec<Attribute>,
+    fields: Fields,
+) -> proc_macro2::TokenStream {
     match fields {
         Fields::Named(named_fields) => struct_read_fixed(named_fields),
         Fields::Unnamed(unnamed_fields) => tuple_struct_read_fixed(unnamed_fields),
@@ -53,11 +58,11 @@ pub(crate) fn struct_write(fields: Fields) -> proc_macro2::TokenStream {
     match fields {
         Fields::Named(named_fields) => struct_write_fixed(named_fields),
         Fields::Unnamed(unnamed_fields) => tuple_struct_write_fixed(unnamed_fields),
-        Fields::Unit => 
-            panic!("Unit structs not supported. Cannot serialize data type that hold no data"),
+        Fields::Unit => {
+            panic!("Unit structs not supported. Cannot serialize data type that hold no data")
+        }
     }
 }
-
 
 fn struct_write_fixed(fields: FieldsNamed) -> proc_macro2::TokenStream {
     let (names, configs) = write_named_fields(&fields);

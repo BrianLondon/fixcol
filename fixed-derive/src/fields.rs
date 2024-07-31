@@ -1,13 +1,11 @@
 use proc_macro2::{Ident, TokenStream};
-use quote::{format_ident, quote, ToTokens};
+use quote::{format_ident, quote};
 use syn::{FieldsNamed, FieldsUnnamed, Index};
 
 // TODO: should FieldConfig live here? yes if it doesnt cause circular
 use crate::attrs::{self, FieldConfig};
 
-pub(crate) fn read_unnamed_fields(
-    fields: &FieldsUnnamed
-) -> (Vec<Ident>, Vec<TokenStream>) {
+pub(crate) fn read_unnamed_fields(fields: &FieldsUnnamed) -> (Vec<Ident>, Vec<TokenStream>) {
     let field_reads = fields.unnamed.iter().enumerate().map(|item| {
         let (field_num, field) = item;
 
@@ -35,9 +33,7 @@ pub(crate) fn read_unnamed_fields(
 }
 
 /// Retuns field names and code to read those fields
-pub(crate) fn read_named_fields(
-    fields: &FieldsNamed,
-) -> (Vec<Ident>, Vec<TokenStream>) {
+pub(crate) fn read_named_fields(fields: &FieldsNamed) -> (Vec<Ident>, Vec<TokenStream>) {
     let field_reads = fields.named.iter().map(|field| {
         let name = field.ident.as_ref().unwrap().clone();
 
@@ -62,25 +58,29 @@ pub(crate) fn read_named_fields(
     field_reads.unzip()
 }
 
-pub(crate) fn write_named_fields(
-    fields: &FieldsNamed
-) -> (Vec<Ident>, Vec<FieldConfig>) {
-    fields.named.iter().map(|field| {
-        let name = field.ident.as_ref().unwrap().clone();
-        let config = attrs::parse_field_attributes(&field.attrs);
+pub(crate) fn write_named_fields(fields: &FieldsNamed) -> (Vec<Ident>, Vec<FieldConfig>) {
+    fields
+        .named
+        .iter()
+        .map(|field| {
+            let name = field.ident.as_ref().unwrap().clone();
+            let config = attrs::parse_field_attributes(&field.attrs);
 
-        (name, config)
-    }).unzip()
+            (name, config)
+        })
+        .unzip()
 }
 
-pub(crate) fn write_unnamed_fields(
-    fields: &FieldsUnnamed
-) -> (Vec<Index>, Vec<FieldConfig>) {
-    fields.unnamed.iter().enumerate().map(|field| {
+pub(crate) fn write_unnamed_fields(fields: &FieldsUnnamed) -> (Vec<Index>, Vec<FieldConfig>) {
+    fields
+        .unnamed
+        .iter()
+        .enumerate()
+        .map(|field| {
+            let name = syn::Index::from(field.0);
+            let config = attrs::parse_field_attributes(&field.1.attrs);
 
-        let name = syn::Index::from(field.0);
-        let config = attrs::parse_field_attributes(&field.1.attrs);
-
-        (name, config)
-    }).unzip()
+            (name, config)
+        })
+        .unzip()
 }
