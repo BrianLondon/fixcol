@@ -1,8 +1,8 @@
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
+use quote::{format_ident, quote};
 use syn::{Attribute, FieldsNamed, FieldsUnnamed, Ident, Variant};
 
-use crate::attrs::{self, parse_variant_attributes, VariantConfig};
+use crate::attrs::{parse_enum_attributes, parse_variant_attributes, VariantConfig};
 use crate::fields::{read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields};
 
 //
@@ -14,7 +14,7 @@ pub(crate) fn enum_read(
     attrs: &Vec<Attribute>, 
     variants: Vec<&Variant>
 ) -> proc_macro2::TokenStream {
-    let enum_config = attrs::parse_enum_attributes(attrs);
+    let enum_config = parse_enum_attributes(attrs);
 
     let (var_name, var_read): (Vec<_>, Vec<_>) = variants.iter().map(|variant| {
         let var_name = &variant.ident;
@@ -83,7 +83,9 @@ fn read_unit_variant(
     // key: String,
     name: &Ident,
 ) -> TokenStream {
-    unimplemented!("Do not yet support unit variants")
+    quote! {
+        Ok(Self::#name)
+    }
 }
 
 
@@ -92,8 +94,6 @@ fn read_unit_variant(
 //////////////////////////
 
 pub(crate) fn enum_write(
-    name: &Ident,
-    attrs: &Vec<Attribute>, 
     variants: Vec<&Variant>
 ) -> proc_macro2::TokenStream {
     let write_variants = variants.iter().map(|variant| {
@@ -110,9 +110,13 @@ pub(crate) fn enum_write(
 
     quote! {
         fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), ()> {
-            use fixed::FixedDeserializer;
+            use fixed::FixedSerializer;
 
-            #(#write_variants)*
+            match self {
+                #(#write_variants)*
+            }
+
+            Ok(())
         }
     }    
 }
@@ -127,16 +131,16 @@ fn write_struct_variant(
     let key_len = key.len();
 
     quote! {
-        v @ Self::#ident {..} => {
+        Self::#ident { #(#names),* } => {
             let key_config = fixed::FieldDescription {
                 skip: 0,
                 len: #key_len,
-                alignment: Alignment::Left,
+                alignment: fixed::Alignment::Left,
             };
             let key = String::from(#key);
-            let _ = key.write_fixed(buf, key_config).unwrap();
+            let _ = key.write_fixed(buf, &key_config).unwrap();
 
-            #( let _ = self.#names.write_fixed(buf, #configs).unwrap();  )*
+            #( let _ = #names.write_fixed(buf, #configs).unwrap();  )*
         },
     }
 }
@@ -147,21 +151,25 @@ fn write_tuple_variant(
     key: String, 
     fields: &FieldsUnnamed
 ) -> TokenStream {
-    let (ids, configs) = write_unnamed_fields(&fields);
+    let (_, configs) = write_unnamed_fields(&fields);
+
+    let named_fields: Vec<Ident> = configs.iter().enumerate().map(|f| {
+        format_ident!("f_{}", f.0)
+    }).collect();
 
     let key_len = key.len();
 
     quote! {
-        v @ Self::#ident(..) => {
+        Self::#ident(#(#named_fields),*) => {
             let key_config = fixed::FieldDescription {
                 skip: 0,
                 len: #key_len,
-                alignment: Alignment::Left,
+                alignment: fixed::Alignment::Left,
             };
             let key = String::from(#key);
-            let _ = key.write_fixed(buf, key_config).unwrap();
+            let _ = key.write_fixed(buf, &key_config).unwrap();
 
-            #( let _ = self.#ids.write_fixed(buf, #configs).unwrap();  )*
+            #( let _ = #named_fields.write_fixed(buf, #configs).unwrap();  )*
         },
     }
 }
@@ -170,14 +178,14 @@ fn write_unit_variant(ident: &Ident, key: String) -> TokenStream {
     let key_len = key.len();
 
     quote! {
-        v @ Self::#ident(..) => {
+        Self::#ident => {
             let key_config = fixed::FieldDescription {
                 skip: 0,
                 len: #key_len,
-                alignment: Alignment::Left,
+                alignment: fixed::Alignment::Left,
             };
             let key = String::from(#key);
-            let _ = key.write_fixed(buf, key_config).unwrap();
+            let _ = key.write_fixed(buf, &key_config).unwrap();
         },
     }
 }

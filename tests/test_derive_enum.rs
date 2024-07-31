@@ -1,4 +1,4 @@
-use fixed_derive::ReadFixed;
+use fixed_derive::{ReadFixed, WriteFixed};
 
 extern crate fixed;
 extern crate fixed_derive;
@@ -24,6 +24,7 @@ EDGE RI MA 2948120
 
 // TODO: "Width must be specified for all fields" should we provid an "until end of line option"?
 
+// #[derive(Debug, ReadFixed, WriteFixed, Eq, PartialEq)]
 #[derive(Debug, ReadFixed, Eq, PartialEq)]
 #[fixed(key_width=4, ignore_others=true)]
 enum GraphObject {
@@ -82,3 +83,32 @@ fn read_enums() {
 
     assert_eq!(graph, expected);
 }
+
+// #[test]
+// fn write_enum() {
+//     use std::str::from_utf8;
+
+//     let inp = vec![
+//         node("ME"),
+//         node("NH"),
+//         edge("ME", "NH", 327819),
+//         node("VT"),
+//         edge("VT", "NH", 1283),
+//         node("MA"),
+//         edge("MA", "VT", 83981),
+//         edge("MA", "NH", 904921),
+//         node("CT"),
+//         edge("CT", "MA", 9389),
+//         node("RI"),
+//         edge("CT", "RI", 412),
+//         edge("RI", "MA", 2948120),
+//     ];
+
+//     let mut outb: Vec<u8> = Vec::new();
+//     let res = inp.write_fixed(&mut outb);
+
+//     let outs = from_utf8(outb.as_slice()).unwrap().to_string();
+
+//     assert!(res.is_ok());
+//     assert_eq!(outs, SAMPLE_DATA);
+// }

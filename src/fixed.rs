@@ -233,6 +233,10 @@ pub trait ReadFixed {
 
 #[cfg(test)]
 mod tests {
+    use fixed_derive::{ReadFixed, WriteFixed};
+
+    use crate::Alignment;
+    use crate::error::Error;
     use super::*;
 
     #[derive(Debug, PartialEq, Eq)]
@@ -320,5 +324,150 @@ mod tests {
             .collect();
 
         assert_eq!(actual, expected);
+    }
+
+    // Derive tests (struct)
+    fn to_str(inp: Vec<u8>) -> String {
+        use std::str;
+        str::from_utf8(inp.as_slice()).unwrap().to_string()
+    }
+
+    use crate as fixed;
+
+    #[derive(ReadFixed, WriteFixed, Eq, PartialEq, Debug)]
+    struct MyStruct {
+        #[fixed(width=10)]
+        string: String,
+        #[fixed(width=10, align="right")]
+        num: i64,
+    }
+
+    #[test]
+    fn read_struct_derived() {
+        let expected = MyStruct {
+            string: "my string".to_string(),
+            num: 981,
+        };
+
+        let raw = "my string        981";
+        assert_eq!(raw.len(), 20);
+        let mut buf = raw.as_bytes();
+        let actual = MyStruct::read_fixed(&mut buf);
+
+        assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn write_struct_derived() {
+        let expected = "my string        981";
+        assert_eq!(expected.len(), 20);
+
+        let my_struct = MyStruct {
+            string: "my string".to_string(),
+            num: 981,
+        };
+        let mut buf: Vec<u8> = Vec::new();
+        let res = my_struct.write_fixed(&mut buf);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(buf), expected);
+    }
+
+    // Derive tests (enum)
+    #[derive(ReadFixed, WriteFixed, Eq, PartialEq, Debug)]
+    #[fixed(key_width=2)]
+    enum MyEnum {
+        #[fixed(key="st")]
+        Struct {
+            #[fixed(width=10)]
+            string: String,
+            #[fixed(width=10, align="right")]
+            num: i64,
+        },
+        #[fixed(key="tu")]
+        Tuple(#[fixed(width=10)]String, #[fixed(width=10, align="right")]i64),
+        // TODO: Make this work
+        #[fixed(key="un")]
+        Unit,
+    }
+
+    #[test]
+    fn read_struct_enum_derived() {
+        let expected = MyEnum::Struct {
+            string: "my string".to_string(),
+            num: 981,
+        };
+
+        let raw = "stmy string        981";
+        assert_eq!(raw.len(), 22);
+        let mut buf = raw.as_bytes();
+        let actual = MyEnum::read_fixed(&mut buf);
+
+        assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn write_struct_enum_derived() {
+        let expected = "stmy string        981";
+        assert_eq!(expected.len(), 22);
+
+        let my_struct = MyEnum::Struct {
+            string: "my string".to_string(),
+            num: 981,
+        };
+        let mut buf: Vec<u8> = Vec::new();
+        let res = my_struct.write_fixed(&mut buf);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(buf), expected);
+    }
+
+    #[test]
+    fn read_tuple_enum_derived() {
+        let expected = MyEnum::Tuple("my string".to_string(), 981);
+
+        let raw = "tumy string        981";
+        assert_eq!(raw.len(), 22);
+        let mut buf = raw.as_bytes();
+        let actual = MyEnum::read_fixed(&mut buf);
+
+        assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn write_tuple_enum_derived() {
+        let expected = "tumy string        981";
+        assert_eq!(expected.len(), 22);
+
+        let my_struct = MyEnum::Tuple("my string".to_string(), 981);
+        let mut buf: Vec<u8> = Vec::new();
+        let res = my_struct.write_fixed(&mut buf);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(buf), expected);
+    }
+
+    #[test]
+    fn read_unit_enum_derived() {
+        let expected = MyEnum::Unit;
+
+        let raw = "unmy string        981";
+        assert_eq!(raw.len(), 22);
+        let mut buf = raw.as_bytes();
+        let actual = MyEnum::read_fixed(&mut buf);
+
+        assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn write_unit_enum_derived() {
+        let expected = "un";
+
+        let my_struct = MyEnum::Unit;
+        let mut buf: Vec<u8> = Vec::new();
+        let res = my_struct.write_fixed(&mut buf);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(buf), expected);
     }
 }

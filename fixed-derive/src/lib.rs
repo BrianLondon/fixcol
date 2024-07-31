@@ -9,6 +9,7 @@ extern crate quote;
 extern crate syn;
 
 use attrs::FieldConfig;
+use enums::enum_write;
 use proc_macro::TokenStream;
 
 use quote::quote;
@@ -60,6 +61,8 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
         }
     };
 
+    // println!("{}", gen);
+
     gen.into()
 }
 
@@ -72,7 +75,7 @@ pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
 
     let function_impl = match ast.data {
         Data::Struct(DataStruct { fields, .. }) => struct_write(fields),
-        Data::Enum(_) => panic!("Deriving WriteFixed on enums is not supported"),
+        Data::Enum(DataEnum { variants, .. }) => enum_write(variants.iter().collect()),
         Data::Union(_) => panic!("Deriving WriteFixed on unions is not supported"),
     };
 
@@ -81,6 +84,8 @@ pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
             #function_impl
         }
     };
+
+    // println!("{}", gen);
 
     gen.into()
 }
