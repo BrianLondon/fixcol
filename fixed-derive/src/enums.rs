@@ -1,17 +1,16 @@
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::{Attribute, FieldsNamed, FieldsUnnamed, Ident, Variant};
 
 use crate::attrs::{self, parse_variant_attributes, VariantConfig};
-use crate::fields::{read_named_fields, read_unnamed_fields};
+use crate::fields::{read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields};
 
 //
 // Reads
 //////////////////////////
 
-
 pub(crate) fn enum_read(
-    name: &Ident, 
+    name: &Ident,
     attrs: &Vec<Attribute>, 
     variants: Vec<&Variant>
 ) -> proc_macro2::TokenStream {
@@ -76,7 +75,7 @@ fn read_tuple_variant(
 
     quote! {
         #(#field_reads)*
-        Ok(Self::#name(#(#field_labels),* ))
+        Ok(Self::#name(#(#field_labels),*))
     }
 }
 
@@ -88,7 +87,97 @@ fn read_unit_variant(
 }
 
 
-
 //
 // Writes
 //////////////////////////
+
+pub(crate) fn enum_write(
+    name: &Ident,
+    attrs: &Vec<Attribute>, 
+    variants: Vec<&Variant>
+) -> proc_macro2::TokenStream {
+    let write_variants = variants.iter().map(|variant| {
+        let VariantConfig { key } = parse_variant_attributes(&variant.attrs);
+
+        match &variant.fields {
+            syn::Fields::Named(fields) => 
+                write_struct_variant(&variant.ident, key, fields),
+            syn::Fields::Unnamed(fields) => 
+                write_tuple_variant(&variant.ident, key, fields),
+            syn::Fields::Unit => write_unit_variant(&variant.ident, key),
+        }
+    });
+
+    quote! {
+        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), ()> {
+            use fixed::FixedDeserializer;
+
+            #(#write_variants)*
+        }
+    }    
+}
+
+fn write_struct_variant(
+    ident: &Ident, 
+    key: String, 
+    fields: &FieldsNamed
+) -> TokenStream {
+    let (names, configs) = write_named_fields(&fields);
+
+    let key_len = key.len();
+
+    quote! {
+        v @ Self::#ident {..} => {
+            let key_config = fixed::FieldDescription {
+                skip: 0,
+                len: #key_len,
+                alignment: Alignment::Left,
+            };
+            let key = String::from(#key);
+            let _ = key.write_fixed(buf, key_config).unwrap();
+
+            #( let _ = self.#names.write_fixed(buf, #configs).unwrap();  )*
+        },
+    }
+}
+
+
+fn write_tuple_variant(
+    ident: &Ident, 
+    key: String, 
+    fields: &FieldsUnnamed
+) -> TokenStream {
+    let (ids, configs) = write_unnamed_fields(&fields);
+
+    let key_len = key.len();
+
+    quote! {
+        v @ Self::#ident(..) => {
+            let key_config = fixed::FieldDescription {
+                skip: 0,
+                len: #key_len,
+                alignment: Alignment::Left,
+            };
+            let key = String::from(#key);
+            let _ = key.write_fixed(buf, key_config).unwrap();
+
+            #( let _ = self.#ids.write_fixed(buf, #configs).unwrap();  )*
+        },
+    }
+}
+
+fn write_unit_variant(ident: &Ident, key: String) -> TokenStream {
+    let key_len = key.len();
+
+    quote! {
+        v @ Self::#ident(..) => {
+            let key_config = fixed::FieldDescription {
+                skip: 0,
+                len: #key_len,
+                alignment: Alignment::Left,
+            };
+            let key = String::from(#key);
+            let _ = key.write_fixed(buf, key_config).unwrap();
+        },
+    }
+}

@@ -1,5 +1,5 @@
 use proc_macro2::{Ident, TokenStream};
-use quote::{quote, format_ident};
+use quote::{format_ident, quote, ToTokens};
 use syn::{FieldsNamed, FieldsUnnamed, Index};
 
 // TODO: should FieldConfig live here? yes if it doesnt cause circular
