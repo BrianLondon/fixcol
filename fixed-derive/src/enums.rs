@@ -43,10 +43,10 @@ pub(crate) fn enum_read(
 
             let mut s: [u8; #key_width] = [0; #key_width];
             buf.read_exact(&mut s).map_err(|e| fixed::error::Error::from(e))?;
-            let key: &str = std::str::from_utf8(&s)
-                .map_err(|e| fixed::error::Error::from_utf8_error(&s, e))?;
+            let key: String = String::from_utf8(s.to_vec())
+                .map_err(|e| fixed::error::Error::from(e))?;
 
-            match key {
+            match key.as_str() {
                 #(#var_name => { #var_read },)*
                 k => Err(fixed::error::Error::unknown_key_error(k.to_owned())),
             }

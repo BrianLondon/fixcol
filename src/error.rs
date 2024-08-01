@@ -41,6 +41,7 @@ use std::fmt::{Display, Formatter};
 use std::io;
 use std::num::{ParseFloatError, ParseIntError};
 use std::str::Utf8Error;
+use std::string::FromUtf8Error;
 
 /// The standard error for the `fixed` library.
 ///
@@ -51,9 +52,9 @@ use std::str::Utf8Error;
 /// to identify what went wrong, it also can format (via [`to_string`]) to print
 /// diagnostic errors to the user.
 ///
-/// Note that there are factory methods like [`from_utf8_error`] that need to
-/// be public because they are inserted by the derive macros, but should essentially
-/// never be used directly by application authors.
+/// Note that there are factory methods that need to be public because they are
+/// inserted by the derive macros, but should essentially never be used directly
+/// by application authors.
 ///
 /// # Example
 ///
@@ -132,9 +133,24 @@ impl From<DataError> for Error {
     }
 }
 
+impl From<FromUtf8Error> for Error {
+    /// Wraps an [`FromUtf8Error`] in an [`Error`]
+    ///
+    /// This is used to wrap utf decoding errors and will preserve the byte
+    /// sequence up to the location the error occured.
+    /// 
+    /// See [`From::from`] docs for more information.
+    fn from(value: FromUtf8Error) -> Self {
+        Self::from_utf8_error(value)
+    }
+}
+
 impl Error {
     /// Creates an `Error` from a `Utf8Error`
-    pub fn from_utf8_error(bytes: &[u8], err: Utf8Error) -> Self {
+    fn from_utf8_error(inner: FromUtf8Error) -> Self {
+        let bytes = inner.as_bytes();
+        let err = inner.utf8_error();
+
         let (good_bytes, _) = bytes.split_at(err.valid_up_to());
         let text: String = String::from_utf8_lossy(good_bytes).into_owned();
 
@@ -295,5 +311,71 @@ impl From<ParseIntError> for InnerError {
 impl From<Utf8Error> for InnerError {
     fn from(value: Utf8Error) -> Self {
         Self::Utf8Error(value)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn wrap_io_error() {
+        fn need_error(_e: Error) -> bool { 
+            true
+        }
+
+        let io_error: io::Error = io::Error::new(io::ErrorKind::AlreadyExists, "uh oh");
+
+        let b = need_error(io_error.into());
+        assert!(b);
+    }
+
+    #[test]
+    fn wrap_data_error() {
+        fn need_error(_e: Error) -> bool { 
+            true
+        }
+
+        let data_error: DataError = DataError::new_err(
+            "can't parse this".to_string(), 
+            InnerError::Custom("oh oh".to_string()),
+        );
+
+        let b = need_error(data_error.into());
+        assert!(b);
+    }
+
+    #[test]
+    fn wrap_utf8_error() {
+        fn need_error(_e: Error) -> bool { 
+            true
+        }
+
+        let bytes: &[u8] = b"\x48\x69\xf0\x9f\x98\x89\xd1\x7b\x21";
+        let res = String::from_utf8(bytes.to_vec()).map_err(|err| err.into());
+
+        let b = need_error(res.unwrap_err());
+        assert!(b);
+    }
+
+    #[test]
+    fn utf8_error_text() {
+        let bytes: &[u8] = b"\x48\x69\xf0\x9f\x98\x89\xd1\x7b\x21";
+        let res: Error = String::from_utf8(bytes.to_vec())
+            .map_err(|err| err.into())
+            .unwrap_err();
+
+        match res {
+            Error::DataError(de) => {
+                assert_eq!(de.text, String::from("Hi😉"));
+                match de.inner_error {
+                    InnerError::Utf8Error(inner) => {
+                        assert_eq!(inner.valid_up_to(), 6);
+                    }
+                    _ => assert!(false),
+                }
+            },
+            Error::IoError(_) => assert!(false),
+        }
     }
 }
