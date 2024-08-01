@@ -6,20 +6,21 @@ use crate::error::Error;
 /// Trait for writing to fixed width (column based) serialization
 pub trait WriteFixed {
     /// Writes the object into the supplied buffer
-    fn write_fixed<W: Write>(&self, buf: &mut W) -> Result<(), ()>;
+    fn write_fixed<W: Write>(&self, buf: &mut W) -> Result<(), Error>;
 }
 
 pub trait WriteFixedAll {
     /// Writes a set of objects to the supplied buffer (newline delimited)
-    fn write_fixed_all<W: Write>(self, buf: &mut W) -> Result<(), ()>;
+    fn write_fixed_all<W: Write>(self, buf: &mut W) -> Result<(), Error>;
 }
 
 impl<T: WriteFixed, Iter: IntoIterator<Item = T>> WriteFixedAll for Iter {
-    fn write_fixed_all<W: Write>(self, buf: &mut W) -> Result<(), ()> {
+    fn write_fixed_all<W: Write>(self, buf: &mut W) -> Result<(), Error> {
         for item in self.into_iter() {
             item.write_fixed(buf)?;
-            buf.write("\n".as_bytes()).map_err(|_| ())?;
+            buf.write("\n".as_bytes())?;
         }
+        
         Ok(())
     }
 }
