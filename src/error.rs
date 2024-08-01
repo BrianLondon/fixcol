@@ -378,4 +378,22 @@ mod tests {
             Error::IoError(_) => assert!(false),
         }
     }
+    #[test]
+    fn map_io_error() {
+        use std::io::Write;
+
+        fn try_write<W: Write>(buf: &mut W, bytes: &[u8]) -> Result<usize, Error> {
+            let mut bytes_written = 0;
+            bytes_written += buf.write(bytes)
+                .map_err(|e| Error::from(e))?; // this line compling is what we're really testing
+            Ok(bytes_written)
+        }
+
+        let mut buf: Vec<u8> = Vec::new();
+        let word: String = String::from("Hello!");
+
+        let n_bytes = try_write(&mut buf, word.as_bytes()).unwrap();
+
+        assert_eq!(n_bytes, 6);
+    }
 }
