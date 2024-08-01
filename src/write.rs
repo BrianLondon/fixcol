@@ -11,7 +11,7 @@ pub trait FixedSerializer {
     /// Uses the provided [`FieldDescription`] to determine how to serialize a fixed
     /// with representation of `self` and writes that representation to the supplie
     /// buffer `buf`.
-    fn write_fixed_field<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<usize, Error>;
+    fn write_fixed_field<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), Error>;
 }
 
 const SPACES: [u8; 256] = [b' '; 256];
@@ -21,7 +21,7 @@ fn to_unit<T>(_: T) -> () {
 }
 
 impl FixedSerializer for String {
-    fn write_fixed_field<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<usize, Error> {
+    fn write_fixed_field<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), Error> {
         if desc.skip > 256 {
             // TODO: Fix this (also in the FieldDescription docs)
             panic!("Do not currently support skips of more than 256");
@@ -30,31 +30,31 @@ impl FixedSerializer for String {
         // If so we'll need to truncate
         let string_is_too_long = self.len() > desc.len;
 
-        let mut write_size = buf.write(&SPACES[0..desc.skip]).map_err(|e| Error::from(e))?;
+        buf.write(&SPACES[0..desc.skip])?;
 
         match desc.alignment {
             Alignment::Left | Alignment::Full => {
                 if string_is_too_long {
-                    write_size += buf.write(&self[0..desc.len].as_bytes()).map_err(|e| Error::from(e))?;
+                    buf.write(&self[0..desc.len].as_bytes())?;
                 } else {
-                    write_size += buf.write(&self.as_bytes()).map_err(|e| Error::from(e))?;
+                    buf.write(&self.as_bytes())?;
                     let spaces_to_pad = desc.len - self.len();
-                    write_size += buf.write(&SPACES[..spaces_to_pad]).map_err(|e| Error::from(e))?;
+                    buf.write(&SPACES[..spaces_to_pad])?;
                 }
             }
             Alignment::Right => {
                 if string_is_too_long {
                     let start = self.len() - desc.len;
-                    write_size += buf.write(&self[start..].as_bytes()).map_err(|e| Error::from(e))?;
+                    buf.write(&self[start..].as_bytes())?;
                 } else {
                     let spaces_to_pad = desc.len - self.len();
-                    write_size += buf.write(&SPACES[..spaces_to_pad]).map_err(|e| Error::from(e))?;
-                    write_size += buf.write(&self.as_bytes()).map_err(|e| Error::from(e))?;
+                    buf.write(&SPACES[..spaces_to_pad])?;
+                    buf.write(&self.as_bytes())?;
                 }
             }
         }
 
-        Ok(write_size)
+        Ok(())
     }
 }
 
@@ -66,8 +66,7 @@ macro_rules! fixed_serializer_int_impl {
                 &self,
                 buf: &mut W,
                 desc: &FieldDescription,
-            ) -> Result<usize, Error> {
-                let mut n_bytes: usize = 0;
+            ) -> Result<(), Error> {
 
                 let mut s = self.to_string();
                 if s.len() > desc.len {
@@ -78,18 +77,18 @@ macro_rules! fixed_serializer_int_impl {
 
                 match desc.alignment {
                     Alignment::Left | Alignment::Full => {
-                        n_bytes += buf.write(&SPACES[..desc.skip]).map_err(|e| Error::from(e))?;
-                        n_bytes += buf.write(s.as_bytes()).map_err(|e| Error::from(e))?;
-                        n_bytes += buf.write(&SPACES[..padding]).map_err(|e| Error::from(e))?;
+                        buf.write(&SPACES[..desc.skip])?;
+                        buf.write(s.as_bytes())?;
+                        buf.write(&SPACES[..padding])?;
                     }
                     Alignment::Right => {
                         let skip = padding + desc.skip;
-                        n_bytes += buf.write(&SPACES[..skip]).map_err(|e| Error::from(e))?;
-                        n_bytes += buf.write(s.as_bytes()).map_err(|e| Error::from(e))?;
+                        buf.write(&SPACES[..skip])?;
+                        buf.write(s.as_bytes())?;
                     }
                 }
 
-                Ok(n_bytes)
+                Ok(())
             }
         }
     };
@@ -114,7 +113,7 @@ impl FixedSerializer for f32 {
         &self,
         buf: &mut W,
         desc: &FieldDescription
-    ) -> Result<usize, Error> {
+    ) -> Result<(), Error> {
         let mut bytes_written: usize = 0;
 
         let mut s = self.to_string();
@@ -126,25 +125,23 @@ impl FixedSerializer for f32 {
 
         match desc.alignment {
             Alignment::Left | Alignment::Full => {
-                bytes_written += buf.write(&SPACES[..desc.skip]).map_err(|e| Error::from(e))?;
-                bytes_written += buf.write(s.as_bytes()).map_err(|e| Error::from(e))?;
-                bytes_written += buf.write(&SPACES[..padding]).map_err(|e| Error::from(e))?;
+                bytes_written += buf.write(&SPACES[..desc.skip])?;
+                bytes_written += buf.write(s.as_bytes())?;
+                bytes_written += buf.write(&SPACES[..padding])?;
             }
             Alignment::Right => {
                 let skip = padding + desc.skip;
-                bytes_written += buf.write(&SPACES[..skip]).map_err(|e| Error::from(e))?;
-                bytes_written += buf.write(s.as_bytes()).map_err(|e| Error::from(e))?;
+                bytes_written += buf.write(&SPACES[..skip])?;
+                bytes_written += buf.write(s.as_bytes())?;
             }
         }
 
-        Ok(bytes_written)
+        Ok(())
     }
 }
 
 impl FixedSerializer for f64 {
-    fn write_fixed_field<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<usize, Error> {
-        let mut n_bytes: usize = 0;
-
+    fn write_fixed_field<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), Error> {
         let mut s = self.to_string();
         if s.len() > desc.len {
             s = s.as_str()[..desc.len].to_string();
@@ -154,23 +151,23 @@ impl FixedSerializer for f64 {
 
         match desc.alignment {
             Alignment::Left | Alignment::Full => {
-                n_bytes += buf.write(&SPACES[..desc.skip]).map_err(|e| Error::from(e))?;
-                n_bytes += buf.write(s.as_bytes()).map_err(|e| Error::from(e))?;
-                n_bytes += buf.write(&SPACES[..padding]).map_err(|e| Error::from(e))?;
+                buf.write(&SPACES[..desc.skip])?;
+                buf.write(s.as_bytes())?;
+                buf.write(&SPACES[..padding])?;
             }
             Alignment::Right => {
                 let skip = padding + desc.skip;
-                n_bytes += buf.write(&SPACES[..skip]).map_err(|e| Error::from(e))?;
-                n_bytes += buf.write(s.as_bytes()).map_err(|e| Error::from(e))?;
+                buf.write(&SPACES[..skip])?;
+                buf.write(s.as_bytes())?;
             }
         }
 
-        Ok(n_bytes)
+        Ok(())
     }
 }
 
 impl<T: WriteFixed> FixedSerializer for T {
-    fn write_fixed_field<W: Write>(&self, buf: &mut W, _desc: &FieldDescription) -> Result<usize, Error> {
+    fn write_fixed_field<W: Write>(&self, buf: &mut W, _desc: &FieldDescription) -> Result<(), Error> {
         self.write_fixed(buf)
     }
 }

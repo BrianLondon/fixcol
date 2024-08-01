@@ -42,8 +42,9 @@ mod tests {
         struct Foo;
 
         impl WriteFixed for Foo {
-            fn write_fixed<W: Write>(&self, buf: &mut W) -> Result<usize, Error> {
-                buf.write("Foo".as_bytes()).map_err(|e| Error::from(e))
+            fn write_fixed<W: Write>(&self, buf: &mut W) -> Result<(), Error> {
+                let _ = buf.write("Foo".as_bytes())?;
+                Ok(())
             }
         }
 
@@ -65,9 +66,9 @@ mod tests {
     }
 
     impl WriteFixed for NumWord {
-        fn write_fixed<W: Write>(&self, buf: &mut W) -> Result<usize, Error> {
+        fn write_fixed<W: Write>(&self, buf: &mut W) -> Result<(), Error> {
             let _ = buf.write_fmt(format_args!("{:<10}{:>3}", self.name, self.value))?;
-            Ok(0)
+            Ok(())
         }
     }
 

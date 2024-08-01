@@ -106,14 +106,14 @@ pub(crate) fn enum_write(variants: Vec<&Variant>) -> proc_macro2::TokenStream {
     });
 
     quote! {
-        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<usize, Error> {
+        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), fixed::error::Error> {
             use fixed::FixedSerializer;
 
             match self {
                 #(#write_variants)*
             }
 
-            Ok(0)
+            Ok(())
         }
     }
 }
