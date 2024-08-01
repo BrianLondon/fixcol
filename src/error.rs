@@ -378,22 +378,51 @@ mod tests {
             Error::IoError(_) => assert!(false),
         }
     }
+
     #[test]
     fn map_io_error() {
         use std::io::Write;
 
         fn try_write<W: Write>(buf: &mut W, bytes: &[u8]) -> Result<usize, Error> {
             let mut bytes_written = 0;
-            bytes_written += buf.write(bytes)
-                .map_err(|e| Error::from(e))?; // this line compling is what we're really testing
+            // The conversion from io::Error to fixed::error::Error is what this 
+            // unit test is supposed to be evaluating
+            bytes_written += buf.write(bytes)?;
             Ok(bytes_written)
         }
 
+        // Test success
         let mut buf: Vec<u8> = Vec::new();
         let word: String = String::from("Hello!");
 
         let n_bytes = try_write(&mut buf, word.as_bytes()).unwrap();
 
         assert_eq!(n_bytes, 6);
+
+        // Test failure
+        struct FailedWritter {}
+
+        impl Write for FailedWritter {
+            fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
+                Err(io::Error::new(io::ErrorKind::InvalidData, "failed"))
+            }
+
+            fn flush(&mut self) -> io::Result<()> {
+                Ok(())
+            }
+        }
+
+        let mut buf = FailedWritter{};
+        let word: String = String::from("1234567!");
+
+        let res: Result<usize, Error> = try_write(&mut buf, word.as_bytes());
+
+        match res {
+            Err(Error::IoError(err)) => {
+                assert_eq!(err.kind(), io::ErrorKind::InvalidData);
+            }
+            Err(Error::DataError(_)) => panic!("Expected IO Error"),
+            Ok(_) => panic!("Expected IO Error"),
+        };
     }
 }
