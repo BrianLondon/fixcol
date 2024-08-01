@@ -9,6 +9,7 @@ pub(crate) fn read_unnamed_fields(fields: &FieldsUnnamed) -> (Vec<Ident>, Vec<To
     let field_reads = fields.unnamed.iter().enumerate().map(|item| {
         let (field_num, field) = item;
 
+        let type_token = field.ty.clone();
         let ident = format_ident!("f{}", field_num);
 
         let config = attrs::parse_field_attributes(&field.attrs);
@@ -20,9 +21,9 @@ pub(crate) fn read_unnamed_fields(fields: &FieldsUnnamed) -> (Vec<Ident>, Vec<To
         let read = quote! {
             let mut s: [u8; #buf_size] = [0; #buf_size];
             buf.read_exact(&mut s).map_err(|e| fixed::error::Error::from(e))?;
-            let #ident = std::str::from_utf8(&s)
-                .map_err(|e| fixed::error::Error::from_utf8_error(&s, e))?
-                .parse_with(#config)
+            let raw = std::str::from_utf8(&s)
+                .map_err(|e| fixed::error::Error::from_utf8_error(&s, e))?;
+            let #ident = #type_token::parse_fixed(raw, #config)
                 .map_err(|e| fixed::error::Error::from(e))?;
         };
 
@@ -35,6 +36,7 @@ pub(crate) fn read_unnamed_fields(fields: &FieldsUnnamed) -> (Vec<Ident>, Vec<To
 /// Retuns field names and code to read those fields
 pub(crate) fn read_named_fields(fields: &FieldsNamed) -> (Vec<Ident>, Vec<TokenStream>) {
     let field_reads = fields.named.iter().map(|field| {
+        let type_token = field.ty.clone();
         let name = field.ident.as_ref().unwrap().clone();
 
         let config = attrs::parse_field_attributes(&field.attrs);
@@ -46,9 +48,9 @@ pub(crate) fn read_named_fields(fields: &FieldsNamed) -> (Vec<Ident>, Vec<TokenS
         let read = quote! {
             let mut s: [u8; #buf_size] = [0; #buf_size];
             buf.read_exact(&mut s).map_err(|e| fixed::error::Error::from(e))?;
-            let #name = std::str::from_utf8(&s)
-                .map_err(|e| fixed::error::Error::from_utf8_error(&s, e))?
-                .parse_with(#config)
+            let raw = std::str::from_utf8(&s)
+                .map_err(|e| fixed::error::Error::from_utf8_error(&s, e))?;
+            let #name = #type_token::parse_fixed(raw, #config)
                 .map_err(|e| fixed::error::Error::from(e))?;
         };
 

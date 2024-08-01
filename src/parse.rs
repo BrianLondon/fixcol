@@ -35,13 +35,13 @@ use crate::ReadFixed;
 ///     Green,
 /// }
 ///
-/// impl FixedDeserializer<EyeColor> for &str {
-///     fn parse_with(&self, desc: &FieldDescription) -> Result<EyeColor, DataError> {
-///         match *self {
+/// impl FixedDeserializer for EyeColor {
+///     fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<EyeColor, DataError> {
+///         match s {
 ///             "Bl" => Ok(EyeColor::Blue),
 ///             "Br" => Ok(EyeColor::Brown),
 ///             "Gr" => Ok(EyeColor::Green),
-///             _ => Err(DataError::custom(self, "Unrecognized eye color")),
+///             _ => Err(DataError::custom(s, "Unrecognized eye color")),
 ///         }
 ///     }
 /// }
@@ -138,9 +138,9 @@ use crate::ReadFixed;
 /// # #[derive(Eq, PartialEq, Debug)]
 /// struct Birthday(NaiveDate);
 ///
-/// impl FixedDeserializer<Birthday> for &str {
-///     fn parse_with(&self, desc: &FieldDescription) -> Result<Birthday, DataError> {
-///         let text = &self[desc.skip..desc.skip+desc.len];
+/// impl FixedDeserializer for Birthday {
+///     fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<Birthday, DataError> {
+///         let text = &s[desc.skip..desc.skip+desc.len];
 ///         let mut parts = text.split(' ').filter(|x| *x != "");
 ///
 ///         let year = parts.next()
@@ -184,12 +184,13 @@ use crate::ReadFixed;
 /// #     },
 /// # ]);
 /// ```
-pub trait FixedDeserializer<T: Sized> {
+pub trait FixedDeserializer {
     /// Read an object of type `T` from the current object.
     ///
     /// Uses the provided [`FieldDescription`] to determine how to parse a data field
     /// from a fixed width representation.
-    fn parse_with(&self, desc: &FieldDescription) -> Result<T, DataError>;
+    fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<Self, DataError>
+    where Self: Sized;
 }
 
 fn extract_trimmed<'a, 'b>(src: &'a str, desc: &'b FieldDescription) -> &'a str {
@@ -204,9 +205,9 @@ fn extract_trimmed<'a, 'b>(src: &'a str, desc: &'b FieldDescription) -> &'a str 
 
 macro_rules! fixed_deserializer_float_impl {
     ($t:ty) => {
-        impl FixedDeserializer<$t> for &str {
-            fn parse_with(&self, desc: &FieldDescription) -> Result<$t, DataError> {
-                let trimmed = extract_trimmed(self, desc);
+        impl FixedDeserializer for $t {
+            fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<$t, DataError> {
+                let trimmed = extract_trimmed(s, desc);
                 trimmed.parse::<$t>().map_err(|e| {
                     DataError::new_err(trimmed.to_string(), InnerError::ParseFloatError(e))
                 })
@@ -219,9 +220,9 @@ fixed_deserializer_float_impl!(f64);
 
 macro_rules! fixed_deserializer_int_impl {
     ($t:ty) => {
-        impl FixedDeserializer<$t> for &str {
-            fn parse_with(&self, desc: &FieldDescription) -> Result<$t, DataError> {
-                let trimmed = extract_trimmed(self, desc);
+        impl FixedDeserializer for $t {
+            fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<$t, DataError> {
+                let trimmed = extract_trimmed(s, desc);
                 trimmed.parse::<$t>().map_err(|e| {
                     DataError::new_err(trimmed.to_string(), InnerError::ParseIntError(e))
                 })
@@ -245,16 +246,16 @@ fixed_deserializer_int_impl!(i128);
 fixed_deserializer_int_impl!(usize);
 fixed_deserializer_int_impl!(isize);
 
-impl FixedDeserializer<String> for &str {
-    fn parse_with(&self, desc: &FieldDescription) -> Result<String, DataError> {
-        let trimmed = extract_trimmed(self, desc);
+impl FixedDeserializer for String {
+    fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<String, DataError> {
+        let trimmed = extract_trimmed(s, desc);
         Ok(trimmed.to_string())
     }
 }
 
-impl<T: ReadFixed> FixedDeserializer<T> for &str {
-    fn parse_with(&self, _desc: &FieldDescription) -> Result<T, DataError> {
-        let obj = T::read_fixed_str(&self).map_err(|e| match e {
+impl<T: ReadFixed> FixedDeserializer for T {
+    fn parse_fixed(s: &str, _desc: &FieldDescription) -> Result<Self, DataError> {
+        let obj = T::read_fixed_str(s).map_err(|e| match e {
             Error::DataError(e) => e,
             Error::IoError(e) => {
                 panic!("I/O error while reading internal memory: {:?}", e);
@@ -276,7 +277,7 @@ mod tests {
             len: 3,
             alignment: Alignment::Left,
         };
-        let actual: String = "abc   ".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("abc   ", &desc).unwrap();
         let expected = "abc".to_string();
         assert_eq!(actual, expected)
     }
@@ -288,7 +289,7 @@ mod tests {
             len: 6,
             alignment: Alignment::Left,
         };
-        let actual: String = "abc   ".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("abc   ", &desc).unwrap();
         let expected = "abc".to_string();
         assert_eq!(actual, expected)
     }
@@ -300,7 +301,7 @@ mod tests {
             len: 5,
             alignment: Alignment::Left,
         };
-        let actual: String = "abc   ".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("abc   ", &desc).unwrap();
         let expected = "bc".to_string();
         assert_eq!(actual, expected)
     }
@@ -312,7 +313,7 @@ mod tests {
             len: 2,
             alignment: Alignment::Left,
         };
-        let actual: String = "abc   ".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("abc   ", &desc).unwrap();
         let expected = "ab".to_string();
         assert_eq!(actual, expected)
     }
@@ -324,7 +325,7 @@ mod tests {
             len: 6,
             alignment: Alignment::Left,
         };
-        let actual: String = "a bc  ".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("a bc  ", &desc).unwrap();
         let expected = "a bc".to_string();
         assert_eq!(actual, expected)
     }
@@ -336,7 +337,7 @@ mod tests {
             len: 6,
             alignment: Alignment::Left,
         };
-        let actual: String = " abc  ".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed(" abc  ", &desc).unwrap();
         let expected = " abc".to_string();
         assert_eq!(actual, expected)
     }
@@ -348,7 +349,7 @@ mod tests {
             len: 3,
             alignment: Alignment::Right,
         };
-        let actual: String = "   abc".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("   abc", &desc).unwrap();
         let expected = "".to_string();
         assert_eq!(actual, expected)
     }
@@ -360,7 +361,7 @@ mod tests {
             len: 6,
             alignment: Alignment::Right,
         };
-        let actual: String = "   abc".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("   abc", &desc).unwrap();
         let expected = "abc".to_string();
         assert_eq!(actual, expected)
     }
@@ -372,7 +373,7 @@ mod tests {
             len: 5,
             alignment: Alignment::Right,
         };
-        let actual: String = "   abc".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("   abc", &desc).unwrap();
         let expected = "abc".to_string();
         assert_eq!(actual, expected)
     }
@@ -384,7 +385,7 @@ mod tests {
             len: 2,
             alignment: Alignment::Right,
         };
-        let actual: String = "   abc".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("   abc", &desc).unwrap();
         let expected = "bc".to_string();
         assert_eq!(actual, expected)
     }
@@ -396,7 +397,7 @@ mod tests {
             len: 4,
             alignment: Alignment::Right,
         };
-        let actual: String = "   abc".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("   abc", &desc).unwrap();
         let expected = "ab".to_string();
         assert_eq!(actual, expected)
     }
@@ -408,7 +409,7 @@ mod tests {
             len: 6,
             alignment: Alignment::Right,
         };
-        let actual: String = "  a bc".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("  a bc", &desc).unwrap();
         let expected = "a bc".to_string();
         assert_eq!(actual, expected)
     }
@@ -420,7 +421,7 @@ mod tests {
             len: 6,
             alignment: Alignment::Right,
         };
-        let actual: String = " abc  ".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed(" abc  ", &desc).unwrap();
         let expected = "abc  ".to_string();
         assert_eq!(actual, expected)
     }
@@ -432,7 +433,7 @@ mod tests {
             len: 6,
             alignment: Alignment::Full,
         };
-        let actual: String = "abcdef".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("abcdef", &desc).unwrap();
         let expected = "abcdef".to_string();
         assert_eq!(actual, expected);
     }
@@ -444,7 +445,7 @@ mod tests {
             len: 3,
             alignment: Alignment::Full,
         };
-        let actual: String = "abcdef".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("abcdef", &desc).unwrap();
         let expected = "bcd".to_string();
         assert_eq!(actual, expected);
     }
@@ -456,7 +457,7 @@ mod tests {
             len: 6,
             alignment: Alignment::Full,
         };
-        let actual: String = "abc   ".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("abc   ", &desc).unwrap();
         let expected = "abc   ".to_string();
         assert_eq!(actual, expected);
     }
@@ -468,7 +469,7 @@ mod tests {
             len: 6,
             alignment: Alignment::Full,
         };
-        let actual: String = "   abc".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("   abc", &desc).unwrap();
         let expected = "   abc".to_string();
         assert_eq!(actual, expected);
     }
@@ -480,7 +481,7 @@ mod tests {
             len: 5,
             alignment: Alignment::Full,
         };
-        let actual: String = "abc   ".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("abc   ", &desc).unwrap();
         let expected = "bc   ".to_string();
         assert_eq!(actual, expected);
     }
@@ -492,7 +493,7 @@ mod tests {
             len: 4,
             alignment: Alignment::Full,
         };
-        let actual: String = "abc   ".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed("abc   ", &desc).unwrap();
         let expected = "abc ".to_string();
         assert_eq!(actual, expected);
     }
@@ -504,7 +505,7 @@ mod tests {
             len: 6,
             alignment: Alignment::Full,
         };
-        let actual: String = " a bc ".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed(" a bc ", &desc).unwrap();
         let expected = " a bc ".to_string();
         assert_eq!(actual, expected);
     }
@@ -516,7 +517,7 @@ mod tests {
             len: 3,
             alignment: Alignment::Full,
         };
-        let actual: String = " ab c ".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed(" ab c ", &desc).unwrap();
         let expected = "ab ".to_string();
         assert_eq!(actual, expected);
     }
@@ -528,7 +529,7 @@ mod tests {
             len: 4,
             alignment: Alignment::Full,
         };
-        let actual: String = " ab c ".parse_with(&desc).unwrap();
+        let actual: String = String::parse_fixed(" ab c ", &desc).unwrap();
         let expected = "ab c".to_string();
         assert_eq!(actual, expected);
     }
@@ -545,13 +546,13 @@ mod tests {
 
         let mut tests_run = 0;
         for desc in descs {
-            let actual: f32 = " 3.14 ".parse_with(&desc).unwrap();
+            let actual: f32 = String::parse_fixed(" 3.14 ", &desc).unwrap();
             assert_eq!(actual, expected);
 
-            let actual: f32 = "3.14  ".parse_with(&desc).unwrap();
+            let actual: f32 = String::parse_fixed("3.14  ", &desc).unwrap();
             assert_eq!(actual, expected);
 
-            let actual: f32 = "  3.14".parse_with(&desc).unwrap();
+            let actual: f32 = String::parse_fixed("  3.14", &desc).unwrap();
             assert_eq!(actual, expected);
 
             tests_run += 1;
@@ -568,7 +569,7 @@ mod tests {
             len: 4,
             alignment: Alignment::Full,
         };
-        let actual: f32 = " 3.14 ".parse_with(&desc).unwrap();
+        let actual: f32 = f32::parse_fixed(" 3.14 ", &desc).unwrap();
         let expected: f32 = 3.14;
         assert_eq!(actual, expected);
 
@@ -577,7 +578,7 @@ mod tests {
             len: 6,
             alignment: Alignment::Full,
         };
-        let actual: Result<f32, DataError> = " 3.14 ".parse_with(&desc);
+        let actual: Result<f32, DataError> = f32::parse_fixed(" 3.14 ", &desc);
 
         assert!(actual.is_err()); // TODO: check the error type
     }
@@ -589,7 +590,7 @@ mod tests {
             len: 5,
             alignment: Alignment::Left,
         };
-        let actual: f32 = " 3.14 ".parse_with(&desc).unwrap();
+        let actual: f32 = f32::parse_fixed(" 3.14 ", &desc).unwrap();
         let expected: f32 = 3.14;
         assert_eq!(actual, expected);
 
@@ -598,7 +599,7 @@ mod tests {
             len: 4,
             alignment: Alignment::Left,
         };
-        let actual: f32 = " 3.14 ".parse_with(&desc).unwrap();
+        let actual: f32 = f32::parse_fixed(" 3.14 ", &desc).unwrap();
         let expected: f32 = 0.14;
         assert_eq!(actual, expected);
     }
@@ -610,7 +611,7 @@ mod tests {
             len: 5,
             alignment: Alignment::Right,
         };
-        let actual: f32 = " 3.14 ".parse_with(&desc).unwrap();
+        let actual: f32 = f32::parse_fixed(" 3.14 ", &desc).unwrap();
         let expected: f32 = 3.14;
         assert_eq!(actual, expected);
     }
@@ -622,7 +623,7 @@ mod tests {
             len: 5,
             alignment: Alignment::Right,
         };
-        let actual: Result<f32, DataError> = " 3a14 ".parse_with(&desc);
+        let actual: Result<f32, DataError> = f32::parse_fixed(" 3a14 ", &desc);
         let expected = "Error decoding data from \"3a14\": invalid float literal\n";
         assert_eq!(actual.unwrap_err().to_string(), expected);
     }

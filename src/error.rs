@@ -179,6 +179,9 @@ impl DataError {
     /// This method will typically be used when implementing custom deserialization
     /// logic through a [`FixedDeserializer`] implementation that also requires
     /// custom error handling to provide useful error messages.
+    /// 
+    /// * `parsed_value` - The data that we failed to parse
+    /// * `message` - A description of what went wrong
     ///
     /// # Example
     ///
@@ -195,12 +198,12 @@ impl DataError {
     ///
     /// struct TriState(Option<bool>);
     ///
-    /// impl FixedDeserializer<TriState> for &str {
-    ///     fn parse_with(&self, desc: &FieldDescription) -> Result<TriState, DataError> {
+    /// impl FixedDeserializer for TriState {
+    ///     fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<TriState, DataError> {
     ///         // We've defined this type as always having one column so confirm that
     ///         assert_eq!(desc.len, 1);
     ///         // burn columns we have to skip
-    ///         let column = &self[desc.skip..desc.skip+1];
+    ///         let column = &s[desc.skip..desc.skip+1];
     ///         match column {
     ///             "Y" => Ok(TriState(Some(true))),
     ///             "N" => Ok(TriState(Some(false))),
