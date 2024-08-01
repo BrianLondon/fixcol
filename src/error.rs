@@ -384,8 +384,9 @@ mod tests {
 
         fn try_write<W: Write>(buf: &mut W, bytes: &[u8]) -> Result<usize, Error> {
             let mut bytes_written = 0;
-            bytes_written += buf.write(bytes)
-                .map_err(|e| Error::from(e))?; // this line compling is what we're really testing
+            // The conversion from io::Error to fixed::error::Error is what this 
+            // unit test is supposed to be evaluating
+            bytes_written += buf.write(bytes)?;
             Ok(bytes_written)
         }
 
