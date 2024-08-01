@@ -1,5 +1,6 @@
-use crate::error::{DataError, InnerError};
+use crate::error::{DataError, Error, InnerError};
 use crate::format::{Alignment, FieldDescription};
+use crate::ReadFixed;
 
 /// A trait the represents field types that can be decoded from fixed len strings
 ///
@@ -248,6 +249,19 @@ impl FixedDeserializer<String> for &str {
     fn parse_with(&self, desc: &FieldDescription) -> Result<String, DataError> {
         let trimmed = extract_trimmed(self, desc);
         Ok(trimmed.to_string())
+    }
+}
+
+impl<T: ReadFixed> FixedDeserializer<T> for &str {
+    fn parse_with(&self, _desc: &FieldDescription) -> Result<T, DataError> {
+        let obj = T::read_fixed_str(&self).map_err(|e| match e {
+            Error::DataError(e) => e,
+            Error::IoError(e) => {
+                panic!("I/O error while reading internal memory: {:?}", e);
+            }
+        })?;
+
+        Ok(obj)
     }
 }
 

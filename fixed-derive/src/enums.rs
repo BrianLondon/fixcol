@@ -131,9 +131,9 @@ fn write_struct_variant(ident: &Ident, key: String, fields: &FieldsNamed) -> Tok
                 alignment: fixed::Alignment::Left,
             };
             let key = String::from(#key);
-            let _ = key.write_fixed(buf, &key_config).unwrap();
+            let _ = key.write_fixed_field(buf, &key_config).unwrap();
 
-            #( let _ = #names.write_fixed(buf, #configs).unwrap();  )*
+            #( let _ = #names.write_fixed_field(buf, #configs).unwrap();  )*
         },
     }
 }
@@ -157,9 +157,9 @@ fn write_tuple_variant(ident: &Ident, key: String, fields: &FieldsUnnamed) -> To
                 alignment: fixed::Alignment::Left,
             };
             let key = String::from(#key);
-            let _ = key.write_fixed(buf, &key_config).unwrap();
+            let _ = key.write_fixed_field(buf, &key_config).unwrap();
 
-            #( let _ = #named_fields.write_fixed(buf, #configs).unwrap();  )*
+            #( let _ = #named_fields.write_fixed_field(buf, #configs).unwrap();  )*
         },
     }
 }
@@ -175,7 +175,7 @@ fn write_unit_variant(ident: &Ident, key: String) -> TokenStream {
                 alignment: fixed::Alignment::Left,
             };
             let key = String::from(#key);
-            let _ = key.write_fixed(buf, &key_config).unwrap();
+            let _ = key.write_fixed_field(buf, &key_config).unwrap();
         },
     }
 }
