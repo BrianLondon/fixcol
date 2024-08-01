@@ -68,12 +68,12 @@ fn struct_write_fixed(fields: FieldsNamed) -> proc_macro2::TokenStream {
     let (names, configs) = write_named_fields(&fields);
 
     quote! {
-        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), ()> {
+        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<usize, fixed::error::Error> {
             use fixed::FixedSerializer;
 
             #( let _ = self.#names.write_fixed_field(buf, #configs).unwrap(); )*
 
-            Ok(())
+            Ok(0)
         }
     }
 }
@@ -82,12 +82,12 @@ fn tuple_struct_write_fixed(fields: FieldsUnnamed) -> proc_macro2::TokenStream {
     let (names, configs) = write_unnamed_fields(&fields);
 
     quote! {
-        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), ()> {
+        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<usize, fixed::error::Error> {
             use fixed::FixedSerializer;
 
             #( let _ = self.#names.write_fixed_field(buf, #configs).unwrap();  )*
 
-            Ok(())
+            Ok(0)
         }
     }
 }
