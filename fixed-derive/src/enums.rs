@@ -16,14 +16,14 @@ pub(crate) fn enum_read(
     attrs: &Vec<Attribute>,
     variants: Vec<&Variant>,
 ) -> proc_macro2::TokenStream {
-    let enum_config = parse_enum_attributes(attrs);
+    let enum_config = parse_enum_attributes(name, attrs);
 
     let (var_name, var_read): (Vec<_>, Vec<_>) = variants
         .iter()
         .map(|variant| {
             let var_name = &variant.ident;
 
-            let VariantConfig { key } = parse_variant_attributes(&variant.attrs);
+            let VariantConfig { key } = parse_variant_attributes(&var_name, &variant.attrs);
 
             let read = match &variant.fields {
                 syn::Fields::Named(fields) => read_struct_variant(var_name, fields),
@@ -43,10 +43,10 @@ pub(crate) fn enum_read(
 
             let mut s: [u8; #key_width] = [0; #key_width];
             buf.read_exact(&mut s).map_err(|e| fixed::error::Error::from(e))?;
-            let key: &str = std::str::from_utf8(&s)
-                .map_err(|e| fixed::error::Error::from_utf8_error(&s, e))?;
+            let key: String = String::from_utf8(s.to_vec())
+                .map_err(|e| fixed::error::Error::from(e))?;
 
-            match key {
+            match key.as_str() {
                 #(#var_name => { #var_read },)*
                 k => Err(fixed::error::Error::unknown_key_error(k.to_owned())),
             }
@@ -96,7 +96,7 @@ fn read_unit_variant(
 
 pub(crate) fn enum_write(variants: Vec<&Variant>) -> proc_macro2::TokenStream {
     let write_variants = variants.iter().map(|variant| {
-        let VariantConfig { key } = parse_variant_attributes(&variant.attrs);
+        let VariantConfig { key } = parse_variant_attributes(&variant.ident, &variant.attrs);
 
         match &variant.fields {
             syn::Fields::Named(fields) => write_struct_variant(&variant.ident, key, fields),
@@ -106,7 +106,7 @@ pub(crate) fn enum_write(variants: Vec<&Variant>) -> proc_macro2::TokenStream {
     });
 
     quote! {
-        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), ()> {
+        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), fixed::error::Error> {
             use fixed::FixedSerializer;
 
             match self {
@@ -131,9 +131,9 @@ fn write_struct_variant(ident: &Ident, key: String, fields: &FieldsNamed) -> Tok
                 alignment: fixed::Alignment::Left,
             };
             let key = String::from(#key);
-            let _ = key.write_fixed_field(buf, &key_config).unwrap();
+            let _ = key.write_fixed_field(buf, &key_config)?;
 
-            #( let _ = #names.write_fixed_field(buf, #configs).unwrap();  )*
+            #( let _ = #names.write_fixed_field(buf, #configs)?;  )*
         },
     }
 }
@@ -157,9 +157,9 @@ fn write_tuple_variant(ident: &Ident, key: String, fields: &FieldsUnnamed) -> To
                 alignment: fixed::Alignment::Left,
             };
             let key = String::from(#key);
-            let _ = key.write_fixed_field(buf, &key_config).unwrap();
+            let _ = key.write_fixed_field(buf, &key_config)?;
 
-            #( let _ = #named_fields.write_fixed_field(buf, #configs).unwrap();  )*
+            #( let _ = #named_fields.write_fixed_field(buf, #configs)?;  )*
         },
     }
 }
@@ -175,7 +175,7 @@ fn write_unit_variant(ident: &Ident, key: String) -> TokenStream {
                 alignment: fixed::Alignment::Left,
             };
             let key = String::from(#key);
-            let _ = key.write_fixed_field(buf, &key_config).unwrap();
+            let _ = key.write_fixed_field(buf, &key_config)?;
         },
     }
 }
