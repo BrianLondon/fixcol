@@ -1,14 +1,14 @@
 extern crate fixed;
 extern crate fixed_derive;
 
-use std::io::{Write, Error as IoError, ErrorKind};
+use std::io::{Error as IoError, ErrorKind, Write};
 
-use fixed_derive::WriteFixed;
-use fixed::WriteFixedAll;
 use fixed::error::Error;
+use fixed::WriteFixedAll;
+use fixed_derive::WriteFixed;
 
 /// A writable buffer that accepts a maximum number of bytes and then errors
-/// 
+///
 /// It's useful when you want to test a system's response to I/O errors
 struct FakeBuffer {
     max_size: usize,
@@ -18,10 +18,10 @@ struct FakeBuffer {
 
 impl FakeBuffer {
     pub fn new(size: usize) -> Self {
-        Self { 
+        Self {
             max_size: size,
             data_size: 0,
-            data: Vec::new() 
+            data: Vec::new(),
         }
     }
 
@@ -138,13 +138,13 @@ fn struct_out_of_space_test() {
 #[fixed(key_width = 1)]
 enum Datum {
     #[fixed(key = "S")]
-    Scalar(#[fixed(width=10, align="right")]u16),
+    Scalar(#[fixed(width = 10, align = "right")] u16),
     #[fixed(key = "P")]
-    Pair{
+    Pair {
         #[fixed(width = 5)]
-        x: u16, 
+        x: u16,
         #[fixed(width = 5)]
-        y: u16 
+        y: u16,
     },
     #[fixed(key = "U")]
     Unit,
@@ -192,7 +192,6 @@ fn enum_adequate_size_control() {
     assert!(res.is_ok());
     assert_eq!(text, EXPECTED_ENUM_TEXT);
 }
-
 
 #[test]
 fn out_of_space_in_struct_variant() {

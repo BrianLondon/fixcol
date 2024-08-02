@@ -11,7 +11,11 @@ pub trait FixedSerializer {
     /// Uses the provided [`FieldDescription`] to determine how to serialize a fixed
     /// with representation of `self` and writes that representation to the supplie
     /// buffer `buf`.
-    fn write_fixed_field<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), Error>;
+    fn write_fixed_field<W: Write>(
+        &self,
+        buf: &mut W,
+        desc: &FieldDescription,
+    ) -> Result<(), Error>;
 }
 
 const SPACES: [u8; 256] = [b' '; 256];
@@ -21,7 +25,11 @@ fn to_unit<T>(_: T) -> () {
 }
 
 impl FixedSerializer for String {
-    fn write_fixed_field<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), Error> {
+    fn write_fixed_field<W: Write>(
+        &self,
+        buf: &mut W,
+        desc: &FieldDescription,
+    ) -> Result<(), Error> {
         if desc.skip > 256 {
             // TODO: Fix this (also in the FieldDescription docs)
             panic!("Do not currently support skips of more than 256");
@@ -67,7 +75,6 @@ macro_rules! fixed_serializer_int_impl {
                 buf: &mut W,
                 desc: &FieldDescription,
             ) -> Result<(), Error> {
-
                 let mut s = self.to_string();
                 if s.len() > desc.len {
                     s = s.as_str()[..desc.len].to_string();
@@ -112,7 +119,7 @@ impl FixedSerializer for f32 {
     fn write_fixed_field<W: Write>(
         &self,
         buf: &mut W,
-        desc: &FieldDescription
+        desc: &FieldDescription,
     ) -> Result<(), Error> {
         let mut bytes_written: usize = 0;
 
@@ -141,7 +148,11 @@ impl FixedSerializer for f32 {
 }
 
 impl FixedSerializer for f64 {
-    fn write_fixed_field<W: Write>(&self, buf: &mut W, desc: &FieldDescription) -> Result<(), Error> {
+    fn write_fixed_field<W: Write>(
+        &self,
+        buf: &mut W,
+        desc: &FieldDescription,
+    ) -> Result<(), Error> {
         let mut s = self.to_string();
         if s.len() > desc.len {
             s = s.as_str()[..desc.len].to_string();
@@ -167,7 +178,11 @@ impl FixedSerializer for f64 {
 }
 
 impl<T: WriteFixed> FixedSerializer for T {
-    fn write_fixed_field<W: Write>(&self, buf: &mut W, _desc: &FieldDescription) -> Result<(), Error> {
+    fn write_fixed_field<W: Write>(
+        &self,
+        buf: &mut W,
+        _desc: &FieldDescription,
+    ) -> Result<(), Error> {
         self.write_fixed(buf)
     }
 }

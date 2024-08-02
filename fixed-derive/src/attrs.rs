@@ -2,7 +2,7 @@
 use std::{fmt::Display, str::FromStr};
 
 use proc_macro2::{TokenStream, TokenTree};
-use syn::{spanned::Spanned, Attribute, Ident, Meta, Path};
+use syn::{Attribute, Ident, Meta, Path};
 
 const FIXED_ATTR_KEY: &'static str = "fixed";
 
@@ -278,8 +278,11 @@ pub(crate) fn parse_enum_attributes(name: &Ident, attrs: &Vec<Attribute>) -> Enu
                     panic!("Duplicate values for key_width");
                 }
             }
-            key => panic!("Fixed encountered an unrecognized parameter \"{}\" \
-                while parsing enum {}", key, name),
+            key => panic!(
+                "Fixed encountered an unrecognized parameter \"{}\" \
+                while parsing enum {}",
+                key, name
+            ),
         }
     }
 
@@ -317,7 +320,10 @@ pub(crate) fn parse_variant_attributes(name: &Ident, attrs: &Vec<Attribute>) -> 
                     panic!("Duplicate values for key");
                 }
             }
-            key => panic!("Unrecognized parameter \"{}\" on enum variant {}", key, name),
+            key => panic!(
+                "Unrecognized parameter \"{}\" on enum variant {}",
+                key, name
+            ),
         }
     }
 

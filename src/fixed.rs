@@ -20,7 +20,7 @@ impl<T: WriteFixed, Iter: IntoIterator<Item = T>> WriteFixedAll for Iter {
             item.write_fixed(buf)?;
             buf.write("\n".as_bytes())?;
         }
-        
+
         Ok(())
     }
 }

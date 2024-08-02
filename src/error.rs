@@ -138,7 +138,7 @@ impl From<FromUtf8Error> for Error {
     ///
     /// This is used to wrap utf decoding errors and will preserve the byte
     /// sequence up to the location the error occured.
-    /// 
+    ///
     /// See [`From::from`] docs for more information.
     fn from(value: FromUtf8Error) -> Self {
         Self::from_utf8_error(value)
@@ -195,7 +195,7 @@ impl DataError {
     /// This method will typically be used when implementing custom deserialization
     /// logic through a [`FixedDeserializer`] implementation that also requires
     /// custom error handling to provide useful error messages.
-    /// 
+    ///
     /// * `parsed_value` - The data that we failed to parse
     /// * `message` - A description of what went wrong
     ///
@@ -320,7 +320,7 @@ mod tests {
 
     #[test]
     fn wrap_io_error() {
-        fn need_error(_e: Error) -> bool { 
+        fn need_error(_e: Error) -> bool {
             true
         }
 
@@ -332,12 +332,12 @@ mod tests {
 
     #[test]
     fn wrap_data_error() {
-        fn need_error(_e: Error) -> bool { 
+        fn need_error(_e: Error) -> bool {
             true
         }
 
         let data_error: DataError = DataError::new_err(
-            "can't parse this".to_string(), 
+            "can't parse this".to_string(),
             InnerError::Custom("oh oh".to_string()),
         );
 
@@ -347,7 +347,7 @@ mod tests {
 
     #[test]
     fn wrap_utf8_error() {
-        fn need_error(_e: Error) -> bool { 
+        fn need_error(_e: Error) -> bool {
             true
         }
 
@@ -374,7 +374,7 @@ mod tests {
                     }
                     _ => assert!(false),
                 }
-            },
+            }
             Error::IoError(_) => assert!(false),
         }
     }
@@ -385,7 +385,7 @@ mod tests {
 
         fn try_write<W: Write>(buf: &mut W, bytes: &[u8]) -> Result<usize, Error> {
             let mut bytes_written = 0;
-            // The conversion from io::Error to fixed::error::Error is what this 
+            // The conversion from io::Error to fixed::error::Error is what this
             // unit test is supposed to be evaluating
             bytes_written += buf.write(bytes)?;
             Ok(bytes_written)
@@ -412,7 +412,7 @@ mod tests {
             }
         }
 
-        let mut buf = FailedWritter{};
+        let mut buf = FailedWritter {};
         let word: String = String::from("1234567!");
 
         let res: Result<usize, Error> = try_write(&mut buf, word.as_bytes());

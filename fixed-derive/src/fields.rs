@@ -79,7 +79,8 @@ pub(crate) fn write_unnamed_fields(fields: &FieldsUnnamed) -> (Vec<Index>, Vec<F
         .enumerate()
         .map(|field| {
             let name = syn::Index::from(field.0);
-            let config = attrs::parse_field_attributes(&format_ident!("f{}", field.0), &field.1.attrs);
+            let config =
+                attrs::parse_field_attributes(&format_ident!("f{}", field.0), &field.1.attrs);
 
             (name, config)
         })

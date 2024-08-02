@@ -190,7 +190,8 @@ pub trait FixedDeserializer {
     /// Uses the provided [`FieldDescription`] to determine how to parse a data field
     /// from a fixed width representation.
     fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<Self, DataError>
-    where Self: Sized;
+    where
+        Self: Sized;
 }
 
 fn extract_trimmed<'a, 'b>(src: &'a str, desc: &'b FieldDescription) -> &'a str {
