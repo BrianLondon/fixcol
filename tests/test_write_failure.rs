@@ -28,11 +28,17 @@ impl FakeBuffer {
     pub fn as_slice(&self) -> &[u8] {
         &self.data.as_slice()
     }
+
+    pub fn as_string(&self) -> Option<String> {
+        std::str::from_utf8(&self.as_slice())
+            .ok()
+            .map(|x| x.to_string())
+    }
 }
 
 impl Write for FakeBuffer {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        if self.data_size <= self.max_size {
+        if self.data_size + buf.len() <= self.max_size {
             let written = self.data.write(buf).unwrap();
             self.data_size += written;
             Ok(written)
@@ -51,7 +57,7 @@ impl Write for FakeBuffer {
 // Tests of struct writes
 //
 
-const EXPECTED: &'static str = r#"91 115
+const EXPECTED_STRUCT_TEXT: &'static str = r#"91 115
 221159
 92 0  
 151171
@@ -81,7 +87,7 @@ impl Point {
 }
 
 #[test]
-fn normal_buffer_control() {
+fn struct_normal_buffer_control() {
     let points = Point::sample();
 
     let mut buf: Vec<u8> = Vec::new();
@@ -90,24 +96,24 @@ fn normal_buffer_control() {
     let text = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
 
     assert!(res.is_ok());
-    assert_eq!(text, EXPECTED);
+    assert_eq!(text, EXPECTED_STRUCT_TEXT);
 }
 
 #[test]
-fn adequate_size_control() {
+fn struct_adequate_size_control() {
     let points = Point::sample();
 
     let mut buf = FakeBuffer::new(50);
     let res = points.write_fixed_all(&mut buf);
 
-    let text = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
+    let text = buf.as_string().unwrap();
 
     assert!(res.is_ok());
-    assert_eq!(text, EXPECTED);
+    assert_eq!(text, EXPECTED_STRUCT_TEXT);
 }
 
 #[test]
-fn out_of_space_test() {
+fn struct_out_of_space_test() {
     let points = Point::sample();
 
     let mut buf = FakeBuffer::new(20);
@@ -128,21 +134,128 @@ fn out_of_space_test() {
 // Test of enum writes
 //
 
-// #[derive(Debug, Eq, PartialEq, WriteFixed)]
-// #[fixed(tag_width = 1)]
-// enum Number {
-//     #[fixed(tag="S")]
-//     Scalar(#[fixed(width=10, align="right")]u16),
-//     #[fixed(tag="P")]
-//     Pair{
-//         #[fixed(width = 5)]
-//         x: u16, 
-//         #[fixed(width = 5)]
-//         y: u16 
-//     },
-//     #[fixed(tag = "U")]
-//     Unit,
-// }
+#[derive(Debug, Eq, PartialEq, WriteFixed)]
+#[fixed(key_width = 1)]
+enum Datum {
+    #[fixed(key = "S")]
+    Scalar(#[fixed(width=10, align="right")]u16),
+    #[fixed(key = "P")]
+    Pair{
+        #[fixed(width = 5)]
+        x: u16, 
+        #[fixed(width = 5)]
+        y: u16 
+    },
+    #[fixed(key = "U")]
+    Unit,
+}
+
+impl Datum {
+    pub fn sample() -> Vec<Self> {
+        vec![
+            Datum::Pair { x: 53542, y: 72 },
+            Datum::Unit,
+            Datum::Unit,
+            Datum::Scalar(1234),
+        ]
+    }
+}
+
+const EXPECTED_ENUM_TEXT: &'static str = r#"P5354272   
+U
+U
+S      1234
+"#;
+
+#[test]
+fn enum_normal_buffer_control() {
+    let data = Datum::sample();
+
+    let mut buf: Vec<u8> = Vec::new();
+    let res = data.write_fixed_all(&mut buf);
+
+    let text = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
+
+    assert!(res.is_ok());
+    assert_eq!(text, EXPECTED_ENUM_TEXT);
+}
+
+#[test]
+fn enum_adequate_size_control() {
+    let data = Datum::sample();
+
+    let mut buf = FakeBuffer::new(50);
+    let res = data.write_fixed_all(&mut buf);
+
+    let text = buf.as_string().unwrap();
+
+    assert!(res.is_ok());
+    assert_eq!(text, EXPECTED_ENUM_TEXT);
+}
 
 
+#[test]
+fn out_of_space_in_struct_variant() {
+    let data = Datum::sample();
 
+    let mut buf = FakeBuffer::new(7);
+    let res = data.write_fixed_all(&mut buf);
+
+    assert!(res.is_err());
+
+    match res.unwrap_err() {
+        Error::DataError(_) => panic!("Should have had I/O Error"),
+        Error::IoError(e) => {
+            assert_eq!(e.to_string(), "Out of space");
+            assert_eq!(e.kind(), ErrorKind::WriteZero);
+        }
+    }
+
+    // Confirm we failed in the struct variant
+    let expected = "P53542";
+    assert_eq!(buf.as_string().unwrap(), expected);
+}
+
+#[test]
+fn out_of_space_in_tuple_variant() {
+    let data = Datum::sample();
+
+    let mut buf = FakeBuffer::new(15);
+    let res = data.write_fixed_all(&mut buf);
+
+    assert!(res.is_err());
+
+    match res.unwrap_err() {
+        Error::DataError(_) => panic!("Should have had I/O Error"),
+        Error::IoError(e) => {
+            assert_eq!(e.to_string(), "Out of space");
+            assert_eq!(e.kind(), ErrorKind::WriteZero);
+        }
+    }
+
+    // Confirm we failed in the tuple variant
+    let expected = "P5354272   \nU\nU";
+    assert_eq!(buf.as_string().unwrap(), expected);
+}
+
+#[test]
+fn out_of_space_in_unit_variant() {
+    let data = Datum::sample();
+
+    let mut buf = FakeBuffer::new(14);
+    let res = data.write_fixed_all(&mut buf);
+
+    assert!(res.is_err());
+
+    match res.unwrap_err() {
+        Error::DataError(_) => panic!("Should have had I/O Error"),
+        Error::IoError(e) => {
+            assert_eq!(e.to_string(), "Out of space");
+            assert_eq!(e.kind(), ErrorKind::WriteZero);
+        }
+    }
+
+    // Confirm we failed in the unit variant
+    let expected = "P5354272   \nU\n";
+    assert_eq!(buf.as_string().unwrap(), expected);
+}

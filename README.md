@@ -8,6 +8,8 @@ A library for reading fixed with / column delimited data files.
  - Fixed column offsets
  - Error messages for writing operations
  - Strict mode
+ - Add an option for padding enum variants to all be the same length
+    - Also support shorter than expected lines gracefully
  
 
 Also... do this: https://stackoverflow.com/questions/54392702/how-to-report-errors-in-a-procedural-macro-using-the-quote-macro
