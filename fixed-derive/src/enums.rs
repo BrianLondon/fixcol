@@ -16,14 +16,14 @@ pub(crate) fn enum_read(
     attrs: &Vec<Attribute>,
     variants: Vec<&Variant>,
 ) -> proc_macro2::TokenStream {
-    let enum_config = parse_enum_attributes(attrs);
+    let enum_config = parse_enum_attributes(name, attrs);
 
     let (var_name, var_read): (Vec<_>, Vec<_>) = variants
         .iter()
         .map(|variant| {
             let var_name = &variant.ident;
 
-            let VariantConfig { key } = parse_variant_attributes(&variant.attrs);
+            let VariantConfig { key } = parse_variant_attributes(&var_name, &variant.attrs);
 
             let read = match &variant.fields {
                 syn::Fields::Named(fields) => read_struct_variant(var_name, fields),
@@ -96,7 +96,7 @@ fn read_unit_variant(
 
 pub(crate) fn enum_write(variants: Vec<&Variant>) -> proc_macro2::TokenStream {
     let write_variants = variants.iter().map(|variant| {
-        let VariantConfig { key } = parse_variant_attributes(&variant.attrs);
+        let VariantConfig { key } = parse_variant_attributes(&variant.ident, &variant.attrs);
 
         match &variant.fields {
             syn::Fields::Named(fields) => write_struct_variant(&variant.ident, key, fields),

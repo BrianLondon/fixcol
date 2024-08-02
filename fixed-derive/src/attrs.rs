@@ -2,7 +2,7 @@
 use std::{fmt::Display, str::FromStr};
 
 use proc_macro2::{TokenStream, TokenTree};
-use syn::{Attribute, Meta, Path};
+use syn::{spanned::Spanned, Attribute, Ident, Meta, Path};
 
 const FIXED_ATTR_KEY: &'static str = "fixed";
 
@@ -189,7 +189,7 @@ impl FieldConfigBuilder {
     }
 }
 
-pub fn parse_field_attributes(attrs: &Vec<Attribute>) -> FieldConfig {
+pub fn parse_field_attributes(name: &Ident, attrs: &Vec<Attribute>) -> FieldConfig {
     let params = parse_attributes(attrs);
     let mut conf = FieldConfigBuilder::new();
 
@@ -216,7 +216,7 @@ pub fn parse_field_attributes(attrs: &Vec<Attribute>) -> FieldConfig {
                     panic!("Duplicate values for align");
                 }
             }
-            key => panic!("Unrecognized parameter {}", key),
+            key => panic!("Unrecognized parameter \"{}\" on field {}", key, name),
         }
     }
 
@@ -248,7 +248,7 @@ pub(crate) struct EnumConfig {
     pub key_width: usize,
 }
 
-pub(crate) fn parse_enum_attributes(attrs: &Vec<Attribute>) -> EnumConfig {
+pub(crate) fn parse_enum_attributes(name: &Ident, attrs: &Vec<Attribute>) -> EnumConfig {
     let params = parse_attributes(attrs);
     let mut conf = EnumConfigBuilder::new();
 
@@ -278,7 +278,8 @@ pub(crate) fn parse_enum_attributes(attrs: &Vec<Attribute>) -> EnumConfig {
                     panic!("Duplicate values for key_width");
                 }
             }
-            key => panic!("Unrecognized parameter {}", key),
+            key => panic!("Fixed encountered an unrecognized parameter \"{}\" \
+                while parsing enum {}", key, name),
         }
     }
 
@@ -304,7 +305,7 @@ pub(crate) struct VariantConfig {
     pub key: String,
 }
 
-pub(crate) fn parse_variant_attributes(attrs: &Vec<Attribute>) -> VariantConfig {
+pub(crate) fn parse_variant_attributes(name: &Ident, attrs: &Vec<Attribute>) -> VariantConfig {
     let params = parse_attributes(attrs);
     let mut conf = VariantConfigBuilder::new();
 
@@ -316,7 +317,7 @@ pub(crate) fn parse_variant_attributes(attrs: &Vec<Attribute>) -> VariantConfig 
                     panic!("Duplicate values for key");
                 }
             }
-            key => panic!("Unrecognized parameter {}", key),
+            key => panic!("Unrecognized parameter \"{}\" on enum variant {}", key, name),
         }
     }
 
