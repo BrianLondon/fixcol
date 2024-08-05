@@ -244,6 +244,10 @@ impl DataError {
         new_error.line = Some(line);
         new_error
     }
+
+    pub fn inner_error(&self) -> &InnerError {
+        &self.inner_error
+    }
 }
 
 impl Display for DataError {
@@ -283,8 +287,6 @@ impl Display for DataError {
         write!(f, "\n")
     }
 }
-
-// TODO: Test case for invalid utf8 data
 
 /// Wrapper type for the known errors that can cause a [`DataError`].
 #[derive(Debug, Clone)]

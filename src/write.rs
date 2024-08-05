@@ -20,21 +20,29 @@ pub trait FixedSerializer {
 
 const SPACES: [u8; 256] = [b' '; 256];
 
+fn write_spaces<W: Write>(buf: &mut W, num: usize) -> Result<(), Error> {
+    let mut bytes_to_write: usize = num;
+
+    while bytes_to_write > 256 {
+        buf.write(&SPACES)?;
+        bytes_to_write -= 256;
+    }
+
+    buf.write(&SPACES[..bytes_to_write])?;
+
+    Ok(())
+}
+
 impl FixedSerializer for String {
     fn write_fixed_field<W: Write>(
         &self,
         buf: &mut W,
         desc: &FieldDescription,
     ) -> Result<(), Error> {
-        if desc.skip > 256 {
-            // TODO: Fix this (also in the FieldDescription docs)
-            panic!("Do not currently support skips of more than 256");
-        }
-
         // If so we'll need to truncate
         let string_is_too_long = self.len() > desc.len;
 
-        buf.write(&SPACES[0..desc.skip])?;
+        write_spaces(buf, desc.skip)?;
 
         match desc.alignment {
             Alignment::Left | Alignment::Full => {
@@ -43,7 +51,7 @@ impl FixedSerializer for String {
                 } else {
                     buf.write(&self.as_bytes())?;
                     let spaces_to_pad = desc.len - self.len();
-                    buf.write(&SPACES[..spaces_to_pad])?;
+                    write_spaces(buf, spaces_to_pad)?;
                 }
             }
             Alignment::Right => {
@@ -52,7 +60,7 @@ impl FixedSerializer for String {
                     buf.write(&self[start..].as_bytes())?;
                 } else {
                     let spaces_to_pad = desc.len - self.len();
-                    buf.write(&SPACES[..spaces_to_pad])?;
+                    write_spaces(buf, spaces_to_pad)?;
                     buf.write(&self.as_bytes())?;
                 }
             }
@@ -80,13 +88,13 @@ macro_rules! fixed_serializer_int_impl {
 
                 match desc.alignment {
                     Alignment::Left | Alignment::Full => {
-                        buf.write(&SPACES[..desc.skip])?;
+                        write_spaces(buf, desc.skip)?;
                         buf.write(s.as_bytes())?;
-                        buf.write(&SPACES[..padding])?;
+                        write_spaces(buf, padding)?;
                     }
                     Alignment::Right => {
                         let skip = padding + desc.skip;
-                        buf.write(&SPACES[..skip])?;
+                        write_spaces(buf, skip)?;
                         buf.write(s.as_bytes())?;
                     }
                 }
@@ -126,13 +134,13 @@ impl FixedSerializer for f32 {
 
         match desc.alignment {
             Alignment::Left | Alignment::Full => {
-                buf.write(&SPACES[..desc.skip])?;
+                write_spaces(buf, desc.skip)?;
                 buf.write(s.as_bytes())?;
-                buf.write(&SPACES[..padding])?;
+                write_spaces(buf, padding)?;
             }
             Alignment::Right => {
                 let skip = padding + desc.skip;
-                buf.write(&SPACES[..skip])?;
+                write_spaces(buf, skip)?;
                 buf.write(s.as_bytes())?;
             }
         }
@@ -156,13 +164,13 @@ impl FixedSerializer for f64 {
 
         match desc.alignment {
             Alignment::Left | Alignment::Full => {
-                buf.write(&SPACES[..desc.skip])?;
+                write_spaces(buf, desc.skip)?;
                 buf.write(s.as_bytes())?;
-                buf.write(&SPACES[..padding])?;
+                write_spaces(buf, padding)?;
             }
             Alignment::Right => {
                 let skip = padding + desc.skip;
-                buf.write(&SPACES[..skip])?;
+                write_spaces(buf, skip)?;
                 buf.write(s.as_bytes())?;
             }
         }
@@ -183,6 +191,10 @@ impl<T: WriteFixed> FixedSerializer for T {
 
 #[cfg(test)]
 mod tests {
+    use core::str;
+
+    use regex::Regex;
+
     use super::*;
 
     fn to_str(inp: Vec<u8>) -> String {
@@ -523,5 +535,168 @@ mod tests {
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), " 3.1415"); // TODO: should end with 6
+    }
+
+    //
+    // Long Writes
+    ///////////////////////////////////
+    
+    #[test]
+    fn write_trailing_over_gap() {
+        // 200 spaces, 5 chars, 100 spaces
+        let desc = FieldDescription {
+            skip: 200,
+            len: 105,
+            alignment: Alignment::Left,
+        };
+
+        let num: u64 = 12345;
+
+        let mut v: Vec<u8> = Vec::new();
+        let res = num.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_ok());
+
+        let re = Regex::new(r"^ {200}12345 {100}$").unwrap();
+        assert!(re.is_match(str::from_utf8(&v).unwrap()));
+    }
+
+    #[test]
+    fn write_leading_over_gap() {
+        // 300 spaces, 5 chars, 200 spaces
+        let desc = FieldDescription {
+            skip: 300,
+            len: 205,
+            alignment: Alignment::Left,
+        };
+
+        let num: u64 = 12345;
+
+        let mut v: Vec<u8> = Vec::new();
+        let res = num.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_ok());
+
+        let re = Regex::new(r"^ {300}12345 {200}$").unwrap();
+        assert!(re.is_match(str::from_utf8(&v).unwrap()));
+    }
+
+    #[test]
+    fn write_value_over_gap() {
+        // 250 spaces, 10 chars, 300 spaces
+        let desc = FieldDescription {
+            skip: 250,
+            len: 310,
+            alignment: Alignment::Left,
+        };
+
+        let num: u64 = 1234567890;
+
+        let mut v: Vec<u8> = Vec::new();
+        let res = num.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_ok());
+
+        let re = Regex::new(r"^ {250}1234567890 {300}$").unwrap();
+        assert!(re.is_match(str::from_utf8(&v).unwrap()));
+    }
+
+    #[test]
+    fn write_left_padding_over_gap() {
+        // 300 spaces, 295 spaces, 5 chars
+        let desc = FieldDescription {
+            skip: 300,
+            len: 300,
+            alignment: Alignment::Right,
+        };
+
+        let num: u64 = 12345;
+
+        let mut v: Vec<u8> = Vec::new();
+        let res = num.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_ok());
+
+        let re = Regex::new(r"^ {595}12345$").unwrap();
+        assert!(re.is_match(str::from_utf8(&v).unwrap()));    }
+
+    #[test]
+    fn write_extra_long_spaces_left_align() {
+        // 1000 spaces, 5 chars, 995 spaces
+        let desc = FieldDescription {
+            skip: 1000,
+            len: 1000,
+            alignment: Alignment::Left,
+        };
+
+        let num: u64 = 12345;
+
+        let mut v: Vec<u8> = Vec::new();
+        let res = num.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_ok());
+
+        let re = Regex::new(r"^ {1000}12345 {995}$").unwrap();
+        assert!(re.is_match(str::from_utf8(&v).unwrap())); 
+    }
+
+    #[test]
+    fn write_extra_long_spaces_right_align() {
+        // 1000 spaces, 995 spaces, 5 chars
+        let desc = FieldDescription {
+            skip: 1000,
+            len: 1000,
+            alignment: Alignment::Right,
+        };
+
+        let num: u64 = 12345;
+
+        let mut v: Vec<u8> = Vec::new();
+        let res = num.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_ok());
+
+        let re = Regex::new(r"^ {1995}12345$").unwrap();
+        assert!(re.is_match(str::from_utf8(&v).unwrap())); 
+    }
+
+    #[test]
+    fn write_long_string_left_align() {
+        // 1000 spaces, 1000 chars, 1000 spaces
+        let desc = FieldDescription {
+            skip: 1000,
+            len: 2000,
+            alignment: Alignment::Left,
+        };
+
+        let s = "abcdefghij".repeat(100);
+
+        let mut v: Vec<u8> = Vec::new();
+        let res = s.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_ok());
+
+        let re = Regex::new(r"^ {1000}(abcdefghij){100} {1000}$").unwrap();
+        assert!(re.is_match(str::from_utf8(&v).unwrap())); 
+    }
+
+    #[test]
+    fn write_long_string_right_align() {
+        // 1000 spaces, 1000 spaces, 1000 chars
+        let desc = FieldDescription {
+            skip: 1000,
+            len: 2000,
+            alignment: Alignment::Right,
+        };
+
+        let s = "abcdefghij".repeat(100);
+
+        let mut v: Vec<u8> = Vec::new();
+        let res = s.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_ok());
+
+        let re = Regex::new(r"^ {2000}(abcdefghij){100}$").unwrap();
+        assert!(re.is_match(str::from_utf8(&v).unwrap())); 
     }
 }
