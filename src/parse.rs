@@ -256,6 +256,7 @@ impl FixedDeserializer for String {
 
 impl<T: ReadFixed> FixedDeserializer for T {
     fn parse_fixed(s: &str, _desc: &FieldDescription) -> Result<Self, DataError> {
+        println!("{}", s);
         let obj = T::read_fixed_str(s).map_err(|e| match e {
             Error::DataError(e) => e,
             Error::IoError(e) => {

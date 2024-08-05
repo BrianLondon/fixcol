@@ -18,7 +18,7 @@ enum Color {
 struct Light {
     #[fixed(width = 8)]
     name: String,
-    #[fixed(width = 1)]
+    #[fixed(width = 1)] // TODO: this is redundant -- find a way to inherit
     color: Color,
     #[fixed(width = 3, align = "right")]
     pos_x: u8,
