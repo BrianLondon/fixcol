@@ -30,7 +30,6 @@ enum MoleculeRow {
     Bond(#[fixed(width = 5)] u16, #[fixed(width = 5)] u16),
 }
 
-
 fn molecule_data() -> Vec<MoleculeRow> {
     fn molecule(id: u16, name: &str) -> MoleculeRow {
         MoleculeRow::Molecule { id, name: name.to_owned() }
@@ -56,9 +55,9 @@ fn molecule_data() -> Vec<MoleculeRow> {
 }
 
 const SAMPLE_TEXT: &'static str = r#"Mol 0    Water   
-Atm    0    0Hydrogen
-Atm    1    0Hydrogen
-Atm    1    0Oxygen  
+Atm    0    0 Hydrogen
+Atm    1    0 Hydrogen
+Atm    2    0 Oxygen  
 Bnd0    1            
 Bnd1    2            
 "#;
@@ -67,8 +66,7 @@ Bnd1    2
 fn read_inner() {
     use fixed::ReadFixed;
 
-    let mut buf = "    0    0Hydrogen".as_bytes();
-    let data: Atom = Atom::read_fixed(&mut buf).unwrap();
+    let data: Atom = Atom::read_fixed_str("    0    0 Hydrogen").unwrap();
 
     assert_eq!(data, Atom{ id: 0, molecule: 0, name: "Hydrogen".to_owned() });
 }

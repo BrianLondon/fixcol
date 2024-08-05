@@ -1,6 +1,5 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::token::Token;
 use syn::{Attribute, FieldsNamed, FieldsUnnamed, Ident, Variant};
 
 use crate::attrs::{has_fixed_attrs, parse_enum_attributes, parse_variant_attributes, VariantConfig};
@@ -81,21 +80,17 @@ fn read_embedded_variant(
         panic!("Embed param is only valid on variantes with exactly one field")
     }
     if let Some(field) = fields.unnamed.first() {
-        println!("{:?}", field);
         if has_fixed_attrs(&field.attrs) {
             panic!("Did not expect fixed attribute on embedded enum variant");
         }
         
         let inner_type = field.ty.clone();
 
-        let q = quote! {
+        quote! {
             // println!("buf:  {:?}", buf);
             let elem = #inner_type::read_fixed(buf)?;
-            println!("elem: {:?}", elem);
             Ok(Self::#inner_type(elem))
-        };
-        println!("{}", q);
-        q
+        }
     } else {
         panic!("Embed param is only valid on variantes with exactly one field");
     }

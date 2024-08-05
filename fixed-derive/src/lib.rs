@@ -61,7 +61,7 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
         }
     };
 
-    println!("{}", gen);
+    // println!("{}", gen);
 
     gen.into()
 }
