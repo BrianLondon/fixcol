@@ -72,3 +72,16 @@ fn read_inner() {
 
     assert_eq!(data, Atom{ id: 0, molecule: 0, name: "Hydrogen".to_owned() });
 }
+
+#[test]
+fn read_nested() {
+    use fixed::ReadFixed;
+
+    let mut buf = SAMPLE_TEXT.as_bytes();
+    let data: Vec<_> = MoleculeRow::read_fixed_all(&mut buf).collect();
+
+    let actual: Vec<MoleculeRow> = data.into_iter().map(|o| {println!("{:?}", o); o.unwrap()}).collect();
+    let expected = molecule_data();
+
+    assert_eq!(actual, expected);
+}

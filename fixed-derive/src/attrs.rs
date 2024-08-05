@@ -25,8 +25,9 @@ fn is_fixed_attr(attr: &Attribute) -> bool {
     ident == FIXED_ATTR_KEY
 }
 
-// valid struct params
-// ??
+pub fn has_fixed_attrs(attrs: &Vec<Attribute>) -> bool {
+    attrs.iter().any(|a| is_fixed_attr(a))
+}
 
 #[derive(PartialEq, Eq, Debug)]
 struct FieldParam {
@@ -296,16 +297,18 @@ pub(crate) fn parse_enum_attributes(name: &Ident, attrs: &Vec<Attribute>) -> Enu
 
 pub(crate) struct VariantConfigBuilder {
     key: Option<String>,
+    embed: Option<bool>,
 }
 
 impl VariantConfigBuilder {
     pub fn new() -> Self {
-        Self { key: None }
+        Self { key: None, embed: None }
     }
 }
 
 pub(crate) struct VariantConfig {
     pub key: String,
+    pub embed: bool,
 }
 
 pub(crate) fn parse_variant_attributes(name: &Ident, attrs: &Vec<Attribute>) -> VariantConfig {
@@ -320,6 +323,20 @@ pub(crate) fn parse_variant_attributes(name: &Ident, attrs: &Vec<Attribute>) -> 
                     panic!("Duplicate values for key");
                 }
             }
+            "embed" => {
+                let embed = match param.value.as_str() {
+                    "true" => true,
+                    "false" => false,
+                    v => {
+                        panic!("Expected boolean value for embed parameter. \
+                            Found \"{}\"", v)
+                    }
+                };
+                let old = conf.embed.replace(embed);
+                if old.is_some() {
+                    panic!("Duplicate values for embed");
+                }
+            }
             key => panic!(
                 "Unrecognized parameter \"{}\" on enum variant {}",
                 key, name
@@ -331,6 +348,7 @@ pub(crate) fn parse_variant_attributes(name: &Ident, attrs: &Vec<Attribute>) -> 
         key: conf
             .key
             .expect("The parameter key must be provided for all enum variants."),
+        embed: conf.embed.unwrap_or(false),
     }
 }
 
