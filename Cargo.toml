@@ -11,3 +11,4 @@ fixed-derive = {path = "fixed-derive"}
 
 [dev-dependencies]
 chrono = "0.4.38"
+regex = "1.10.6"

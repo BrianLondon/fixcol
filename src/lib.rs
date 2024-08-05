@@ -12,8 +12,6 @@ pub use format::{Alignment, FieldDescription};
 pub use parse::FixedDeserializer;
 pub use write::FixedSerializer;
 
-// TODO: should we support custom deserialization functions on individual columns?
-
 #[cfg(test)]
 mod tests {
     use std::io::{Read, Write};

@@ -381,7 +381,6 @@ mod tests {
             #[fixed(width = 10)] String,
             #[fixed(width = 10, align = "right")] i64,
         ),
-        // TODO: Make this work
         #[fixed(key = "un")]
         Unit,
     }

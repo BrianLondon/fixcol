@@ -581,8 +581,16 @@ mod tests {
             alignment: Alignment::Full,
         };
         let actual: Result<f32, DataError> = f32::parse_fixed(" 3.14 ", &desc);
-
-        assert!(actual.is_err()); // TODO: check the error type
+        
+        match actual {
+            Ok(_) => panic!("Expected parse_fixed call to fail"),
+            Err(e) => {
+                match e.inner_error() {
+                    InnerError::ParseFloatError(_) => {},
+                    _ => panic!("Expected ParseFloatError as inner error"),
+                }
+            }
+        }
     }
 
     #[test]
