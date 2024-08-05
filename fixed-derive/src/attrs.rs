@@ -245,7 +245,7 @@ impl EnumConfigBuilder {
 }
 
 pub(crate) struct EnumConfig {
-    pub ignore_others: bool,
+    pub ignore_others: bool, // TODO: implement
     pub key_width: usize,
 }
 

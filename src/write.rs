@@ -20,10 +20,6 @@ pub trait FixedSerializer {
 
 const SPACES: [u8; 256] = [b' '; 256];
 
-fn to_unit<T>(_: T) -> () {
-    ()
-}
-
 impl FixedSerializer for String {
     fn write_fixed_field<W: Write>(
         &self,
@@ -121,8 +117,6 @@ impl FixedSerializer for f32 {
         buf: &mut W,
         desc: &FieldDescription,
     ) -> Result<(), Error> {
-        let mut bytes_written: usize = 0;
-
         let mut s = self.to_string();
         if s.len() > desc.len {
             s = s.as_str()[..desc.len].to_string();
@@ -132,14 +126,14 @@ impl FixedSerializer for f32 {
 
         match desc.alignment {
             Alignment::Left | Alignment::Full => {
-                bytes_written += buf.write(&SPACES[..desc.skip])?;
-                bytes_written += buf.write(s.as_bytes())?;
-                bytes_written += buf.write(&SPACES[..padding])?;
+                buf.write(&SPACES[..desc.skip])?;
+                buf.write(s.as_bytes())?;
+                buf.write(&SPACES[..padding])?;
             }
             Alignment::Right => {
                 let skip = padding + desc.skip;
-                bytes_written += buf.write(&SPACES[..skip])?;
-                bytes_written += buf.write(s.as_bytes())?;
+                buf.write(&SPACES[..skip])?;
+                buf.write(s.as_bytes())?;
             }
         }
 

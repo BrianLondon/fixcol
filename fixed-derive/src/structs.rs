@@ -1,18 +1,15 @@
-use crate::attrs;
+use quote::quote;
+use syn::{Fields, FieldsNamed, FieldsUnnamed};
+
 use crate::fields::{
     read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields,
 };
-
-use quote::quote;
-use syn::{Attribute, Fields, FieldsNamed, FieldsUnnamed, Ident};
 
 //
 // Reads
 /////////////////////////////
 
 pub(crate) fn struct_read(
-    name: &Ident,
-    attrs: &Vec<Attribute>,
     fields: Fields,
 ) -> proc_macro2::TokenStream {
     match fields {
