@@ -3,8 +3,13 @@ extern crate fixed_derive;
 
 use fixed_derive::{ReadFixed, WriteFixed};
 
+// Converted the struct Atom to AtomS and the MoleculeRow
+// variant Atom to AtomV to act as a regression test where
+// we did not correctly handle when those two had differen
+// names. i.e., Atom(Atom) worked but AtomV(AtomS) did not.
+
 #[derive(Debug, PartialEq, Eq, ReadFixed, WriteFixed)]
-struct Atom {
+struct AtomS {
     #[fixed(width = 5, align = "right")]
     id: u16,
     #[fixed(width = 5, align = "right")]
@@ -25,7 +30,7 @@ enum MoleculeRow {
         name: String 
     },
     #[fixed(key = "Atm", embed = true)]
-    Atom(Atom),
+    AtomV(AtomS),
     #[fixed(key = "Bnd")]
     Bond(#[fixed(width = 5)] u16, #[fixed(width = 5)] u16),
 }
@@ -36,8 +41,8 @@ fn molecule_data() -> Vec<MoleculeRow> {
     }
 
     fn atom(id: u16, molecule: u16, name: &str) -> MoleculeRow {
-        let atom = Atom { id, molecule, name: name.to_owned() };
-        MoleculeRow::Atom(atom)
+        let atom = AtomS { id, molecule, name: name.to_owned() };
+        MoleculeRow::AtomV(atom)
     }
 
     fn bond(a: u16, b: u16) -> MoleculeRow {
@@ -66,9 +71,9 @@ Bnd1    2
 fn read_inner() {
     use fixed::ReadFixed;
 
-    let data: Atom = Atom::read_fixed_str("    0    0 Hydrogen").unwrap();
+    let data: AtomS = AtomS::read_fixed_str("    0    0 Hydrogen").unwrap();
 
-    assert_eq!(data, Atom{ id: 0, molecule: 0, name: "Hydrogen".to_owned() });
+    assert_eq!(data, AtomS{ id: 0, molecule: 0, name: "Hydrogen".to_owned() });
 }
 
 #[test]

@@ -29,7 +29,7 @@ pub(crate) fn enum_read(
             let read = match &variant.fields {
                 syn::Fields::Named(fields) => read_struct_variant(var_name, fields),
                 syn::Fields::Unnamed(fields) if embed => {
-                    read_embedded_variant(name, fields)
+                    read_embedded_variant(var_name, fields)
                 }
                 syn::Fields::Unnamed(fields) => read_tuple_variant(var_name, fields),
                 syn::Fields::Unit => read_unit_variant(var_name),
@@ -60,7 +60,6 @@ pub(crate) fn enum_read(
 }
 
 fn read_struct_variant(
-    // key: String,
     name: &Ident,
     fields: &FieldsNamed,
 ) -> TokenStream {
@@ -89,7 +88,7 @@ fn read_embedded_variant(
         quote! {
             // println!("buf:  {:?}", buf);
             let elem = #inner_type::read_fixed(buf)?;
-            Ok(Self::#inner_type(elem))
+            Ok(Self::#name(elem))
         }
     } else {
         panic!("Embed param is only valid on variantes with exactly one field");
