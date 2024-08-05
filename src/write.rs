@@ -42,11 +42,6 @@ impl FixedSerializer for String {
         // If so we'll need to truncate
         let string_is_too_long = self.len() > desc.len;
 
-        if desc.skip > 256 {
-            // TODO: Fix this (also in the FieldDescription docs)
-            panic!("Do not currently support skips of more than 256");
-        }
-
         write_spaces(buf, desc.skip)?;
 
         match desc.alignment {
@@ -662,6 +657,46 @@ mod tests {
         assert!(res.is_ok());
 
         let re = Regex::new(r"^ {1995}12345$").unwrap();
+        assert!(re.is_match(str::from_utf8(&v).unwrap())); 
+    }
+
+    #[test]
+    fn write_long_string_left_align() {
+        // 1000 spaces, 1000 chars, 1000 spaces
+        let desc = FieldDescription {
+            skip: 1000,
+            len: 2000,
+            alignment: Alignment::Left,
+        };
+
+        let s = "abcdefghij".repeat(100);
+
+        let mut v: Vec<u8> = Vec::new();
+        let res = s.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_ok());
+
+        let re = Regex::new(r"^ {1000}(abcdefghij){100} {1000}$").unwrap();
+        assert!(re.is_match(str::from_utf8(&v).unwrap())); 
+    }
+
+    #[test]
+    fn write_long_string_right_align() {
+        // 1000 spaces, 1000 spaces, 1000 chars
+        let desc = FieldDescription {
+            skip: 1000,
+            len: 2000,
+            alignment: Alignment::Right,
+        };
+
+        let s = "abcdefghij".repeat(100);
+
+        let mut v: Vec<u8> = Vec::new();
+        let res = s.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_ok());
+
+        let re = Regex::new(r"^ {2000}(abcdefghij){100}$").unwrap();
         assert!(re.is_match(str::from_utf8(&v).unwrap())); 
     }
 }
