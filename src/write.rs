@@ -18,17 +18,17 @@ pub trait FixedSerializer {
     ) -> Result<(), Error>;
 }
 
-const _SPACES: [u8; 256] = [b' '; 256];
+const SPACES: [u8; 256] = [b' '; 256];
 
 fn write_spaces<W: Write>(buf: &mut W, num: usize) -> Result<(), Error> {
     let mut bytes_to_write: usize = num;
 
     while bytes_to_write > 256 {
-        buf.write(&_SPACES)?;
+        buf.write(&SPACES)?;
         bytes_to_write -= 256;
     }
 
-    buf.write(&_SPACES[..bytes_to_write])?;
+    buf.write(&SPACES[..bytes_to_write])?;
 
     Ok(())
 }
