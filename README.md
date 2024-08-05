@@ -1,6 +1,6 @@
 # Fixed
 
-A library for reading fixed with / column delimited data files.
+A library for reading fixed width / column delimited data files.
 
 ## Wishlist of new features
 
@@ -10,6 +10,9 @@ A library for reading fixed with / column delimited data files.
  - Strict mode
  - Add an option for padding enum variants to all be the same length
     - Also support shorter than expected lines gracefully
+ - Make param list data rather than code to support dynamic lists of
+   valid parameters.
+ 
  
 
 Also... do this: https://stackoverflow.com/questions/54392702/how-to-report-errors-in-a-procedural-macro-using-the-quote-macro
