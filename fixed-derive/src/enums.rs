@@ -127,6 +127,9 @@ pub(crate) fn enum_write(variants: Vec<&Variant>) -> proc_macro2::TokenStream {
 
         match &variant.fields {
             syn::Fields::Named(fields) => write_struct_variant(&variant.ident, key, fields),
+            syn::Fields::Unnamed(fields) if embed => {
+                write_embedded_variant(&variant.ident, key, fields)
+            }
             syn::Fields::Unnamed(fields) => write_tuple_variant(&variant.ident, key, fields),
             syn::Fields::Unit => write_unit_variant(&variant.ident, key),
         }
@@ -188,6 +191,39 @@ fn write_tuple_variant(ident: &Ident, key: String, fields: &FieldsUnnamed) -> To
 
             #( let _ = #named_fields.write_fixed_field(buf, #configs)?;  )*
         },
+    }
+}
+
+fn write_embedded_variant(
+    ident: &Ident,
+    key: String,
+    fields: &FieldsUnnamed,
+) -> TokenStream {
+    if fields.unnamed.len() != 1 {
+        panic!("Embed param is only valid on variantes with exactly one field")
+    }
+    if let Some(field) = fields.unnamed.first() {
+        if has_fixed_attrs(&field.attrs) {
+            panic!("Did not expect fixed attribute on embedded enum variant");
+        }
+        
+        let key_len = key.len();
+
+        quote! {
+            Self::#ident(inner) => {
+                let key_config = fixed::FieldDescription {
+                    skip: 0,
+                    len: #key_len,
+                    alignment: fixed::Alignment::Left,
+                };
+                let key = String::from(#key);
+                let _ = key.write_fixed_field(buf, &key_config)?;
+
+                inner.write_fixed(buf)?;
+            }
+        }
+    } else {
+        panic!("Embed param is only valid on variants with exactly one field");
     }
 }
 

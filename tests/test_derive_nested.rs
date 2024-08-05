@@ -5,7 +5,7 @@ use fixed_derive::{ReadFixed, WriteFixed};
 
 // Converted the struct Atom to AtomS and the MoleculeRow
 // variant Atom to AtomV to act as a regression test where
-// we did not correctly handle when those two had differen
+// we did not correctly handle when those two had different
 // names. i.e., Atom(Atom) worked but AtomV(AtomS) did not.
 
 #[derive(Debug, PartialEq, Eq, ReadFixed, WriteFixed)]
@@ -18,8 +18,7 @@ struct AtomS {
     name: String,
 }
 
-// #[derive(Debug, PartialEq, Eq, ReadFixed, WriteFixed)]
-#[derive(Debug, PartialEq, Eq, ReadFixed)]
+#[derive(Debug, PartialEq, Eq, ReadFixed, WriteFixed)]
 #[fixed(key_width = 3)]
 enum MoleculeRow {
     #[fixed(key = "Mol")]
@@ -63,12 +62,14 @@ const SAMPLE_TEXT: &'static str = r#"Mol 0    Water
 Atm    0    0 Hydrogen
 Atm    1    0 Hydrogen
 Atm    2    0 Oxygen  
-Bnd0    1            
-Bnd1    2            
+Bnd0    1    
+Bnd1    2    
 "#;
 
 #[test]
 fn read_inner() {
+    // This is a regression test on a test setup error when read_nested was
+    // failing for the wrong reason
     use fixed::ReadFixed;
 
     let data: AtomS = AtomS::read_fixed_str("    0    0 Hydrogen").unwrap();
@@ -87,4 +88,17 @@ fn read_nested() {
     let expected = molecule_data();
 
     assert_eq!(actual, expected);
+}
+
+#[test]
+fn write_nested() {
+    use fixed::WriteFixedAll;
+
+    let mut v = Vec::new();
+    let res = molecule_data().write_fixed_all(&mut v);
+
+    assert!(res.is_ok());
+
+    let text = std::str::from_utf8(v.as_slice()).unwrap();
+    assert_eq!(text, SAMPLE_TEXT);
 }
