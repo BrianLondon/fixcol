@@ -2,7 +2,9 @@
 use std::{fmt::Display, str::FromStr};
 
 use proc_macro2::{TokenStream, TokenTree};
-use syn::{Attribute, Ident, Meta, Path};
+use syn::{spanned::Spanned, Attribute, Ident, Meta, Path};
+
+use crate::error::MacroError;
 
 const FIXED_ATTR_KEY: &'static str = "fixed";
 
@@ -190,7 +192,10 @@ impl FieldConfigBuilder {
     }
 }
 
-pub fn parse_field_attributes(name: &Ident, attrs: &Vec<Attribute>) -> FieldConfig {
+pub fn parse_field_attributes(
+    name: &Ident,
+    attrs: &Vec<Attribute>
+) -> Result<FieldConfig, MacroError> {
     let params = parse_attributes(attrs);
     let mut conf = FieldConfigBuilder::new();
 
@@ -217,20 +222,28 @@ pub fn parse_field_attributes(name: &Ident, attrs: &Vec<Attribute>) -> FieldConf
                     panic!("Duplicate values for align");
                 }
             }
-            key => panic!("Unrecognized parameter \"{}\" on field {}", key, name),
+            key => {
+                return Err(MacroError::new(
+                    format!("Unrecognized parameter \"{}\" on field {}", 
+                        key, name).as_str(),
+                    key.span(),
+                ));
+            }
         }
     }
 
     let width = match conf.width {
         Some(w) => w,
-        None => panic!("Width must be specified for all fields"),
+        None => return Err(MacroError::new("Width must be specified for all fields.", name.span())),
     };
 
-    FieldConfig {
+    let fc = FieldConfig {
         skip: conf.skip.unwrap_or(0),
         align: conf.align.unwrap_or(Align::Left),
         width: width,
-    }
+    };
+
+    Ok(fc)
 }
 
 pub(crate) struct EnumConfigBuilder {
@@ -249,7 +262,10 @@ pub(crate) struct EnumConfig {
     pub key_width: usize,
 }
 
-pub(crate) fn parse_enum_attributes(name: &Ident, attrs: &Vec<Attribute>) -> EnumConfig {
+pub(crate) fn parse_enum_attributes(
+    name: &Ident,
+    attrs: &Vec<Attribute>
+) -> Result<EnumConfig, MacroError> {
     let params = parse_attributes(attrs);
     let mut conf = EnumConfigBuilder::new();
 
@@ -287,12 +303,14 @@ pub(crate) fn parse_enum_attributes(name: &Ident, attrs: &Vec<Attribute>) -> Enu
         }
     }
 
-    EnumConfig {
+   let ec = EnumConfig {
         ignore_others: conf.ignore_others.unwrap_or(false),
         key_width: conf
             .key_width
             .expect("The parameter key_width must be provided for enums."),
-    }
+    };
+
+    Ok(ec)
 }
 
 pub(crate) struct VariantConfigBuilder {
@@ -311,7 +329,10 @@ pub(crate) struct VariantConfig {
     pub embed: bool,
 }
 
-pub(crate) fn parse_variant_attributes(name: &Ident, attrs: &Vec<Attribute>) -> VariantConfig {
+pub(crate) fn parse_variant_attributes(
+    name: &Ident,
+    attrs: &Vec<Attribute>
+) -> Result<VariantConfig, MacroError> {
     let params = parse_attributes(attrs);
     let mut conf = VariantConfigBuilder::new();
 
@@ -344,12 +365,17 @@ pub(crate) fn parse_variant_attributes(name: &Ident, attrs: &Vec<Attribute>) -> 
         }
     }
 
-    VariantConfig {
-        key: conf
-            .key
-            .expect("The parameter key must be provided for all enum variants."),
+    let key = conf.key.ok_or(MacroError::new(
+        "The parameter key must be provided for all enum variants",
+        name.span(),
+    ))?;
+
+    let vc = VariantConfig {
+        key: key,
         embed: conf.embed.unwrap_or(false),
-    }
+    };
+
+    Ok(vc)
 }
 
 #[cfg(test)]
