@@ -1,10 +1,10 @@
 use fixed_derive::{ReadFixed};
 
 #[derive(ReadFixed)]
-struct Point {
+struct Item {
     #[fixed(width = 5)]
-    x: u16,
-    y: u16,
+    id: u64,
+    name: String,
 }
 
 pub fn main() {}
