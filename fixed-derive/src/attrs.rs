@@ -1,8 +1,10 @@
 //! Utilities for parsing field attributres
 use std::{fmt::Display, str::FromStr};
 
-use proc_macro2::{TokenStream, TokenTree};
-use syn::{Attribute, Ident, Meta, Path};
+use proc_macro2::{Span, TokenStream, TokenTree};
+use syn::{spanned::Spanned, Attribute, Ident, Meta, Path};
+
+use crate::error::MacroError;
 
 const FIXED_ATTR_KEY: &'static str = "fixed";
 
@@ -25,21 +27,38 @@ fn is_fixed_attr(attr: &Attribute) -> bool {
     ident == FIXED_ATTR_KEY
 }
 
-pub fn has_fixed_attrs(attrs: &Vec<Attribute>) -> bool {
-    attrs.iter().any(|a| is_fixed_attr(a))
+pub fn fixed_attrs(attrs: &Vec<Attribute>) -> Vec<&Attribute> {
+    attrs.iter().filter(|a| is_fixed_attr(a)).collect()
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug)]
 struct FieldParam {
     key: String,
     value: String,
+    span: Option<Span>,
 }
 
 impl FieldParam {
-    fn new(key: String, value: String) -> Self {
-        Self { key, value }
+    fn new(key: String, value: String, span: Span) -> Self {
+        Self { key, value, span: Some(span) }
+    }
+
+    fn spanless(key: &str, value: &str) -> Self {
+        Self { 
+            key: String::from(key),
+            value: String::from(value),
+            span: None 
+        }
     }
 }
+
+impl PartialEq for FieldParam {
+    fn eq(&self, other: &Self) -> bool {
+        self.key == other.key && self.value == other.value
+    }
+}
+
+impl Eq for FieldParam {}
 
 // String holds the key of the current param we're parsing
 #[derive(PartialEq, Eq, Debug)]
@@ -91,14 +110,14 @@ fn parse_next_token(
             let value = ident.to_string();
             (
                 ExpectedTokenState::Separator,
-                Some(FieldParam::new(key.to_string(), value)),
+                Some(FieldParam::new(key.to_string(), value, ident.span())),
             )
         }
         (ExpectedTokenState::Value(key), TokenTree::Literal(literal)) => {
             let value = strip_quotes(literal.to_string());
             (
                 ExpectedTokenState::Separator,
-                Some(FieldParam::new(key, value)),
+                Some(FieldParam::new(key, value, literal.span())),
             )
         }
         (ExpectedTokenState::Value(_), t) => {
@@ -190,7 +209,10 @@ impl FieldConfigBuilder {
     }
 }
 
-pub fn parse_field_attributes(name: &Ident, attrs: &Vec<Attribute>) -> FieldConfig {
+pub fn parse_field_attributes(
+    name: &Ident,
+    attrs: &Vec<Attribute>
+) -> Result<FieldConfig, MacroError> {
     let params = parse_attributes(attrs);
     let mut conf = FieldConfigBuilder::new();
 
@@ -217,20 +239,28 @@ pub fn parse_field_attributes(name: &Ident, attrs: &Vec<Attribute>) -> FieldConf
                     panic!("Duplicate values for align");
                 }
             }
-            key => panic!("Unrecognized parameter \"{}\" on field {}", key, name),
+            key => {
+                return Err(MacroError::new(
+                    format!("Unrecognized parameter \"{}\" on field {}", 
+                        key, name).as_str(),
+                    key.span(),
+                ));
+            }
         }
     }
 
     let width = match conf.width {
         Some(w) => w,
-        None => panic!("Width must be specified for all fields"),
+        None => return Err(MacroError::new("Width must be specified for all fields.", name.span())),
     };
 
-    FieldConfig {
+    let fc = FieldConfig {
         skip: conf.skip.unwrap_or(0),
         align: conf.align.unwrap_or(Align::Left),
         width: width,
-    }
+    };
+
+    Ok(fc)
 }
 
 pub(crate) struct EnumConfigBuilder {
@@ -249,7 +279,10 @@ pub(crate) struct EnumConfig {
     pub key_width: usize,
 }
 
-pub(crate) fn parse_enum_attributes(name: &Ident, attrs: &Vec<Attribute>) -> EnumConfig {
+pub(crate) fn parse_enum_attributes(
+    name: &Ident,
+    attrs: &Vec<Attribute>
+) -> Result<EnumConfig, MacroError> {
     let params = parse_attributes(attrs);
     let mut conf = EnumConfigBuilder::new();
 
@@ -287,12 +320,14 @@ pub(crate) fn parse_enum_attributes(name: &Ident, attrs: &Vec<Attribute>) -> Enu
         }
     }
 
-    EnumConfig {
+   let ec = EnumConfig {
         ignore_others: conf.ignore_others.unwrap_or(false),
         key_width: conf
             .key_width
             .expect("The parameter key_width must be provided for enums."),
-    }
+    };
+
+    Ok(ec)
 }
 
 pub(crate) struct VariantConfigBuilder {
@@ -311,7 +346,10 @@ pub(crate) struct VariantConfig {
     pub embed: bool,
 }
 
-pub(crate) fn parse_variant_attributes(name: &Ident, attrs: &Vec<Attribute>) -> VariantConfig {
+pub(crate) fn parse_variant_attributes(
+    name: &Ident,
+    attrs: &Vec<Attribute>
+) -> Result<VariantConfig, MacroError> {
     let params = parse_attributes(attrs);
     let mut conf = VariantConfigBuilder::new();
 
@@ -344,12 +382,17 @@ pub(crate) fn parse_variant_attributes(name: &Ident, attrs: &Vec<Attribute>) -> 
         }
     }
 
-    VariantConfig {
-        key: conf
-            .key
-            .expect("The parameter key must be provided for all enum variants."),
+    let key = conf.key.ok_or(MacroError::new(
+        "The parameter key must be provided for all enum variants",
+        name.span(),
+    ))?;
+
+    let vc = VariantConfig {
+        key: key,
         embed: conf.embed.unwrap_or(false),
-    }
+    };
+
+    Ok(vc)
 }
 
 #[cfg(test)]
@@ -389,10 +432,8 @@ mod tests {
 
     #[test]
     fn parse_one_field_param() {
-        let expected = FieldParam {
-            key: "align".to_owned(),
-            value: "right".to_owned(),
-        };
+        let expected = FieldParam::spanless("align", "right");
+
         let code: MetaList = syn::parse_str("fixed(align=right)").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens);
 
@@ -403,14 +444,8 @@ mod tests {
     #[test]
     fn parse_two_field_params() {
         let expected = vec![
-            FieldParam {
-                key: "width".to_owned(),
-                value: "3".to_owned(),
-            },
-            FieldParam {
-                key: "align".to_owned(),
-                value: "right".to_owned(),
-            },
+            FieldParam::spanless("width", "3"),
+            FieldParam::spanless("align", "right"),
         ];
         let code: MetaList = syn::parse_str("fixed(width=3, align = right)").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens);
@@ -421,18 +456,9 @@ mod tests {
     #[test]
     fn parse_three_field_params() {
         let expected = vec![
-            FieldParam {
-                key: "skip".to_owned(),
-                value: "1".to_owned(),
-            },
-            FieldParam {
-                key: "width".to_owned(),
-                value: "3".to_owned(),
-            },
-            FieldParam {
-                key: "align".to_owned(),
-                value: "right".to_owned(),
-            },
+            FieldParam::spanless("skip", "1"),
+            FieldParam::spanless("width", "3"),
+            FieldParam::spanless("align", "right"),
         ];
         let code: MetaList = syn::parse_str("fixed(skip=1,width=3, align = right)").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens);
@@ -442,10 +468,7 @@ mod tests {
 
     #[test]
     fn parse_with_quotes() {
-        let expected = FieldParam {
-            key: "align".to_owned(),
-            value: "right".to_owned(),
-        };
+        let expected = FieldParam::spanless("align", "right");
         let code: MetaList = syn::parse_str("fixed(align=\"right\")").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens);
 

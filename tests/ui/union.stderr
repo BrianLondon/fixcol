@@ -1,0 +1,5 @@
+error: fixed-derive error: Deriving ReadFixed on unions is not supported
+ --> tests/ui/union.rs:5:1
+  |
+5 | union MyUnion {
+  | ^^^^^

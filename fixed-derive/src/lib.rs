@@ -1,5 +1,6 @@
 mod attrs;
 mod enums;
+mod error;
 mod fields;
 mod structs;
 
@@ -10,10 +11,12 @@ extern crate syn;
 
 use attrs::FieldConfig;
 use enums::enum_write;
+use error::MacroError;
 use proc_macro::TokenStream;
 
 use quote::quote;
 use syn::{Data, DataEnum, DataStruct, DeriveInput};
+use syn::spanned::Spanned;
 
 use crate::enums::enum_read;
 use crate::structs::{struct_read, struct_write};
@@ -49,16 +52,24 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
     let attrs = &ast.attrs;
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
 
-    let function_impl = match ast.data {
-        Data::Struct(DataStruct { fields, .. }) => struct_read(fields),
+    let function_impl_result = match ast.data {
+        Data::Struct(DataStruct { fields, .. }) => struct_read(&name, fields),
         Data::Enum(DataEnum { variants, .. }) => enum_read(name, attrs, variants.iter().collect()),
-        Data::Union(_) => panic!("Deriving ReadFixed on unions is not supported"),
+        Data::Union(u) => Err(MacroError::new(
+            "Deriving ReadFixed on unions is not supported",
+            u.union_token.span(),
+        )),
     };
 
-    let gen = quote! {
-        impl #impl_generics fixed::ReadFixed for #name #ty_generics #where_clause {
-            #function_impl
+    let gen = match function_impl_result {
+        Ok(function_impl) => {
+            quote! {
+                impl #impl_generics fixed::ReadFixed for #name #ty_generics #where_clause {
+                    #function_impl
+                }
+            }
         }
+        Err(err) => quote! { #err },
     };
 
     // println!("{}", gen);
@@ -73,16 +84,24 @@ pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
     let name = &ast.ident;
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
 
-    let function_impl = match ast.data {
+    let function_impl_result = match ast.data {
         Data::Struct(DataStruct { fields, .. }) => struct_write(fields),
         Data::Enum(DataEnum { variants, .. }) => enum_write(variants.iter().collect()),
-        Data::Union(_) => panic!("Deriving WriteFixed on unions is not supported"),
+        Data::Union(u) => Err(MacroError::new(
+            "Deriving WriteFixed on unions is not supported",
+            u.union_token.span(),
+        )),
     };
 
-    let gen = quote! {
-        impl #impl_generics fixed::WriteFixed for #name #ty_generics #where_clause {
-            #function_impl
+    let gen = match function_impl_result {
+        Ok(function_impl) => {
+            quote! {
+                impl #impl_generics fixed::WriteFixed for #name #ty_generics #where_clause {
+                    #function_impl
+                }
+            }
         }
+        Err(err) => quote! { #err },
     };
 
     // println!("{}", gen);
