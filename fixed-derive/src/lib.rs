@@ -53,7 +53,7 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
 
     let function_impl_result = match ast.data {
-        Data::Struct(DataStruct { fields, .. }) => struct_read(fields),
+        Data::Struct(DataStruct { fields, .. }) => struct_read(&name, fields),
         Data::Enum(DataEnum { variants, .. }) => enum_read(name, attrs, variants.iter().collect()),
         Data::Union(u) => Err(MacroError::new(
             "Deriving ReadFixed on unions is not supported",
@@ -87,7 +87,10 @@ pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
     let function_impl_result = match ast.data {
         Data::Struct(DataStruct { fields, .. }) => struct_write(fields),
         Data::Enum(DataEnum { variants, .. }) => enum_write(variants.iter().collect()),
-        Data::Union(_) => panic!("Deriving WriteFixed on unions is not supported"),
+        Data::Union(u) => Err(MacroError::new(
+            "Deriving WriteFixed on unions is not supported",
+            u.union_token.span(),
+        )),
     };
 
     let gen = match function_impl_result {

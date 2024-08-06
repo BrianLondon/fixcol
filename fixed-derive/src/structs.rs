@@ -1,7 +1,8 @@
+use proc_macro2::Ident;
 use quote::quote;
 use syn::{Fields, FieldsNamed, FieldsUnnamed};
 
-use crate::{error::MacroResult, fields::{
+use crate::{error::{MacroError, MacroResult}, fields::{
     read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields,
 }};
 
@@ -10,12 +11,18 @@ use crate::{error::MacroResult, fields::{
 /////////////////////////////
 
 pub(crate) fn struct_read(
+    ident: &Ident,
     fields: Fields,
 ) -> MacroResult {
     match fields {
         Fields::Named(named_fields) => struct_read_fixed(named_fields),
         Fields::Unnamed(unnamed_fields) => tuple_struct_read_fixed(unnamed_fields),
-        Fields::Unit => panic!("Cannot deserialize type with no inner data"),
+        Fields::Unit => {
+            Err(MacroError::new(
+                "Cannot deserialize type with no inner data",
+                ident.span()
+            ))
+        }
     }
 }
 
@@ -60,7 +67,7 @@ pub(crate) fn struct_write(fields: Fields) -> MacroResult {
         Fields::Named(named_fields) => struct_write_fixed(named_fields)?,
         Fields::Unnamed(unnamed_fields) => tuple_struct_write_fixed(unnamed_fields)?,
         Fields::Unit => {
-            panic!("Unit structs not supported. Cannot serialize data type that hold no data")
+            panic!("Unit structs not supported. Cannot serialize data types that hold no data")
         }
     };
 

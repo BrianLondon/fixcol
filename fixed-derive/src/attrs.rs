@@ -27,8 +27,8 @@ fn is_fixed_attr(attr: &Attribute) -> bool {
     ident == FIXED_ATTR_KEY
 }
 
-pub fn has_fixed_attrs(attrs: &Vec<Attribute>) -> bool {
-    attrs.iter().any(|a| is_fixed_attr(a))
+pub fn fixed_attrs(attrs: &Vec<Attribute>) -> Vec<&Attribute> {
+    attrs.iter().filter(|a| is_fixed_attr(a)).collect()
 }
 
 #[derive(Debug)]

@@ -1,0 +1,5 @@
+error: fixed-derive error: Did not expect fixed attribute on embedded enum variant
+  --> tests/ui/embed_extra_attr.rs:17:13
+   |
+17 |     Point(#[fixed(width = 5)] Point),
+   |             ^^^^^

@@ -1,8 +1,9 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote};
 use syn::{Attribute, FieldsNamed, FieldsUnnamed, Ident, Variant};
+use syn::spanned::Spanned;
 
-use crate::attrs::{has_fixed_attrs, parse_enum_attributes, parse_variant_attributes, VariantConfig};
+use crate::attrs::{fixed_attrs, parse_enum_attributes, parse_variant_attributes, VariantConfig};
 use crate::error::{MacroError, MacroResult};
 use crate::fields::{
     read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields,
@@ -30,7 +31,7 @@ pub(crate) fn enum_read(
             let read = match &variant.fields {
                 syn::Fields::Named(fields) => read_struct_variant(var_name, fields)?,
                 syn::Fields::Unnamed(fields) if embed => {
-                    read_embedded_variant(var_name, fields)
+                    read_embedded_variant(var_name, fields)?
                 }
                 syn::Fields::Unnamed(fields) => read_tuple_variant(var_name, fields)?,
                 syn::Fields::Unit => read_unit_variant(var_name),
@@ -80,24 +81,31 @@ fn read_struct_variant(
 fn read_embedded_variant(
     name: &Ident,
     fields: &FieldsUnnamed,
-) -> TokenStream {
+) -> MacroResult {
     if fields.unnamed.len() != 1 {
-        panic!("Embed param is only valid on variantes with exactly one field")
+        return Err(MacroError::new(
+            "Embed param is only valid on variants with exactly one field",
+            fields.span(),
+        ));
     }
     if let Some(field) = fields.unnamed.first() {
-        if has_fixed_attrs(&field.attrs) {
-            panic!("Did not expect fixed attribute on embedded enum variant");
+        if let Some(fa) = fixed_attrs(&field.attrs).first() {
+            return Err(MacroError::new(
+                "Did not expect fixed attribute on embedded enum variant",
+                fa.meta.span(),
+            ));
         }
-        
+
         let inner_type = field.ty.clone();
 
-        quote! {
-            // println!("buf:  {:?}", buf);
+        let code = quote! {
             let elem = #inner_type::read_fixed(buf)?;
             Ok(Self::#name(elem))
-        }
+        };
+
+        Ok(code)
     } else {
-        panic!("Embed param is only valid on variantes with exactly one field");
+        unreachable!();
     }
 }
 
@@ -231,7 +239,7 @@ fn write_embedded_variant(
         panic!("Embed param is only valid on variantes with exactly one field")
     }
     if let Some(field) = fields.unnamed.first() {
-        if has_fixed_attrs(&field.attrs) {
+        if let Some(_attr) = fixed_attrs(&field.attrs).first() {
             panic!("Did not expect fixed attribute on embedded enum variant");
         }
         
