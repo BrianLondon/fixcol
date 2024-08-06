@@ -1,7 +1,7 @@
 //! Utilities for parsing field attributres
 use std::{fmt::Display, str::FromStr};
 
-use proc_macro2::{TokenStream, TokenTree};
+use proc_macro2::{Span, TokenStream, TokenTree};
 use syn::{spanned::Spanned, Attribute, Ident, Meta, Path};
 
 use crate::error::MacroError;
@@ -31,17 +31,34 @@ pub fn has_fixed_attrs(attrs: &Vec<Attribute>) -> bool {
     attrs.iter().any(|a| is_fixed_attr(a))
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug)]
 struct FieldParam {
     key: String,
     value: String,
+    span: Option<Span>,
 }
 
 impl FieldParam {
-    fn new(key: String, value: String) -> Self {
-        Self { key, value }
+    fn new(key: String, value: String, span: Span) -> Self {
+        Self { key, value, span: Some(span) }
+    }
+
+    fn spanless(key: &str, value: &str) -> Self {
+        Self { 
+            key: String::from(key),
+            value: String::from(value),
+            span: None 
+        }
     }
 }
+
+impl PartialEq for FieldParam {
+    fn eq(&self, other: &Self) -> bool {
+        self.key == other.key && self.value == other.value
+    }
+}
+
+impl Eq for FieldParam {}
 
 // String holds the key of the current param we're parsing
 #[derive(PartialEq, Eq, Debug)]
@@ -93,14 +110,14 @@ fn parse_next_token(
             let value = ident.to_string();
             (
                 ExpectedTokenState::Separator,
-                Some(FieldParam::new(key.to_string(), value)),
+                Some(FieldParam::new(key.to_string(), value, ident.span())),
             )
         }
         (ExpectedTokenState::Value(key), TokenTree::Literal(literal)) => {
             let value = strip_quotes(literal.to_string());
             (
                 ExpectedTokenState::Separator,
-                Some(FieldParam::new(key, value)),
+                Some(FieldParam::new(key, value, literal.span())),
             )
         }
         (ExpectedTokenState::Value(_), t) => {
@@ -415,10 +432,8 @@ mod tests {
 
     #[test]
     fn parse_one_field_param() {
-        let expected = FieldParam {
-            key: "align".to_owned(),
-            value: "right".to_owned(),
-        };
+        let expected = FieldParam::spanless("align", "right");
+
         let code: MetaList = syn::parse_str("fixed(align=right)").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens);
 
@@ -429,14 +444,8 @@ mod tests {
     #[test]
     fn parse_two_field_params() {
         let expected = vec![
-            FieldParam {
-                key: "width".to_owned(),
-                value: "3".to_owned(),
-            },
-            FieldParam {
-                key: "align".to_owned(),
-                value: "right".to_owned(),
-            },
+            FieldParam::spanless("width", "3"),
+            FieldParam::spanless("align", "right"),
         ];
         let code: MetaList = syn::parse_str("fixed(width=3, align = right)").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens);
@@ -447,18 +456,9 @@ mod tests {
     #[test]
     fn parse_three_field_params() {
         let expected = vec![
-            FieldParam {
-                key: "skip".to_owned(),
-                value: "1".to_owned(),
-            },
-            FieldParam {
-                key: "width".to_owned(),
-                value: "3".to_owned(),
-            },
-            FieldParam {
-                key: "align".to_owned(),
-                value: "right".to_owned(),
-            },
+            FieldParam::spanless("skip", "1"),
+            FieldParam::spanless("width", "3"),
+            FieldParam::spanless("align", "right"),
         ];
         let code: MetaList = syn::parse_str("fixed(skip=1,width=3, align = right)").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens);
@@ -468,10 +468,7 @@ mod tests {
 
     #[test]
     fn parse_with_quotes() {
-        let expected = FieldParam {
-            key: "align".to_owned(),
-            value: "right".to_owned(),
-        };
+        let expected = FieldParam::spanless("align", "right");
         let code: MetaList = syn::parse_str("fixed(align=\"right\")").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens);
 

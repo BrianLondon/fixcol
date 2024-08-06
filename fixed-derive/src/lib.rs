@@ -11,10 +11,12 @@ extern crate syn;
 
 use attrs::FieldConfig;
 use enums::enum_write;
+use error::MacroError;
 use proc_macro::TokenStream;
 
 use quote::quote;
 use syn::{Data, DataEnum, DataStruct, DeriveInput};
+use syn::spanned::Spanned;
 
 use crate::enums::enum_read;
 use crate::structs::{struct_read, struct_write};
@@ -53,7 +55,10 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
     let function_impl_result = match ast.data {
         Data::Struct(DataStruct { fields, .. }) => struct_read(fields),
         Data::Enum(DataEnum { variants, .. }) => enum_read(name, attrs, variants.iter().collect()),
-        Data::Union(_) => panic!("Deriving ReadFixed on unions is not supported"),
+        Data::Union(u) => Err(MacroError::new(
+            "Deriving ReadFixed on unions is not supported",
+            u.union_token.span(),
+        )),
     };
 
     let gen = match function_impl_result {
