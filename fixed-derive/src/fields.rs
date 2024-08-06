@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
-use syn::{FieldsNamed, FieldsUnnamed, Index};
+use syn::{spanned::Spanned, FieldsNamed, FieldsUnnamed, Index};
 
 // TODO: should FieldConfig live here? yes if it doesnt cause circular
 use crate::{attrs::{self, FieldConfig}, error::MacroError};
@@ -16,7 +16,8 @@ pub(crate) fn read_unnamed_fields(
             let type_token = field.ty.clone();
             let ident = format_ident!("_{}", field_num);
 
-            let config = attrs::parse_field_attributes(&ident, &field.attrs)?;
+            let config = attrs::parse_field_attributes(&ident, &field.attrs)
+                .map_err(|e| e.replace_span(field.span()))?;
             let FieldConfig { skip, width, align: _ } = config;
 
             let buf_size = skip + width;
@@ -32,7 +33,7 @@ pub(crate) fn read_unnamed_fields(
 
             Ok((ident, read))
         }).collect();
-
+    
     Ok(field_reads?.into_iter().unzip())
 }
 

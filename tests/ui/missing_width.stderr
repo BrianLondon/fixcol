@@ -1,0 +1,5 @@
+error: fixed-derive error: Width must be specified for all fields.
+ --> tests/ui/missing_width.rs:7:5
+  |
+7 |     y: u16,
+  |     ^

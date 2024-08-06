@@ -13,7 +13,7 @@ use attrs::FieldConfig;
 use enums::enum_write;
 use proc_macro::TokenStream;
 
-use quote::{quote, ToTokens};
+use quote::quote;
 use syn::{Data, DataEnum, DataStruct, DeriveInput};
 
 use crate::enums::enum_read;
