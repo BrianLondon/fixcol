@@ -1,6 +1,6 @@
-use fixed_derive::{ReadFixed};
+use fixed_derive::{ReadFixed, WriteFixed};
 
-#[derive(ReadFixed)]
+#[derive(ReadFixed, WriteFixed)]
 #[repr(C)]
 union MyUnion {
     f1: u32,

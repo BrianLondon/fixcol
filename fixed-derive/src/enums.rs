@@ -145,7 +145,7 @@ pub(crate) fn enum_write(variants: Vec<&Variant>) -> MacroResult {
             let out = match &variant.fields {
                 syn::Fields::Named(fields) => write_struct_variant(&variant.ident, key, fields)?,
                 syn::Fields::Unnamed(fields) if embed => {
-                    write_embedded_variant(&variant.ident, key, fields)
+                    write_embedded_variant(&variant.ident, key, fields)?
                 }
                 syn::Fields::Unnamed(fields) => write_tuple_variant(&variant.ident, key, fields)?,
                 syn::Fields::Unit => write_unit_variant(&variant.ident, key),
@@ -234,18 +234,25 @@ fn write_embedded_variant(
     ident: &Ident,
     key: String,
     fields: &FieldsUnnamed,
-) -> TokenStream {
+) -> MacroResult {
     if fields.unnamed.len() != 1 {
-        panic!("Embed param is only valid on variantes with exactly one field")
+        return Err(MacroError::new(
+            "Embed param is only valid on variants with exactly one field",
+            fields.span(),
+        ));
     }
+
     if let Some(field) = fields.unnamed.first() {
-        if let Some(_attr) = fixed_attrs(&field.attrs).first() {
-            panic!("Did not expect fixed attribute on embedded enum variant");
+        if let Some(fa) = fixed_attrs(&field.attrs).first() {
+            return Err(MacroError::new(
+                "Did not expect fixed attribute on embedded enum variant",
+                fa.meta.span(),
+            ));
         }
         
         let key_len = key.len();
 
-        quote! {
+        let gen = quote! {
             Self::#ident(inner) => {
                 let key_config = fixed::FieldDescription {
                     skip: 0,
@@ -257,9 +264,11 @@ fn write_embedded_variant(
 
                 inner.write_fixed(buf)?;
             }
-        }
+        };
+
+        Ok(gen)
     } else {
-        panic!("Embed param is only valid on variants with exactly one field");
+        unreachable!();
     }
 }
 

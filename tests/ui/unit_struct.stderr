@@ -1,4 +1,10 @@
-error: fixed-derive error: Cannot deserialize type with no inner data
+error: fixed-derive error: Cannot derive ReadFixed for unit type
+ --> tests/ui/unit_struct.rs:4:8
+  |
+4 | struct Thing;
+  |        ^^^^^
+
+error: fixed-derive error: Cannot derive WriteFixed for unit structs.
  --> tests/ui/unit_struct.rs:4:8
   |
 4 | struct Thing;

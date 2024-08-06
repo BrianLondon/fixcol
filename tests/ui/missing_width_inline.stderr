@@ -1,5 +1,12 @@
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 error: fixed-derive error: Width must be specified for all fields.
  --> tests/ui/missing_width_inline.rs:4:12
+  |
+4 | struct Foo(u64);
+  |            ^^^
+
+error: fixed-derive error: Width must be specified for all fields.
+ --> tests/ui/missing_width_inline.rs:3:21
   |
 4 | struct Foo(u64);
   |            ^^^

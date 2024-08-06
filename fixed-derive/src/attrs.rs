@@ -241,7 +241,7 @@ pub fn parse_field_attributes(
             }
             key => {
                 return Err(MacroError::new(
-                    format!("Unrecognized parameter \"{}\" on field {}", 
+                    format!("Unrecognized parameter \"{}\" on field {}.", 
                         key, name).as_str(),
                     key.span(),
                 ));
