@@ -1,7 +1,7 @@
 //! Utilities for parsing field attributres
 use std::{fmt::Display, str::FromStr};
 
-use proc_macro2::{Span, TokenStream, TokenTree};
+use proc_macro2::{Literal, Span, TokenStream, TokenTree};
 use syn::{spanned::Spanned, Attribute, Ident, Meta, Path};
 
 use crate::error::MacroError;
@@ -31,42 +31,106 @@ pub(crate) fn fixed_attrs(attrs: &Vec<Attribute>) -> Vec<&Attribute> {
     attrs.iter().filter(|a| is_fixed_attr(a)).collect()
 }
 
+/// Wraps either a literal or an identifier
+#[derive(Debug)]
+enum ValueToken {
+    Ident(Ident),
+    Literal(Literal),
+}
+
+impl ValueToken {
+    fn span(&self) -> Span {
+        match self {
+            ValueToken::Ident(ident) => ident.span(),
+            ValueToken::Literal(literal) => literal.span(),
+        }
+    }
+}
+
+impl Display for ValueToken {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ValueToken::Ident(ident) => ident.fmt(f),
+            ValueToken::Literal(literal) => literal.fmt(f),
+        }
+    }
+}
+
+impl From<Ident> for ValueToken {
+    fn from(value: Ident) -> Self {
+        Self::Ident(value)
+    }
+}
+
+impl From<Literal> for ValueToken {
+    fn from(value: Literal) -> Self {
+        Self::Literal(value)
+    }
+}
+
+/// Holds a parsed parameter from an attribute 
+/// 
+/// The source for a `FieldParam`` started as "key = value" in an attribute
+/// like `#[fixed(key = value)]`. The field param itself holds the raw tokens
+/// but the raw values can be extracted.
 #[derive(Debug)]
 struct FieldParam {
-    key: String,
-    value: String,
-    span: Option<Span>,
+    key: Ident,
+    value: ValueToken,
+}
+
+fn strip_quotes(s: &str) -> String {
+    s.trim_end_matches('\"')
+        .trim_start_matches('\"')
+        .to_string()
 }
 
 impl FieldParam {
-    fn new(key: String, value: String, span: Span) -> Self {
-        Self { key, value, span: Some(span) }
+    fn new(key: Ident, value: ValueToken) -> Self {
+        Self { key, value }
     }
 
     #[cfg(test)]
-    fn spanless(key: &str, value: &str) -> Self {
+    fn test(key: &str, value: &str) -> Self {
+        use quote::format_ident;
+
         Self { 
-            key: String::from(key),
-            value: String::from(value),
-            span: None 
+            key: format_ident!("{}", key),
+            value: ValueToken::Literal(Literal::from_str(value).unwrap()),
         }
+    }
+
+    fn key_span(&self) -> Span {
+        self.key.span()
+    }
+
+    fn value_span(&self) -> Span {
+        self.value.span()
+    }
+
+    fn key(&self) -> String {
+        self.key.to_string()
+    }
+
+    fn value(&self) -> String {
+        strip_quotes(self.value.to_string().as_str())
     }
 }
 
 impl PartialEq for FieldParam {
     fn eq(&self, other: &Self) -> bool {
-        self.key == other.key && self.value == other.value
+        self.key() == other.key() && self.value() == other.value()
     }
 }
 
 impl Eq for FieldParam {}
 
-// String holds the key of the current param we're parsing
+// Ident holds the key of the current param we're parsing
 #[derive(PartialEq, Eq, Debug)]
 enum ExpectedTokenState {
     Key,
-    Equals(String),
-    Value(String),
+    Equals(Ident),
+    Value(Ident),
     Separator,
 }
 
@@ -81,19 +145,13 @@ impl Display for ExpectedTokenState {
     }
 }
 
-fn strip_quotes(s: String) -> String {
-    s.trim_end_matches('\"')
-        .trim_start_matches('\"')
-        .to_string()
-}
-
 fn parse_next_token(
     state: ExpectedTokenState,
     tt: TokenTree,
 ) -> Result<(ExpectedTokenState, Option<FieldParam>), MacroError> {
     match (state, tt) {
         (ExpectedTokenState::Key, TokenTree::Ident(ident)) => {
-            Ok((ExpectedTokenState::Equals(ident.to_string()), None))
+            Ok((ExpectedTokenState::Equals(ident), None))
         }
         (ExpectedTokenState::Key, t) => {
             panic!("Expected identifier. Found {}.", t.to_string());
@@ -108,17 +166,15 @@ fn parse_next_token(
             );
         }
         (ExpectedTokenState::Value(key), TokenTree::Ident(ident)) => {
-            let value = ident.to_string();
             Ok((
                 ExpectedTokenState::Separator,
-                Some(FieldParam::new(key.to_string(), value, ident.span())),
+                Some(FieldParam::new(key, ident.into())),
             ))
         }
         (ExpectedTokenState::Value(key), TokenTree::Literal(literal)) => {
-            let value = strip_quotes(literal.to_string());
             Ok((
                 ExpectedTokenState::Separator,
-                Some(FieldParam::new(key, value, literal.span())),
+                Some(FieldParam::new(key, literal.into())),
             ))
         }
         (ExpectedTokenState::Value(_), t) => {
@@ -237,24 +293,24 @@ pub(crate) fn parse_field_attributes(
     let mut conf = FieldConfigBuilder::new();
 
     for param in params {
-        match param.key.as_str() {
+        match param.key().as_str() {
             "skip" => {
                 let err = format!("Expected numeric value for skip. Found {}", param.value);
-                let old = conf.skip.replace(param.value.parse().expect(err.as_str()));
+                let old = conf.skip.replace(param.value.to_string().parse().expect(err.as_str()));
                 if old.is_some() {
                     panic!("Duplicate values for skip");
                 }
             }
             "width" => {
                 let err = format!("Expected numeric value for width. Found {}", param.value);
-                let old = conf.width.replace(param.value.parse().expect(err.as_str()));
+                let old = conf.width.replace(param.value().parse().expect(err.as_str()));
                 if old.is_some() {
                     panic!("Duplicate values for width");
                 }
             }
             "align" => {
                 let err = "Expected values for align are \"left\", \"right\", or \"full\".";
-                let old = conf.align.replace(param.value.parse().expect(err));
+                let old = conf.align.replace(param.value().parse().expect(err));
                 if old.is_some() {
                     panic!("Duplicate values for align");
                 }
@@ -262,7 +318,7 @@ pub(crate) fn parse_field_attributes(
             key => {
                 return Err(MacroError::new(
                     format!("Unrecognized parameter \"{}\".", key).as_str(),
-                    *span,
+                    param.key_span(),
                 ));
             }
         }
@@ -296,7 +352,7 @@ impl EnumConfigBuilder {
 }
 
 pub(crate) struct EnumConfig {
-    pub ignore_others: bool, // TODO: implement
+    pub _ignore_others: bool, // TODO: implement
     pub key_width: usize,
 }
 
@@ -308,7 +364,7 @@ pub(crate) fn parse_enum_attributes(
     let mut conf = EnumConfigBuilder::new();
 
     for param in params {
-        match param.key.as_str() {
+        match param.key().as_str() {
             "ignore_others" => {
                 let err = format!(
                     "Expected true or false for ignoer_others. Found {}",
@@ -316,7 +372,7 @@ pub(crate) fn parse_enum_attributes(
                 );
                 let old = conf
                     .ignore_others
-                    .replace(param.value.parse().expect(err.as_str()));
+                    .replace(param.value().parse().expect(err.as_str()));
                 if old.is_some() {
                     panic!("Duplicate values for ignore_others");
                 }
@@ -328,7 +384,7 @@ pub(crate) fn parse_enum_attributes(
                 );
                 let old = conf
                     .key_width
-                    .replace(param.value.parse().expect(err.as_str()));
+                    .replace(param.value().parse().expect(err.as_str()));
                 if old.is_some() {
                     panic!("Duplicate values for key_width");
                 }
@@ -342,7 +398,7 @@ pub(crate) fn parse_enum_attributes(
     }
 
    let ec = EnumConfig {
-        ignore_others: conf.ignore_others.unwrap_or(false),
+        _ignore_others: conf.ignore_others.unwrap_or(false),
         key_width: conf
             .key_width
             .expect("The parameter key_width must be provided for enums."),
@@ -375,15 +431,15 @@ pub(crate) fn parse_variant_attributes(
     let mut conf = VariantConfigBuilder::new();
 
     for param in params {
-        match param.key.as_str() {
+        match param.key().as_str() {
             "key" => {
-                let old = conf.key.replace(param.value);
+                let old = conf.key.replace(param.value());
                 if old.is_some() {
                     panic!("Duplicate values for key");
                 }
             }
             "embed" => {
-                let embed = match param.value.as_str() {
+                let embed = match param.value().as_str() {
                     "true" => true,
                     "false" => false,
                     v => {
@@ -425,9 +481,7 @@ mod tests {
 
     #[test]
     fn strip_quotes_strip() {
-        let inp = String::from("\"foo\"");
-
-        let actual = strip_quotes(inp);
+        let actual = strip_quotes("\"foo\"");
         let expected = String::from("foo");
 
         assert_eq!(actual, expected);
@@ -435,9 +489,7 @@ mod tests {
 
     #[test]
     fn strip_quotes_ignore() {
-        let inp = String::from("1");
-
-        let actual = strip_quotes(inp);
+        let actual = strip_quotes("1");
         let expected = String::from("1");
 
         assert_eq!(actual, expected);
@@ -453,7 +505,7 @@ mod tests {
 
     #[test]
     fn parse_one_field_param() {
-        let expected = FieldParam::spanless("align", "right");
+        let expected = FieldParam::test("align", "\"right\"");
 
         let code: MetaList = syn::parse_str("fixed(align=right)").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
@@ -465,8 +517,8 @@ mod tests {
     #[test]
     fn parse_two_field_params() {
         let expected = vec![
-            FieldParam::spanless("width", "3"),
-            FieldParam::spanless("align", "right"),
+            FieldParam::test("width", "3"),
+            FieldParam::test("align", "\"right\""),
         ];
         let code: MetaList = syn::parse_str("fixed(width=3, align = right)").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
@@ -477,9 +529,9 @@ mod tests {
     #[test]
     fn parse_three_field_params() {
         let expected = vec![
-            FieldParam::spanless("skip", "1"),
-            FieldParam::spanless("width", "3"),
-            FieldParam::spanless("align", "right"),
+            FieldParam::test("skip", "1"),
+            FieldParam::test("width", "3"),
+            FieldParam::test("align", "\"right\""),
         ];
         let code: MetaList = syn::parse_str("fixed(skip=1,width=3, align = right)").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
@@ -489,7 +541,7 @@ mod tests {
 
     #[test]
     fn parse_with_quotes() {
-        let expected = FieldParam::spanless("align", "right");
+        let expected = FieldParam::test("align", "\"right\"");
         let code: MetaList = syn::parse_str("fixed(align=\"right\")").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
 
