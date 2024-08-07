@@ -210,7 +210,7 @@ impl FieldConfigBuilder {
 }
 
 pub fn parse_field_attributes(
-    name: &Ident,
+    span: &Span,
     attrs: &Vec<Attribute>
 ) -> Result<FieldConfig, MacroError> {
     let params = parse_attributes(attrs);
@@ -241,9 +241,8 @@ pub fn parse_field_attributes(
             }
             key => {
                 return Err(MacroError::new(
-                    format!("Unrecognized parameter \"{}\" on field {}.", 
-                        key, name).as_str(),
-                    key.span(),
+                    format!("Unrecognized parameter \"{}\".", key).as_str(),
+                    *span,
                 ));
             }
         }
@@ -251,7 +250,7 @@ pub fn parse_field_attributes(
 
     let width = match conf.width {
         Some(w) => w,
-        None => return Err(MacroError::new("Width must be specified for all fields.", name.span())),
+        None => return Err(MacroError::new("Width must be specified for all fields.", *span)),
     };
 
     let fc = FieldConfig {

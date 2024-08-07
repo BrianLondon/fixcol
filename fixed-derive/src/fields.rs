@@ -16,7 +16,7 @@ pub(crate) fn read_unnamed_fields(
             let type_token = field.ty.clone();
             let ident = format_ident!("_{}", field_num);
 
-            let config = attrs::parse_field_attributes(&ident, &field.attrs)
+            let config = attrs::parse_field_attributes(&item.1.span(), &field.attrs)
                 .map_err(|e| e.replace_span(field.span()))?;
             let FieldConfig { skip, width, align: _ } = config;
 
@@ -47,7 +47,7 @@ pub(crate) fn read_named_fields(
             let type_token = field.ty.clone();
             let name = field.ident.as_ref().unwrap().clone();
 
-            let config = attrs::parse_field_attributes(&name, &field.attrs)?;
+            let config = attrs::parse_field_attributes(&name.span(), &field.attrs)?;
             let FieldConfig { skip, width, align: _ } = config;
 
             let buf_size = skip + width;
@@ -76,7 +76,7 @@ pub(crate) fn write_named_fields(
         .iter()
         .map(|field| -> Result<(Ident, FieldConfig), MacroError> {
             let name = field.ident.as_ref().unwrap().clone();
-            let config = attrs::parse_field_attributes(&name, &field.attrs)?;
+            let config = attrs::parse_field_attributes(&name.span(), &field.attrs)?;
 
             Ok((name, config))
         })
@@ -94,8 +94,7 @@ pub(crate) fn write_unnamed_fields(
         .enumerate()
         .map(|field| -> Result<(Index, FieldConfig), MacroError> {
             let name = syn::Index::from(field.0);
-            let config = attrs::parse_field_attributes(
-                &format_ident!("_{}", field.0), &field.1.attrs)?;
+            let config = attrs::parse_field_attributes(&field.1.span(), &field.1.attrs)?;
 
             Ok((name, config))
         })
