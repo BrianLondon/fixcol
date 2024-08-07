@@ -19,7 +19,7 @@ pub(crate) fn struct_read(
         Fields::Unnamed(unnamed_fields) => tuple_struct_read_fixed(unnamed_fields),
         Fields::Unit => {
             Err(MacroError::new(
-                "Cannot deserialize type with no inner data",
+                "Cannot derive ReadFixed for unit type",
                 ident.span()
             ))
         }
@@ -62,12 +62,15 @@ fn struct_read_fixed(fields: FieldsNamed) -> MacroResult {
 // Writes
 ///////////////////////////////////
 
-pub(crate) fn struct_write(fields: Fields) -> MacroResult {
+pub(crate) fn struct_write(ident: &Ident, fields: Fields) -> MacroResult {
     let writes = match fields {
         Fields::Named(named_fields) => struct_write_fixed(named_fields)?,
         Fields::Unnamed(unnamed_fields) => tuple_struct_write_fixed(unnamed_fields)?,
         Fields::Unit => {
-            panic!("Unit structs not supported. Cannot serialize data types that hold no data")
+            Err(MacroError::new(
+                "Cannot derive WriteFixed for unit structs.",
+                ident.span(),
+            ))?
         }
     };
 
@@ -97,7 +100,7 @@ fn tuple_struct_write_fixed(fields: FieldsUnnamed) -> MacroResult {
         fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), fixed::error::Error> {
             use fixed::FixedSerializer;
 
-            #( let _ = self.#names.write_fixed_field(buf, #configs)?;  )*
+            #( let _ = self.#names.write_fixed_field(buf, #configs)?; )*
 
             Ok(())
         }

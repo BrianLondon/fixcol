@@ -85,7 +85,7 @@ pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
 
     let function_impl_result = match ast.data {
-        Data::Struct(DataStruct { fields, .. }) => struct_write(fields),
+        Data::Struct(DataStruct { fields, .. }) => struct_write(name, fields),
         Data::Enum(DataEnum { variants, .. }) => enum_write(variants.iter().collect()),
         Data::Union(u) => Err(MacroError::new(
             "Deriving WriteFixed on unions is not supported",

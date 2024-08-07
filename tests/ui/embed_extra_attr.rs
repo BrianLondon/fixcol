@@ -1,4 +1,4 @@
-use fixed_derive::{ReadFixed};
+use fixed_derive::{ReadFixed, WriteFixed};
 
 #[derive(ReadFixed)]
 struct Point {
@@ -8,7 +8,7 @@ struct Point {
     point_y: u16,
 }
 
-#[derive(ReadFixed)]
+#[derive(ReadFixed, WriteFixed)]
 #[fixed(key_width = 1)]
 enum Alg {
     #[fixed(key = "N")]
