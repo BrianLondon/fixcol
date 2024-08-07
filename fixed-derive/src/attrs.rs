@@ -90,16 +90,16 @@ fn strip_quotes(s: String) -> String {
 fn parse_next_token(
     state: ExpectedTokenState,
     tt: TokenTree,
-) -> (ExpectedTokenState, Option<FieldParam>) {
+) -> Result<(ExpectedTokenState, Option<FieldParam>), MacroError> {
     match (state, tt) {
         (ExpectedTokenState::Key, TokenTree::Ident(ident)) => {
-            (ExpectedTokenState::Equals(ident.to_string()), None)
+            Ok((ExpectedTokenState::Equals(ident.to_string()), None))
         }
         (ExpectedTokenState::Key, t) => {
             panic!("Expected identifier. Found {}.", t.to_string());
         }
         (ExpectedTokenState::Equals(key), TokenTree::Punct(p)) if p.as_char() == '=' => {
-            (ExpectedTokenState::Value(key), None)
+            Ok((ExpectedTokenState::Value(key), None))
         }
         (ExpectedTokenState::Equals(_), t) => {
             panic!(
@@ -109,23 +109,23 @@ fn parse_next_token(
         }
         (ExpectedTokenState::Value(key), TokenTree::Ident(ident)) => {
             let value = ident.to_string();
-            (
+            Ok((
                 ExpectedTokenState::Separator,
                 Some(FieldParam::new(key.to_string(), value, ident.span())),
-            )
+            ))
         }
         (ExpectedTokenState::Value(key), TokenTree::Literal(literal)) => {
             let value = strip_quotes(literal.to_string());
-            (
+            Ok((
                 ExpectedTokenState::Separator,
                 Some(FieldParam::new(key, value, literal.span())),
-            )
+            ))
         }
         (ExpectedTokenState::Value(_), t) => {
             panic!("Expected identifier or literal. Found {}.", t.to_string());
         }
         (ExpectedTokenState::Separator, TokenTree::Punct(p)) if p.as_char() == ',' => {
-            (ExpectedTokenState::Key, None)
+            Ok((ExpectedTokenState::Key, None))
         }
         (ExpectedTokenState::Separator, t) => {
             panic!(
@@ -136,11 +136,12 @@ fn parse_next_token(
     }
 }
 
-fn parse_attributes(attrs: &Vec<Attribute>) -> Vec<FieldParam> {
-    attrs
+// TODO: need a unit test for multiple fixed attributes
+fn parse_attributes(attrs: &Vec<Attribute>) -> Result<Vec<FieldParam>, MacroError> {
+    let params: Vec<Result<Vec<FieldParam>, MacroError>> = attrs
         .iter()
         .filter(|a| is_fixed_attr(*a))
-        .flat_map(|a| {
+        .map(|a| -> Result<Vec<FieldParam>, MacroError> {
             let tokens = match &a.meta {
                 Meta::Path(_) => unimplemented!("Could not parse Meta::Path -- unreachable?"),
                 Meta::List(m) => &m.tokens,
@@ -149,17 +150,20 @@ fn parse_attributes(attrs: &Vec<Attribute>) -> Vec<FieldParam> {
 
             get_config_params(tokens.clone())
         })
-        .collect()
+        .collect();
+
+    let params: Result<Vec<Vec<FieldParam>>, MacroError> = params.into_iter().collect();
+    Ok(params?.into_iter().flatten().collect())
 }
 
-fn get_config_params(tokens: TokenStream) -> Vec<FieldParam> {
+fn get_config_params(tokens: TokenStream) -> Result<Vec<FieldParam>, MacroError> {
     let mut any_tokens = false;
     let mut state = ExpectedTokenState::Key;
     let mut field_params: Vec<FieldParam> = Vec::new();
 
     for token in tokens.into_iter() {
         any_tokens = true;
-        let (new_state, out) = parse_next_token(state, token);
+        let (new_state, out) = parse_next_token(state, token)?;
         state = new_state;
         if let Some(param) = out {
             field_params.push(param);
@@ -170,7 +174,7 @@ fn get_config_params(tokens: TokenStream) -> Vec<FieldParam> {
         panic!("Expected {} found end of input.", state);
     }
 
-    field_params
+    Ok(field_params)
 }
 
 pub(crate) enum Align {
@@ -214,7 +218,7 @@ pub(crate) fn parse_field_attributes(
     span: &Span,
     attrs: &Vec<Attribute>
 ) -> Result<FieldConfig, MacroError> {
-    let params = parse_attributes(attrs);
+    let params = parse_attributes(attrs)?;
     let mut conf = FieldConfigBuilder::new();
 
     for param in params {
@@ -285,7 +289,7 @@ pub(crate) fn parse_enum_attributes(
     name: &Ident,
     attrs: &Vec<Attribute>
 ) -> Result<EnumConfig, MacroError> {
-    let params = parse_attributes(attrs);
+    let params = parse_attributes(attrs)?;
     let mut conf = EnumConfigBuilder::new();
 
     for param in params {
@@ -352,7 +356,7 @@ pub(crate) fn parse_variant_attributes(
     name: &Ident,
     attrs: &Vec<Attribute>
 ) -> Result<VariantConfig, MacroError> {
-    let params = parse_attributes(attrs);
+    let params = parse_attributes(attrs)?;
     let mut conf = VariantConfigBuilder::new();
 
     for param in params {
@@ -427,7 +431,7 @@ mod tests {
     #[test]
     fn parse_zero_field_params() {
         let code: MetaList = syn::parse_str("fixed()").unwrap();
-        let params: Vec<FieldParam> = get_config_params(code.tokens);
+        let params: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
 
         assert_eq!(params.len(), 0);
     }
@@ -437,7 +441,7 @@ mod tests {
         let expected = FieldParam::spanless("align", "right");
 
         let code: MetaList = syn::parse_str("fixed(align=right)").unwrap();
-        let params: Vec<FieldParam> = get_config_params(code.tokens);
+        let params: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
 
         assert_eq!(params.len(), 1);
         assert_eq!(*(params.get(0)).unwrap(), expected);
@@ -450,7 +454,7 @@ mod tests {
             FieldParam::spanless("align", "right"),
         ];
         let code: MetaList = syn::parse_str("fixed(width=3, align = right)").unwrap();
-        let params: Vec<FieldParam> = get_config_params(code.tokens);
+        let params: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
 
         assert_eq!(params, expected);
     }
@@ -463,7 +467,7 @@ mod tests {
             FieldParam::spanless("align", "right"),
         ];
         let code: MetaList = syn::parse_str("fixed(skip=1,width=3, align = right)").unwrap();
-        let params: Vec<FieldParam> = get_config_params(code.tokens);
+        let params: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
 
         assert_eq!(params, expected);
     }
@@ -472,7 +476,7 @@ mod tests {
     fn parse_with_quotes() {
         let expected = FieldParam::spanless("align", "right");
         let code: MetaList = syn::parse_str("fixed(align=\"right\")").unwrap();
-        let params: Vec<FieldParam> = get_config_params(code.tokens);
+        let params: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
 
         assert_eq!(params.len(), 1);
         assert_eq!(*(params.get(0)).unwrap(), expected);
@@ -482,7 +486,7 @@ mod tests {
     #[should_panic(expected = "Expected assignment found end of input.")]
     fn parse_params_ident_only() {
         let code: MetaList = syn::parse_str("fixed(width)").unwrap();
-        let x: Vec<FieldParam> = get_config_params(code.tokens);
+        let x: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
         println!("{:?}", x)
     }
 
@@ -490,7 +494,7 @@ mod tests {
     #[should_panic(expected = "Expected value found end of input.")]
     fn parse_params_ident_equal_only() {
         let code: MetaList = syn::parse_str("fixed(width=)").unwrap();
-        let x: Vec<FieldParam> = get_config_params(code.tokens);
+        let x: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
         println!("{:?}", x)
     }
 
@@ -500,7 +504,7 @@ mod tests {
     )]
     fn parse_params_missing_comma() {
         let code: MetaList = syn::parse_str("fixed(width=3 align = right)").unwrap();
-        let _: Vec<FieldParam> = get_config_params(code.tokens);
+        let _: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
     }
 
     #[test]
@@ -509,6 +513,6 @@ mod tests {
     )]
     fn parse_params_wrong_separator() {
         let code: MetaList = syn::parse_str("fixed(width=3; align = right)").unwrap();
-        let _: Vec<FieldParam> = get_config_params(code.tokens);
+        let _: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
     }
 }
