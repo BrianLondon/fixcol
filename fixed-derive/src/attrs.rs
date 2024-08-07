@@ -142,13 +142,23 @@ fn parse_attributes(attrs: &Vec<Attribute>) -> Result<Vec<FieldParam>, MacroErro
         .iter()
         .filter(|a| is_fixed_attr(*a))
         .map(|a| -> Result<Vec<FieldParam>, MacroError> {
-            let tokens = match &a.meta {
-                Meta::Path(_) => unimplemented!("Could not parse Meta::Path -- unreachable?"),
-                Meta::List(m) => &m.tokens,
-                Meta::NameValue(_) => unimplemented!("Could not parse Meta::NameValue"),
-            };
-
-            get_config_params(tokens.clone())
+            match &a.meta {
+                Meta::Path(_) => {
+                    Err(MacroError::new(
+                        "Could not read config from path style attribute. \
+                        \n\nExpected parameters like #[fixed(width = 4)]",
+                        a.meta.span(),
+                    ))
+                }
+                Meta::List(m) => get_config_params(m.tokens.clone()),
+                Meta::NameValue(nv) => {
+                    Err(MacroError::new(
+                        "Could not read config from name/value style attribute. \
+                        \n\nExpected parameters like #[fixed(width = 4)]",
+                        nv.value.span(),
+                    ))
+                },
+            }
         })
         .collect();
 
