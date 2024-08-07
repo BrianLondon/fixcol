@@ -2,7 +2,7 @@
 use std::{fmt::Display, str::FromStr};
 
 use proc_macro2::{Span, TokenStream, TokenTree};
-use syn::{spanned::Spanned, Attribute, Ident, Meta, Path};
+use syn::{Attribute, Ident, Meta, Path};
 
 use crate::error::MacroError;
 
@@ -27,7 +27,7 @@ fn is_fixed_attr(attr: &Attribute) -> bool {
     ident == FIXED_ATTR_KEY
 }
 
-pub fn fixed_attrs(attrs: &Vec<Attribute>) -> Vec<&Attribute> {
+pub(crate) fn fixed_attrs(attrs: &Vec<Attribute>) -> Vec<&Attribute> {
     attrs.iter().filter(|a| is_fixed_attr(a)).collect()
 }
 
@@ -43,6 +43,7 @@ impl FieldParam {
         Self { key, value, span: Some(span) }
     }
 
+    #[cfg(test)]
     fn spanless(key: &str, value: &str) -> Self {
         Self { 
             key: String::from(key),
@@ -172,7 +173,7 @@ fn get_config_params(tokens: TokenStream) -> Vec<FieldParam> {
     field_params
 }
 
-pub enum Align {
+pub(crate) enum Align {
     Left,
     Right,
     Full,
@@ -191,10 +192,10 @@ impl FromStr for Align {
     }
 }
 
-pub struct FieldConfig {
-    pub skip: usize,
-    pub width: usize,
-    pub align: Align,
+pub(crate) struct FieldConfig {
+    pub(crate) skip: usize,
+    pub(crate) width: usize,
+    pub(crate) align: Align,
 }
 
 struct FieldConfigBuilder {
@@ -209,7 +210,7 @@ impl FieldConfigBuilder {
     }
 }
 
-pub fn parse_field_attributes(
+pub(crate) fn parse_field_attributes(
     span: &Span,
     attrs: &Vec<Attribute>
 ) -> Result<FieldConfig, MacroError> {
@@ -248,18 +249,20 @@ pub fn parse_field_attributes(
         }
     }
 
-    let width = match conf.width {
-        Some(w) => w,
-        None => return Err(MacroError::new("Width must be specified for all fields.", *span)),
-    };
-
-    let fc = FieldConfig {
-        skip: conf.skip.unwrap_or(0),
-        align: conf.align.unwrap_or(Align::Left),
-        width: width,
-    };
-
-    Ok(fc)
+    match conf.width {
+        Some(width) => {
+            let fc = FieldConfig {
+                skip: conf.skip.unwrap_or(0),
+                align: conf.align.unwrap_or(Align::Left),
+                width: width,
+            };
+        
+            Ok(fc)        
+        },
+        None => {
+            Err(MacroError::new("Width must be specified for all fields.", *span))
+        },
+    }
 }
 
 pub(crate) struct EnumConfigBuilder {
