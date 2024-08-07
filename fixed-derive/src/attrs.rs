@@ -2,7 +2,7 @@
 use std::{fmt::Display, str::FromStr};
 
 use proc_macro2::{Span, TokenStream, TokenTree};
-use syn::{Attribute, Ident, Meta, Path};
+use syn::{spanned::Spanned, Attribute, Ident, Meta, Path};
 
 use crate::error::MacroError;
 
@@ -161,8 +161,11 @@ fn get_config_params(tokens: TokenStream) -> Result<Vec<FieldParam>, MacroError>
     let mut state = ExpectedTokenState::Key;
     let mut field_params: Vec<FieldParam> = Vec::new();
 
+    let mut last_span = tokens.span();
+
     for token in tokens.into_iter() {
         any_tokens = true;
+        last_span = token.span();
         let (new_state, out) = parse_next_token(state, token)?;
         state = new_state;
         if let Some(param) = out {
@@ -171,10 +174,13 @@ fn get_config_params(tokens: TokenStream) -> Result<Vec<FieldParam>, MacroError>
     }
 
     if state != ExpectedTokenState::Separator && any_tokens {
-        panic!("Expected {} found end of input.", state);
+        Err(MacroError::new(
+            format!("Expected {} found end of input.", state).as_str(), 
+            last_span,
+        ))
+    } else {
+        Ok(field_params)
     }
-
-    Ok(field_params)
 }
 
 pub(crate) enum Align {

@@ -1,0 +1,5 @@
+error: fixed-derive error: Expected value found end of input.
+ --> tests/ui/attr_end_of_input.rs:5:30
+  |
+5 |     #[fixed(width = 5, align =)]
+  |                              ^
