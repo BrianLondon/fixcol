@@ -136,7 +136,6 @@ fn parse_next_token(
     }
 }
 
-// TODO: need a unit test for multiple fixed attributes
 fn parse_attributes(attrs: &Vec<Attribute>) -> Result<Vec<FieldParam>, MacroError> {
     let params: Vec<Result<Vec<FieldParam>, MacroError>> = attrs
         .iter()
