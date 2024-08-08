@@ -1,5 +1,5 @@
 //! Utilities for parsing field attributres
-use std::{fmt::Display, str::FromStr};
+use std::{collections::HashMap, fmt::Display, marker::PhantomData, str::FromStr};
 
 use proc_macro2::{Literal, Span, TokenStream, TokenTree};
 use syn::{spanned::Spanned, Attribute, Ident, Meta, Path};
@@ -285,6 +285,16 @@ impl FieldConfigBuilder {
     }
 }
 
+fn check_none<T>(key: &str, span: Span, opt: Option<T>) -> Result<(), MacroError> {
+    match opt {
+        Some(_) => Err(MacroError::new(
+            format!("Duplicate values for {}", key).as_str(),
+            span,
+        )),
+        None => Ok(()),
+    }
+}
+
 pub(crate) fn parse_field_attributes(
     span: &Span,
     attrs: &Vec<Attribute>
@@ -295,25 +305,28 @@ pub(crate) fn parse_field_attributes(
     for param in params {
         match param.key().as_str() {
             "skip" => {
-                let err = format!("Expected numeric value for skip. Found {}", param.value);
-                let old = conf.skip.replace(param.value.to_string().parse().expect(err.as_str()));
-                if old.is_some() {
-                    panic!("Duplicate values for skip");
-                }
+                let err = "Expected numeric value for skip.";
+                let val: usize = param.value().to_string().parse().map_err(|_| {
+                    MacroError::new(err, param.value_span())
+                })?;
+                let old = conf.skip.replace(val);
+                check_none("skip", param.key_span(), old)?;
             }
             "width" => {
-                let err = format!("Expected numeric value for width. Found {}", param.value);
-                let old = conf.width.replace(param.value().parse().expect(err.as_str()));
-                if old.is_some() {
-                    panic!("Duplicate values for width");
-                }
+                let err = "Expected numeric value for width.";
+                let val: usize = param.value().to_string().parse().map_err(|_| {
+                    MacroError::new(err, param.value_span())
+                })?;
+                let old = conf.width.replace(val);
+                check_none("width", param.key_span(), old)?;
             }
             "align" => {
                 let err = "Expected values for align are \"left\", \"right\", or \"full\".";
-                let old = conf.align.replace(param.value().parse().expect(err));
-                if old.is_some() {
-                    panic!("Duplicate values for align");
-                }
+                let val: Align = param.value().to_string().parse().map_err(|_| {
+                    MacroError::new(err, param.value_span())
+                })?;
+                let old = conf.align.replace(val);
+                check_none("align", param.key_span(), old)?;
             }
             key => {
                 return Err(MacroError::new(
@@ -366,34 +379,27 @@ pub(crate) fn parse_enum_attributes(
     for param in params {
         match param.key().as_str() {
             "ignore_others" => {
-                let err = format!(
-                    "Expected true or false for ignoer_others. Found {}",
-                    param.value
-                );
-                let old = conf
-                    .ignore_others
-                    .replace(param.value().parse().expect(err.as_str()));
-                if old.is_some() {
-                    panic!("Duplicate values for ignore_others");
-                }
+                let err = "Expected true or false for ignore_others.";
+                let val: bool = param.value().to_string().parse().map_err(|_| {
+                    MacroError::new(err, param.value_span())
+                })?;
+                let old = conf.ignore_others.replace(val);
+                check_none("ignore_others", param.key_span(), old)?;
             }
             "key_width" => {
-                let err = format!(
-                    "Expected numeric value for key_width. Found {}",
-                    param.value
-                );
-                let old = conf
-                    .key_width
-                    .replace(param.value().parse().expect(err.as_str()));
-                if old.is_some() {
-                    panic!("Duplicate values for key_width");
-                }
+                let err = "Expected numeric value for key_width.";
+                let val: usize = param.value().to_string().parse().map_err(|_| {
+                    MacroError::new(err, param.value_span())
+                })?;
+                let old = conf.key_width.replace(val);
+                check_none("key_width", param.key_span(), old)?;
             }
-            key => panic!(
-                "Fixed encountered an unrecognized parameter \"{}\" \
-                while parsing enum {}",
-                key, name
-            ),
+            key => {
+                return Err(MacroError::new(
+                    format!("Unrecognized parameter \"{}\".", key).as_str(),
+                    param.key_span(),
+                ));
+            }
         }
     }
 
@@ -434,23 +440,15 @@ pub(crate) fn parse_variant_attributes(
         match param.key().as_str() {
             "key" => {
                 let old = conf.key.replace(param.value());
-                if old.is_some() {
-                    panic!("Duplicate values for key");
-                }
+                check_none("key_width", param.key_span(), old)?;
             }
             "embed" => {
-                let embed = match param.value().as_str() {
-                    "true" => true,
-                    "false" => false,
-                    v => {
-                        panic!("Expected boolean value for embed parameter. \
-                            Found \"{}\"", v)
-                    }
-                };
-                let old = conf.embed.replace(embed);
-                if old.is_some() {
-                    panic!("Duplicate values for embed");
-                }
+                let err = "Expected true or false for embed.";
+                let val: bool = param.value().to_string().parse().map_err(|_| {
+                    MacroError::new(err, param.value_span())
+                })?;
+                let old = conf.embed.replace(val);
+                check_none("embed", param.key_span(), old)?;
             }
             key => panic!(
                 "Unrecognized parameter \"{}\" on enum variant {}",
