@@ -1,0 +1,5 @@
+error: fixed-derive error: Expected separator (',' character) or end of sequence.
+ --> tests/ui/attr_expected_sep.rs:5:23
+  |
+5 |     #[fixed(width = 5 align = right)]
+  |                       ^^^^^

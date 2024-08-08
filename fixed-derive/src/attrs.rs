@@ -1,5 +1,6 @@
 //! Utilities for parsing field attributres
-use std::{collections::HashMap, fmt::Display, marker::PhantomData, str::FromStr};
+use std::fmt::Display;
+use std::str::FromStr;
 
 use proc_macro2::{Literal, Span, TokenStream, TokenTree};
 use syn::{spanned::Spanned, Attribute, Ident, Meta, Path};
@@ -154,16 +155,13 @@ fn parse_next_token(
             Ok((ExpectedTokenState::Equals(ident), None))
         }
         (ExpectedTokenState::Key, t) => {
-            panic!("Expected identifier. Found {}.", t.to_string());
+            Err(MacroError::new("Expected identifier.", t.span()))
         }
         (ExpectedTokenState::Equals(key), TokenTree::Punct(p)) if p.as_char() == '=' => {
             Ok((ExpectedTokenState::Value(key), None))
         }
         (ExpectedTokenState::Equals(_), t) => {
-            panic!(
-                "Expected assignmen ('=' character). Found {}.",
-                t.to_string()
-            );
+            Err(MacroError::new("Expected assignment ('=' character).", t.span()))
         }
         (ExpectedTokenState::Value(key), TokenTree::Ident(ident)) => {
             Ok((
@@ -178,16 +176,13 @@ fn parse_next_token(
             ))
         }
         (ExpectedTokenState::Value(_), t) => {
-            panic!("Expected identifier or literal. Found {}.", t.to_string());
+            Err(MacroError::new("Expected identifier or literal.", t.span()))
         }
         (ExpectedTokenState::Separator, TokenTree::Punct(p)) if p.as_char() == ',' => {
             Ok((ExpectedTokenState::Key, None))
         }
         (ExpectedTokenState::Separator, t) => {
-            panic!(
-                "Expected separator (',' character) or end of sequence. Found {:?}.",
-                t.to_string()
-            );
+            Err(MacroError::new("Expected separator (',' character) or end of sequence.", t.span()))
         }
     }
 }
@@ -565,7 +560,8 @@ mod tests {
 
     #[test]
     #[should_panic(
-        expected = "Expected separator (',' character) or end of sequence. Found \"align\"."
+        expected = "called `Result::unwrap()` on an `Err` value: MacroError { message: \
+         \"Expected separator (',' character) or end of sequence.\", span: Span }"
     )]
     fn parse_params_missing_comma() {
         let code: MetaList = syn::parse_str("fixed(width=3 align = right)").unwrap();
@@ -574,8 +570,9 @@ mod tests {
 
     #[test]
     #[should_panic(
-        expected = "Expected separator (',' character) or end of sequence. Found \";\"."
-    )]
+        expected = "called `Result::unwrap()` on an `Err` value: MacroError { message: \
+        \"Expected separator (',' character) or end of sequence.\", span: Span }"
+   )]
     fn parse_params_wrong_separator() {
         let code: MetaList = syn::parse_str("fixed(width=3; align = right)").unwrap();
         let _: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
