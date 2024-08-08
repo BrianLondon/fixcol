@@ -398,11 +398,16 @@ pub(crate) fn parse_enum_attributes(
         }
     }
 
-   let ec = EnumConfig {
+    let key_width = conf.key_width.ok_or(MacroError::new(
+        "The parameter key must be provided for all enum variants.\n\n \
+        Try adding #[fixed(key_width = 10)] to this enum replacing \"10\" with the width of \
+        your key.",
+        name.span(),
+    ))?;
+
+    let ec = EnumConfig {
         _ignore_others: conf.ignore_others.unwrap_or(false),
-        key_width: conf
-            .key_width
-            .expect("The parameter key_width must be provided for enums."),
+        key_width,
     };
 
     Ok(ec)
@@ -435,7 +440,7 @@ pub(crate) fn parse_variant_attributes(
         match param.key().as_str() {
             "key" => {
                 let old = conf.key.replace(param.value());
-                check_none("key_width", param.key_span(), old)?;
+                check_none("key", param.key_span(), old)?;
             }
             "embed" => {
                 let err = "Expected true or false for embed.";
@@ -445,15 +450,18 @@ pub(crate) fn parse_variant_attributes(
                 let old = conf.embed.replace(val);
                 check_none("embed", param.key_span(), old)?;
             }
-            key => panic!(
-                "Unrecognized parameter \"{}\" on enum variant {}",
-                key, name
-            ),
+            key => {
+                return Err(MacroError::new(
+                    format!("Unrecognized parameter \"{}\".", key).as_str(),
+                    param.key_span(),
+                ));
+            }
         }
     }
 
     let key = conf.key.ok_or(MacroError::new(
-        "The parameter key must be provided for all enum variants",
+        "The parameter key must be provided for all enum variants.\n\n \
+        Try adding #[fixed(key = \"<my key>\")] to this variant.",
         name.span(),
     ))?;
 

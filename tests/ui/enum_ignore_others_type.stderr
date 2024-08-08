@@ -1,0 +1,5 @@
+error: fixed-derive error: Expected true or false for ignore_others.
+  --> tests/ui/enum_ignore_others_type.rs:10:25
+   |
+10 | #[fixed(ignore_others = 1)]
+   |                         ^
