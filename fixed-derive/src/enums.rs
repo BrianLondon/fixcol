@@ -1,4 +1,4 @@
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::{Attribute, FieldsNamed, FieldsUnnamed, Ident, Variant};
 use syn::spanned::Spanned;

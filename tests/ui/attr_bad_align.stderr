@@ -1,0 +1,5 @@
+error: fixed-derive error: Expected values for align are "left", "right", or "full".
+ --> tests/ui/attr_bad_align.rs:5:32
+  |
+5 |     #[fixed(width = 5, align = "backwards")]
+  |                                ^^^^^^^^^^^
