@@ -13,8 +13,3 @@ A library for reading fixed width / column delimited data files.
    valid parameters.
  - Allow a function based custom deserialization on individual columns
  - Clear error messages of location of error on read errors
-
-Also... do this: https://stackoverflow.com/questions/54392702/how-to-report-errors-in-a-procedural-macro-using-the-quote-macro
-    It seems like we just make all of the inner methods return Results with an error type that has a message and a span
-    If we see that when we get to rendering then the error takes precedence.
-    This might not be a release 1 thing.
