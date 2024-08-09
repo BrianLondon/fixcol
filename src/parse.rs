@@ -118,6 +118,8 @@ use crate::ReadFixed;
 ///
 /// Same data file, but this time using a custom `FixedDeserializer` to decode the date.
 /// We use a `Birthday` new type around a [`chrono::NaiveDate`].
+/// 
+/// [`chrono::NaiveDate`]: https://docs.rs/chrono/latest/chrono/struct.NaiveDate.html
 ///
 /// ```
 /// # use fixed_derive::ReadFixed;
