@@ -17,13 +17,12 @@
 //! # Example
 //!
 //! ```
-//! use fixed_derive::ReadFixed;
+//! use fixed::ReadFixed;
 //! #[derive(ReadFixed)]
 //! struct MyType {
 //!     // Fields here
 //! }
 //!
-//! use fixed::ReadFixed;
 //! use std::fs::File;
 //! # fn f() {
 //! let mut file = File::open("my_file.txt").unwrap();
@@ -62,13 +61,12 @@ use std::string::FromUtf8Error;
 /// # Example
 ///
 /// ```
-/// use fixed_derive::ReadFixed;
+/// use fixed::ReadFixed;
 /// #[derive(ReadFixed)]
 /// struct MyType {
 ///     // Fields here
 /// }
 ///
-/// use fixed::ReadFixed;
 /// use std::fs::File;
 /// # fn f() {
 /// let mut file = File::open("my_file.txt").unwrap();

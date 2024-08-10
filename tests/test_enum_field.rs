@@ -1,7 +1,5 @@
 extern crate fixed;
-extern crate fixed_derive;
-
-use fixed_derive::{ReadFixed, WriteFixed};
+use fixed::{ReadFixed, WriteFixed};
 
 #[derive(Debug, Eq, PartialEq, ReadFixed, WriteFixed)]
 #[fixed(key_width = 1)]
@@ -28,8 +26,6 @@ struct Light {
 
 #[test]
 fn derive_read() {
-    use fixed::ReadFixed; // TODO: this double import is really ugly
-
     let expected = Light {
         name: String::from("RtBl2"),
         color: Color::Blue,
@@ -46,8 +42,6 @@ fn derive_read() {
 #[test]
 fn derive_write() {
     use std::str;
-
-    use fixed::WriteFixed;
 
     let expected = "RtBl2   B174 34";
 

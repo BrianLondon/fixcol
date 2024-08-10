@@ -24,7 +24,7 @@ use crate::ReadFixed;
 /// ### Custom deserialization
 ///
 /// ```
-/// # use fixed_derive::ReadFixed;
+/// # use fixed::ReadFixed;
 /// # use fixed::FixedDeserializer;
 /// # use fixed::FieldDescription;
 /// # use fixed::error::DataError;
@@ -56,7 +56,6 @@ use crate::ReadFixed;
 ///     pub eye_color: EyeColor,
 /// }
 ///
-/// # use fixed::ReadFixed;
 /// let person = Person::read_fixed_str("Harold     42Gr").unwrap();
 /// assert_eq!(person.eye_color, EyeColor::Green);
 /// ```
@@ -84,7 +83,7 @@ use crate::ReadFixed;
 /// Naive implementation
 ///
 /// ```
-/// # use fixed_derive::ReadFixed;
+/// # use fixed::ReadFixed;
 /// # use fixed::FixedDeserializer;
 /// # use fixed::FieldDescription;
 /// # use std::fs::File;
@@ -102,7 +101,6 @@ use crate::ReadFixed;
 /// }
 ///
 /// // Note we are being sloppy with error handling to keep the example simple
-/// # use fixed::ReadFixed;
 /// # fn f() {
 /// let mut file = File::open("my_file.txt").unwrap();
 /// # }
@@ -122,7 +120,7 @@ use crate::ReadFixed;
 /// [`chrono::NaiveDate`]: https://docs.rs/chrono/latest/chrono/struct.NaiveDate.html
 ///
 /// ```
-/// # use fixed_derive::ReadFixed;
+/// # use fixed::ReadFixed;
 /// # use fixed::FixedDeserializer;
 /// # use fixed::FieldDescription;
 /// # use fixed::error::DataError;
@@ -167,7 +165,6 @@ use crate::ReadFixed;
 ///     }
 /// }
 ///
-/// # use fixed::ReadFixed;
 /// # fn f() {
 /// let mut file = File::open("my_file.txt").unwrap();
 /// # }

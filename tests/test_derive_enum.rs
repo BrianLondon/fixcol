@@ -1,7 +1,5 @@
-use fixed_derive::{ReadFixed, WriteFixed};
-
 extern crate fixed;
-extern crate fixed_derive;
+use fixed::{ReadFixed, WriteFixed, WriteFixedAll};
 
 const SAMPLE_DATA: &'static str = r#"NODE ME
 NODE NH
@@ -54,8 +52,6 @@ fn edge(from: &str, to: &str, weight: u64) -> GraphObject {
 
 #[test]
 fn read_enums() {
-    use fixed::ReadFixed;
-
     let mut buf = SAMPLE_DATA.as_bytes();
     let data: Vec<_> = GraphObject::read_fixed_all(&mut buf).collect();
     println!("{:?}", data);
@@ -83,8 +79,6 @@ fn read_enums() {
 
 #[test]
 fn write_enum() {
-    use fixed::WriteFixedAll;
-
     use std::str::from_utf8;
 
     let inp = vec![

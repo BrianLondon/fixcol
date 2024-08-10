@@ -19,7 +19,7 @@ pub trait WriteFixed {
     /// # Example
     /// 
     /// ```
-    /// # use fixed_derive::WriteFixed;
+    /// # use fixed::WriteFixed;
     /// # use std::io;
     /// #[derive(WriteFixed)]
     /// struct Point {
@@ -29,7 +29,6 @@ pub trait WriteFixed {
     ///     y: u8,
     /// }
     ///
-    /// # use fixed::WriteFixed;
     /// let mut buffer = Vec::new();
     /// 
     /// let point = Point { x: 12, y: 7 };
@@ -189,7 +188,7 @@ pub trait ReadFixed {
     ///
     /// # Example
     /// ```
-    /// # use fixed_derive::ReadFixed;
+    /// # use fixed::ReadFixed;
     /// # use std::fs::File;
     /// # use std::io;
     /// #[derive(ReadFixed)]
@@ -200,7 +199,6 @@ pub trait ReadFixed {
     ///     bar: String,
     /// }
     ///
-    /// # use fixed::ReadFixed;
     /// let mut buffer: &[u8] = "foobar".as_bytes();
     /// let my_foo: Foo = Foo::read_fixed(&mut buffer).unwrap();
     /// # assert_eq!(my_foo.foo, "foo".to_string());
@@ -218,7 +216,7 @@ pub trait ReadFixed {
     ///
     /// # Example
     /// ```
-    /// # use fixed_derive::ReadFixed;
+    /// # use fixed::ReadFixed;
     /// # use std::fs::File;
     /// # use std::io;
     /// #[derive(ReadFixed)]
@@ -226,7 +224,6 @@ pub trait ReadFixed {
     ///     // ...
     /// }
     ///
-    /// # use fixed::ReadFixed;
     /// # fn f() {
     /// let mut file = File::open("my_file.txt").unwrap();
     /// for res in MyType::read_fixed_all(file) {
@@ -256,7 +253,7 @@ pub trait ReadFixed {
     ///
     /// We can parse directly from `str` literals
     /// ```
-    /// # use fixed_derive::ReadFixed;
+    /// # use fixed::ReadFixed;
     /// # use fixed::FixedDeserializer;
     /// # use fixed::FieldDescription;
     /// #[derive(ReadFixed)]
@@ -267,7 +264,6 @@ pub trait ReadFixed {
     ///     y: u8,
     /// }
     ///
-    /// # use fixed::ReadFixed;
     /// let point = Point::read_fixed_str(" 42  7").unwrap();
     /// assert_eq!(point.x, 42);
     /// assert_eq!(point.y, 7)
@@ -275,9 +271,7 @@ pub trait ReadFixed {
     ///
     /// It can also be useful to pull directly from slices.
     /// ```
-    /// # use fixed_derive::ReadFixed;
-    /// # use fixed::FixedDeserializer;
-    /// # use fixed::FieldDescription;
+    /// # use fixed::{FixedDeserializer, FieldDescription, ReadFixed};
     /// # #[derive(ReadFixed)]
     /// # struct Point {
     /// #     #[fixed(width=3)]
@@ -285,7 +279,6 @@ pub trait ReadFixed {
     /// #     #[fixed(width=3)]
     /// #     y: u8,
     /// # }
-    /// # use fixed::ReadFixed;
     /// let s = ">>12361 <<";
     /// let point = Point::read_fixed_str(&s[2..8]).unwrap();
     ///
@@ -309,7 +302,7 @@ pub trait ReadFixed {
     ///
     /// We can parse directly from `str` literals
     /// ```
-    /// # use fixed_derive::ReadFixed;
+    /// # use fixed::ReadFixed;
     /// # use fixed::FixedDeserializer;
     /// # use fixed::FieldDescription;
     /// #[derive(ReadFixed)]
@@ -320,7 +313,6 @@ pub trait ReadFixed {
     ///     y: u8,
     /// }
     ///
-    /// # use fixed::ReadFixed;
     /// let s = String::from(" 42  7");
     /// let point = Point::read_fixed_string(s).unwrap();
     /// assert_eq!(point.x, 42);

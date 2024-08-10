@@ -1,11 +1,9 @@
 extern crate fixed;
-extern crate fixed_derive;
 
 use std::io::{Error as IoError, ErrorKind, Write};
 
 use fixed::error::Error;
-use fixed::WriteFixedAll;
-use fixed_derive::WriteFixed;
+use fixed::{WriteFixed, WriteFixedAll};
 
 /// A writable buffer that accepts a maximum number of bytes and then errors
 ///

@@ -12,6 +12,8 @@ pub use format::{Alignment, FieldDescription};
 pub use parse::FixedDeserializer;
 pub use write::FixedSerializer;
 
+pub use fixed_derive::{ReadFixed, WriteFixed};
+
 #[cfg(test)]
 mod tests {
     use std::io::{Read, Write};
