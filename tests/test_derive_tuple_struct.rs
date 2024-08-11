@@ -1,8 +1,11 @@
 extern crate fixcol;
 
-use fixcol::{ReadFixed, WriteFixed};
+use fixcol::ReadFixed;
+#[cfg(feature = "experimental-write")]
+use fixcol::WriteFixed;
 
-#[derive(Debug, Eq, PartialEq, ReadFixed, WriteFixed)]
+#[cfg_attr(feature = "experimental-write", derive(WriteFixed))]
+#[derive(Debug, Eq, PartialEq, ReadFixed)]
 struct Color(
     #[fixcol(width = 3, align = "right")] u8,
     #[fixcol(skip = 1, width = 3, align = "right")] u8,
@@ -17,6 +20,7 @@ fn derive_read() {
     assert_eq!(color, Color(255, 255, 64));
 }
 
+#[cfg(feature = "experimental-write")]
 #[test]
 fn derive_write() {
     let mut buf = Vec::new();

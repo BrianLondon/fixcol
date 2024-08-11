@@ -3,6 +3,9 @@ name = "fixcol"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+experimental-write = []
+
 [workspace]
 members = ["fixcol-derive"]
 
@@ -14,3 +17,6 @@ chrono = "0.4.38"
 escargot = "0.5.12"
 regex = "1.10.6"
 trybuild = "1.0.99"
+
+[package.metadata."docs.rs"]
+all-features = true

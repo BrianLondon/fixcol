@@ -9,16 +9,24 @@ pub mod error;
 mod fixcol;
 mod format;
 mod parse;
+
+#[cfg(feature = "experimental-write")]
 mod write;
 
 extern crate fixcol_derive;
 
-pub use fixcol::{Iter, ReadFixed, WriteFixed, WriteFixedAll};
+pub use fixcol::{Iter, ReadFixed};
 pub use format::{Alignment, FieldDescription};
 pub use parse::FixedDeserializer;
+
+#[cfg(feature = "experimental-write")]
+pub use fixed::{WriteFixed, WriteFixedAll};
+#[cfg(feature = "experimental-write")]
 pub use write::FixedSerializer;
 
-pub use fixcol_derive::{ReadFixed, WriteFixed};
+pub use fixcol_derive::ReadFixed;
+#[cfg(feature = "experimental-write")]
+pub use fixcol_derive::WriteFixed;
 
 #[cfg(test)]
 mod tests {
@@ -44,6 +52,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "experimental-write")]
     fn write_custom_basic() {
         struct Foo;
 
@@ -71,6 +80,7 @@ mod tests {
         value: u8,
     }
 
+    #[cfg(feature = "experimental-write")]
     impl WriteFixed for NumWord {
         fn write_fixed<W: Write>(&self, buf: &mut W) -> Result<(), Error> {
             let _ = buf.write_fmt(format_args!("{:<10}{:>3}", self.name, self.value))?;
@@ -94,6 +104,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "experimental-write")]
     #[test]
     fn custom_struct_write() {
         let three = NumWord { name: "three".to_string(), value: 3 };

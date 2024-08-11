@@ -1,13 +1,17 @@
 extern crate fixcol;
 
-use fixcol::{ReadFixed, WriteFixed, WriteFixedAll};
+use fixcol::ReadFixed;
+#[cfg(feature = "experimental-write")]
+use fixcol::{WriteFixed, WriteFixedAll};
 
 // Converted the struct Atom to AtomS and the MoleculeRow
 // variant Atom to AtomV to act as a regression test where
 // we did not correctly handle when those two had different
 // names. i.e., Atom(Atom) worked but AtomV(AtomS) did not.
 
-#[derive(Debug, PartialEq, Eq, ReadFixed, WriteFixed)]
+
+#[cfg_attr(feature = "experimental-write", derive(WriteFixed))]
+#[derive(Debug, PartialEq, Eq, ReadFixed)]
 struct AtomS {
     #[fixcol(width = 5, align = "right")]
     id: u16,
@@ -17,7 +21,8 @@ struct AtomS {
     name: String,
 }
 
-#[derive(Debug, PartialEq, Eq, ReadFixed, WriteFixed)]
+#[cfg_attr(feature = "experimental-write", derive(WriteFixed))]
+#[derive(Debug, PartialEq, Eq, ReadFixed)]
 #[fixcol(key_width = 3)]
 enum MoleculeRow {
     #[fixcol(key = "Mol")]
@@ -93,6 +98,7 @@ fn read_nested() {
 }
 
 #[test]
+#[cfg(feature = "experimental-write")]
 fn write_nested() {
     let mut v = Vec::new();
     let res = molecule_data().write_fixed_all(&mut v);
