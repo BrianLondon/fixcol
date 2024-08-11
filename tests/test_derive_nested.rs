@@ -1,7 +1,6 @@
 extern crate fixed;
-extern crate fixed_derive;
 
-use fixed_derive::{ReadFixed, WriteFixed};
+use fixed::{ReadFixed, WriteFixed, WriteFixedAll};
 
 // Converted the struct Atom to AtomS and the MoleculeRow
 // variant Atom to AtomV to act as a regression test where
@@ -70,8 +69,6 @@ Bnd1    2
 fn read_inner() {
     // This is a regression test on a test setup error when read_nested was
     // failing for the wrong reason
-    use fixed::ReadFixed;
-
     let data: AtomS = AtomS::read_fixed_str("    0    0 Hydrogen").unwrap();
 
     assert_eq!(data, AtomS{ id: 0, molecule: 0, name: "Hydrogen".to_owned() });
@@ -79,8 +76,6 @@ fn read_inner() {
 
 #[test]
 fn read_nested() {
-    use fixed::ReadFixed;
-
     let mut buf = SAMPLE_TEXT.as_bytes();
     let data: Vec<_> = MoleculeRow::read_fixed_all(&mut buf).collect();
 
@@ -92,8 +87,6 @@ fn read_nested() {
 
 #[test]
 fn write_nested() {
-    use fixed::WriteFixedAll;
-
     let mut v = Vec::new();
     let res = molecule_data().write_fixed_all(&mut v);
 

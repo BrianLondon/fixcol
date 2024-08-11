@@ -1,7 +1,5 @@
 extern crate fixed;
-extern crate fixed_derive;
-
-use fixed_derive::{ReadFixed, WriteFixed};
+use fixed::{ReadFixed, WriteFixed};
 
 #[derive(Debug, ReadFixed, WriteFixed, Eq, PartialEq)]
 struct Point {
@@ -16,8 +14,6 @@ struct Point {
 
 #[test]
 fn derive_read_struct() {
-    use fixed::ReadFixed; // TODO: this double import is really ugly
-
     let mut buf = "42                 3".as_bytes();
     let point = Point::read_fixed(&mut buf).unwrap();
     assert_eq!(point, Point { x: 42, y: 3 });
@@ -25,8 +21,6 @@ fn derive_read_struct() {
 
 #[test]
 fn derive_write_struct() {
-    use fixed::WriteFixed;
-
     let point = Point { x: 42, y: 3 };
 
     let mut v = Vec::new();

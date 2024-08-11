@@ -11,16 +11,18 @@
 //! sufficient to identify where in the data file and on what data the error
 //! occured.
 //!
+//! [`ReadFixed`]: crate::ReadFixed
+//! [`WriteFixed`]: crate::WriteFixed
+//! 
 //! # Example
 //!
 //! ```
-//! use fixed_derive::ReadFixed;
+//! use fixed::ReadFixed;
 //! #[derive(ReadFixed)]
 //! struct MyType {
 //!     // Fields here
 //! }
 //!
-//! use fixed::ReadFixed;
 //! use std::fs::File;
 //! # fn f() {
 //! let mut file = File::open("my_file.txt").unwrap();
@@ -59,13 +61,12 @@ use std::string::FromUtf8Error;
 /// # Example
 ///
 /// ```
-/// use fixed_derive::ReadFixed;
+/// use fixed::ReadFixed;
 /// #[derive(ReadFixed)]
 /// struct MyType {
 ///     // Fields here
 /// }
 ///
-/// use fixed::ReadFixed;
 /// use std::fs::File;
 /// # fn f() {
 /// let mut file = File::open("my_file.txt").unwrap();
@@ -90,6 +91,10 @@ use std::string::FromUtf8Error;
 /// Error decoding data from "123x6": invalid digit found in string
 /// Error occured on line 56
 /// ```
+/// [`ReadFixed`]: crate::ReadFixed
+/// [`WriteFixed`]: crate::WriteFixed
+/// [`to_string`]: std::string::ToString::to_string()
+/// 
 #[derive(Debug)]
 pub enum Error {
     /// An error that occured while parsing the formatted data
@@ -199,6 +204,8 @@ impl DataError {
     /// * `parsed_value` - The data that we failed to parse
     /// * `message` - A description of what went wrong
     ///
+    /// [`FixedDeserializer`]: crate::FixedDeserializer
+    /// 
     /// # Example
     ///
     /// Consider a data file that contains a one character column with a nullable

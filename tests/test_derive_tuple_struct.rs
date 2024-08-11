@@ -1,7 +1,5 @@
 extern crate fixed;
-extern crate fixed_derive;
-
-use fixed_derive::{ReadFixed, WriteFixed};
+use fixed::{ReadFixed, WriteFixed};
 
 #[derive(Debug, Eq, PartialEq, ReadFixed, WriteFixed)]
 struct Color(
@@ -12,8 +10,6 @@ struct Color(
 
 #[test]
 fn derive_read() {
-    use fixed::ReadFixed;
-
     let mut buf = "255 255  64".as_bytes();
 
     let color = Color::read_fixed(&mut buf).unwrap();
@@ -22,8 +18,6 @@ fn derive_read() {
 
 #[test]
 fn derive_write() {
-    use fixed::WriteFixed;
-
     let mut buf = Vec::new();
     let res = Color(0, 128, 42).write_fixed(&mut buf);
 
