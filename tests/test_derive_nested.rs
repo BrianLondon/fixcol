@@ -21,11 +21,11 @@ struct AtomS {
 #[fixed(key_width = 3)]
 enum MoleculeRow {
     #[fixed(key = "Mol")]
-    Molecule { 
+    Molecule {
         #[fixed(skip = 1, width = 5)]
         id: u16,
         #[fixed(width = 8)]
-        name: String 
+        name: String,
     },
     #[fixed(key = "Atm", embed = true)]
     AtomV(AtomS),
@@ -54,7 +54,7 @@ fn molecule_data() -> Vec<MoleculeRow> {
         atom(2, 0, "Oxygen"),
         bond(0, 1),
         bond(1, 2),
-    ] 
+    ]
 }
 
 const SAMPLE_TEXT: &'static str = r#"Mol 0    Water   
@@ -71,7 +71,14 @@ fn read_inner() {
     // failing for the wrong reason
     let data: AtomS = AtomS::read_fixed_str("    0    0 Hydrogen").unwrap();
 
-    assert_eq!(data, AtomS{ id: 0, molecule: 0, name: "Hydrogen".to_owned() });
+    assert_eq!(
+        data,
+        AtomS {
+            id: 0,
+            molecule: 0,
+            name: "Hydrogen".to_owned()
+        }
+    );
 }
 
 #[test]
@@ -79,7 +86,7 @@ fn read_nested() {
     let mut buf = SAMPLE_TEXT.as_bytes();
     let data: Vec<_> = MoleculeRow::read_fixed_all(&mut buf).collect();
 
-    let actual: Vec<MoleculeRow> = data.into_iter().map(|o| {println!("{:?}", o); o.unwrap()}).collect();
+    let actual: Vec<MoleculeRow> = data.into_iter().map(|o| o.unwrap()).collect();
     let expected = molecule_data();
 
     assert_eq!(actual, expected);

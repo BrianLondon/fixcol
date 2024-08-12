@@ -116,7 +116,7 @@ use crate::ReadFixed;
 ///
 /// Same data file, but this time using a custom `FixedDeserializer` to decode the date.
 /// We use a `Birthday` new type around a [`chrono::NaiveDate`].
-/// 
+///
 /// [`chrono::NaiveDate`]: https://docs.rs/chrono/latest/chrono/struct.NaiveDate.html
 ///
 /// ```
@@ -580,15 +580,13 @@ mod tests {
             alignment: Alignment::Full,
         };
         let actual: Result<f32, DataError> = f32::parse_fixed(" 3.14 ", &desc);
-        
+
         match actual {
             Ok(_) => panic!("Expected parse_fixed call to fail"),
-            Err(e) => {
-                match e.inner_error() {
-                    InnerError::ParseFloatError(_) => {},
-                    _ => panic!("Expected ParseFloatError as inner error"),
-                }
-            }
+            Err(e) => match e.inner_error() {
+                InnerError::ParseFloatError(_) => {}
+                _ => panic!("Expected ParseFloatError as inner error"),
+            },
         }
     }
 

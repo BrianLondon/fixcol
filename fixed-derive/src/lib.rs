@@ -9,40 +9,16 @@ extern crate proc_macro2;
 extern crate quote;
 extern crate syn;
 
-use attrs::FieldConfig;
 use enums::enum_write;
 use error::MacroError;
 use proc_macro::TokenStream;
 
 use quote::quote;
-use syn::{Data, DataEnum, DataStruct, DeriveInput};
 use syn::spanned::Spanned;
+use syn::{Data, DataEnum, DataStruct, DeriveInput};
 
 use crate::enums::enum_read;
 use crate::structs::{struct_read, struct_write};
-
-// This doesn't really belong here, but there's not a better place
-// it's function spans the arg parsing and code generating steps
-// Maybe in fields.rs?
-impl quote::ToTokens for FieldConfig {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let FieldConfig { skip, width, align } = &self;
-
-        let alignment = match &align {
-            attrs::Align::Left => quote! { fixed::Alignment::Left },
-            attrs::Align::Right => quote! { fixed::Alignment::Right },
-            attrs::Align::Full => quote! { fixed::Alignment::Full },
-        };
-
-        tokens.extend(quote! {
-            &fixed::FieldDescription {
-                skip: #skip,
-                len: #width,
-                alignment: #alignment,
-            }
-        });
-    }
-}
 
 #[proc_macro_derive(ReadFixed, attributes(fixed))]
 pub fn read_fixed_impl(input: TokenStream) -> TokenStream {

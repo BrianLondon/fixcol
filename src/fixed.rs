@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 use crate::error::Error;
 
 /// Trait for writing to fixed width (column based) serialization
-/// 
+///
 /// The `fixed` library provides limited writing functionality out of the box.
 /// `WriteFixed` is the main entry point to that serialization functionality.
 /// While one can always manually implement `WriteFixed`, it is normally derived
@@ -12,12 +12,12 @@ use crate::error::Error;
 /// limited floating point formatting.
 pub trait WriteFixed {
     /// Writes the object into the supplied buffer
-    /// 
+    ///
     /// Provides logic for serializing an instance of the object in the specified
     /// fixed column format.
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```
     /// # use fixed::WriteFixed;
     /// # use std::io;
@@ -30,7 +30,7 @@ pub trait WriteFixed {
     /// }
     ///
     /// let mut buffer = Vec::new();
-    /// 
+    ///
     /// let point = Point { x: 12, y: 7 };
     /// let res = point.write_fixed(&mut buffer);
     ///
@@ -40,15 +40,15 @@ pub trait WriteFixed {
 }
 
 /// Implements writing a data set in a fixed width column format
-/// 
+///
 /// This trait exposes the [`write_fixed_all`] method that allows serialization
 /// of a set of objects to a buffer in a newline delimited, fixed column data
-/// format. There is a blanket implementation on all collections that 
-/// implement [`IntoIterator`] when the inner class implements [`WriteFixed`]. 
+/// format. There is a blanket implementation on all collections that
+/// implement [`IntoIterator`] when the inner class implements [`WriteFixed`].
 /// This trait should not need any custom implementation.
-/// 
+///
 /// [`write_fixed_all`]: crate::WriteFixedAll::write_fixed_all
-/// 
+///
 /// # Example
 /// ```
 /// use fixed_derive::WriteFixed;
@@ -58,14 +58,14 @@ pub trait WriteFixed {
 ///     #[fixed(width=3)] y: u8,
 /// }
 /// // Point implements WriteFixed
-/// 
+///
 /// use fixed::WriteFixedAll;
 /// let v: Vec<Point> = Vec::new();
 /// // Therefore Vec<Point> implements WriteFixedAll
 /// ```
 pub trait WriteFixedAll {
     /// Writes a set of objects to the supplied buffer (newline delimited)
-    /// 
+    ///
     /// # Example
     /// ```
     /// # use fixed_derive::WriteFixed;
@@ -76,7 +76,7 @@ pub trait WriteFixedAll {
     ///     #[fixed(width=3)] x: u8,
     ///     #[fixed(width=3)] y: u8,
     /// }
-    /// 
+    ///
     /// let v: Vec<Point> = vec![
     ///     // data here...
     /// #   Point { x: 0, y: 3},
@@ -87,7 +87,7 @@ pub trait WriteFixedAll {
     /// let mut file = File::open("my_file.txt").unwrap();
     /// # }
     /// # let mut file: Vec<u8> = Vec::new();
-    /// 
+    ///
     /// use fixed::WriteFixedAll;
     /// v.write_fixed_all(&mut file);
     /// # let s = std::str::from_utf8(file.as_slice()).unwrap();
@@ -97,7 +97,7 @@ pub trait WriteFixedAll {
 }
 
 /// Blanket implementation of WriteFixedAll for collections of `impl WriteFixed`
-/// 
+///
 /// See also: [`WriteFixed`]
 impl<T: WriteFixed, Iter: IntoIterator<Item = T>> WriteFixedAll for Iter {
     fn write_fixed_all<W: Write>(self, buf: &mut W) -> Result<(), Error> {
@@ -114,7 +114,7 @@ impl<T: WriteFixed, Iter: IntoIterator<Item = T>> WriteFixedAll for Iter {
 ///
 /// Implements [`Iterator`] for `T`. This struct is created by a call to
 /// [`read_fixed_all`].
-/// 
+///
 /// [`read_fixed_all`]: ReadFixed::read_fixed_all
 pub struct Iter<T, R>
 where

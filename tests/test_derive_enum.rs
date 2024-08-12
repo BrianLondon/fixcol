@@ -34,8 +34,7 @@ enum GraphObject {
         to: String,
         #[fixed(skip = 1, width = 7, align = "right")]
         weight: u64,
-    }, // #[fixed(key="XXXX")]
-       // Blank,
+    },
 }
 
 fn node(s: &str) -> GraphObject {

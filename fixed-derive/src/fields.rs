@@ -2,14 +2,16 @@ use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use syn::{spanned::Spanned, FieldsNamed, FieldsUnnamed, Index};
 
-// TODO: should FieldConfig live here? yes if it doesnt cause circular
-use crate::{attrs::{self, FieldConfig}, error::MacroError};
+use crate::attrs::{self, FieldConfig};
+use crate::error::MacroError;
 
 pub(crate) fn read_unnamed_fields(
-    fields: &FieldsUnnamed
+    fields: &FieldsUnnamed,
 ) -> Result<(Vec<Ident>, Vec<TokenStream>), MacroError> {
-    let field_reads: Result<Vec<(Ident ,TokenStream)>, MacroError> = fields.unnamed
-        .iter().enumerate()
+    let field_reads: Result<Vec<(Ident, TokenStream)>, MacroError> = fields
+        .unnamed
+        .iter()
+        .enumerate()
         .map(|item| -> Result<(Ident, TokenStream), MacroError> {
             let (field_num, field) = item;
 
@@ -32,16 +34,18 @@ pub(crate) fn read_unnamed_fields(
             };
 
             Ok((ident, read))
-        }).collect();
-    
+        })
+        .collect();
+
     Ok(field_reads?.into_iter().unzip())
 }
 
 /// Retuns field names and code to read those fields
 pub(crate) fn read_named_fields(
-    fields: &FieldsNamed
+    fields: &FieldsNamed,
 ) -> Result<(Vec<Ident>, Vec<TokenStream>), MacroError> {
-    let field_reads: Result<Vec<(Ident, TokenStream)>, MacroError> = fields.named
+    let field_reads: Result<Vec<(Ident, TokenStream)>, MacroError> = fields
+        .named
         .iter()
         .map(|field| -> Result<(Ident, TokenStream), MacroError> {
             let type_token = field.ty.clone();
@@ -69,7 +73,7 @@ pub(crate) fn read_named_fields(
 }
 
 pub(crate) fn write_named_fields(
-    fields: &FieldsNamed
+    fields: &FieldsNamed,
 ) -> Result<(Vec<Ident>, Vec<FieldConfig>), MacroError> {
     let field_configs: Result<Vec<(Ident, FieldConfig)>, MacroError> = fields
         .named
@@ -86,7 +90,7 @@ pub(crate) fn write_named_fields(
 }
 
 pub(crate) fn write_unnamed_fields(
-    fields: &FieldsUnnamed
+    fields: &FieldsUnnamed,
 ) -> Result<(Vec<Index>, Vec<FieldConfig>), MacroError> {
     let field_configs: Result<Vec<(Index, FieldConfig)>, MacroError> = fields
         .unnamed
