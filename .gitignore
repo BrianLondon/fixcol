@@ -1,4 +1,5 @@
 /target
+/wip
 Cargo.lock
 
 tarpaulin-report.html
