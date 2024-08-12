@@ -3,6 +3,7 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 use proc_macro2::{Literal, Span, TokenStream, TokenTree};
+use quote::quote;
 use syn::{spanned::Spanned, Attribute, Ident, Meta, Path};
 
 use crate::error::MacroError;
@@ -266,6 +267,28 @@ pub(crate) struct FieldConfig {
     pub(crate) skip: usize,
     pub(crate) width: usize,
     pub(crate) align: Align,
+}
+
+// This allows us to directly convert a FieldConfig (from the macro code)
+// into a FieldDescription literal in the generated code
+impl quote::ToTokens for FieldConfig {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        let FieldConfig { skip, width, align } = &self;
+
+        let alignment = match &align {
+            Align::Left => quote! { fixed::Alignment::Left },
+            Align::Right => quote! { fixed::Alignment::Right },
+            Align::Full => quote! { fixed::Alignment::Full },
+        };
+
+        tokens.extend(quote! {
+            &fixed::FieldDescription {
+                skip: #skip,
+                len: #width,
+                alignment: #alignment,
+            }
+        });
+    }
 }
 
 struct FieldConfigBuilder {

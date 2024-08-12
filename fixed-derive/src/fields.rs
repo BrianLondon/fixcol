@@ -2,8 +2,8 @@ use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use syn::{spanned::Spanned, FieldsNamed, FieldsUnnamed, Index};
 
-// TODO: should FieldConfig live here? yes if it doesnt cause circular
-use crate::{attrs::{self, FieldConfig}, error::MacroError};
+use crate::attrs::{self, FieldConfig};
+use crate::error::MacroError;
 
 pub(crate) fn read_unnamed_fields(
     fields: &FieldsUnnamed
