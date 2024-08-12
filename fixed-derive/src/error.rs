@@ -25,7 +25,7 @@ impl ToTokens for MacroError {
         let span = self.span.clone();
 
         tokens.extend(quote_spanned! {
-            span => 
+            span =>
             compile_error!(#message);
         });
     }

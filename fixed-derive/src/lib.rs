@@ -14,8 +14,8 @@ use error::MacroError;
 use proc_macro::TokenStream;
 
 use quote::quote;
-use syn::{Data, DataEnum, DataStruct, DeriveInput};
 use syn::spanned::Spanned;
+use syn::{Data, DataEnum, DataStruct, DeriveInput};
 
 use crate::enums::enum_read;
 use crate::structs::{struct_read, struct_write};

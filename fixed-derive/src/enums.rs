@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Attribute, FieldsNamed, FieldsUnnamed, Ident, Variant};
 use syn::spanned::Spanned;
+use syn::{Attribute, FieldsNamed, FieldsUnnamed, Ident, Variant};
 
 use crate::attrs::{fixed_attrs, parse_enum_attributes, parse_variant_attributes, VariantConfig};
 use crate::error::{MacroError, MacroResult};
@@ -25,14 +25,11 @@ pub(crate) fn enum_read(
         .map(|variant| -> Result<(String, TokenStream), MacroError> {
             let var_name = &variant.ident;
 
-            let VariantConfig { key, embed } = 
-                parse_variant_attributes(&var_name, &variant.attrs)?;
+            let VariantConfig { key, embed } = parse_variant_attributes(&var_name, &variant.attrs)?;
 
             let read = match &variant.fields {
                 syn::Fields::Named(fields) => read_struct_variant(var_name, fields)?,
-                syn::Fields::Unnamed(fields) if embed => {
-                    read_embedded_variant(var_name, fields)?
-                }
+                syn::Fields::Unnamed(fields) if embed => read_embedded_variant(var_name, fields)?,
                 syn::Fields::Unnamed(fields) => read_tuple_variant(var_name, fields)?,
                 syn::Fields::Unit => read_unit_variant(var_name),
             };
@@ -40,7 +37,7 @@ pub(crate) fn enum_read(
             Ok((key, read))
         })
         .collect(); // TODO: Gather all the errors instead of just the first
-    
+
     let (var_name, var_read): (Vec<String>, Vec<TokenStream>) = items?.into_iter().unzip();
 
     let key_width = enum_config.key_width;
@@ -64,10 +61,7 @@ pub(crate) fn enum_read(
     Ok(fun)
 }
 
-fn read_struct_variant(
-    name: &Ident,
-    fields: &FieldsNamed,
-) -> MacroResult {
+fn read_struct_variant(name: &Ident, fields: &FieldsNamed) -> MacroResult {
     let (field_names, field_reads) = read_named_fields(fields)?;
 
     let read_code = quote! {
@@ -78,10 +72,7 @@ fn read_struct_variant(
     Ok(read_code)
 }
 
-fn read_embedded_variant(
-    name: &Ident,
-    fields: &FieldsUnnamed,
-) -> MacroResult {
+fn read_embedded_variant(name: &Ident, fields: &FieldsUnnamed) -> MacroResult {
     if fields.unnamed.len() != 1 {
         return Err(MacroError::new(
             "Embed param is only valid on variants with exactly one field",
@@ -139,8 +130,8 @@ pub(crate) fn enum_write(variants: Vec<&Variant>) -> MacroResult {
     let write_variants: Result<Vec<TokenStream>, MacroError> = variants
         .iter()
         .map(|variant| -> MacroResult {
-            let VariantConfig { key, embed } = parse_variant_attributes(&variant.ident, &variant.attrs)
-                .unwrap(); // TODO: need to do this for write macros also
+            let VariantConfig { key, embed } =
+                parse_variant_attributes(&variant.ident, &variant.attrs).unwrap(); // TODO: need to do this for write macros also
 
             let out = match &variant.fields {
                 syn::Fields::Named(fields) => write_struct_variant(&variant.ident, key, fields)?,
@@ -172,11 +163,7 @@ pub(crate) fn enum_write(variants: Vec<&Variant>) -> MacroResult {
     Ok(code)
 }
 
-fn write_struct_variant(
-    ident: &Ident,
-    key: String,
-    fields: &FieldsNamed
-) -> MacroResult {
+fn write_struct_variant(ident: &Ident, key: String, fields: &FieldsNamed) -> MacroResult {
     let (names, configs) = write_named_fields(&fields)?;
 
     let key_len = key.len();
@@ -198,11 +185,7 @@ fn write_struct_variant(
     Ok(code)
 }
 
-fn write_tuple_variant(
-    ident: &Ident,
-    key: String,
-    fields: &FieldsUnnamed
-) -> MacroResult {
+fn write_tuple_variant(ident: &Ident, key: String, fields: &FieldsUnnamed) -> MacroResult {
     let (_, configs) = write_unnamed_fields(&fields)?;
 
     let named_fields: Vec<Ident> = configs
@@ -230,11 +213,7 @@ fn write_tuple_variant(
     Ok(code)
 }
 
-fn write_embedded_variant(
-    ident: &Ident,
-    key: String,
-    fields: &FieldsUnnamed,
-) -> MacroResult {
+fn write_embedded_variant(ident: &Ident, key: String, fields: &FieldsUnnamed) -> MacroResult {
     if fields.unnamed.len() != 1 {
         return Err(MacroError::new(
             "Embed param is only valid on variants with exactly one field",
@@ -249,7 +228,7 @@ fn write_embedded_variant(
                 fa.meta.span(),
             ));
         }
-        
+
         let key_len = key.len();
 
         let gen = quote! {

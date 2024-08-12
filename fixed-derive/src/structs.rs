@@ -2,27 +2,23 @@ use proc_macro2::Ident;
 use quote::quote;
 use syn::{Fields, FieldsNamed, FieldsUnnamed};
 
-use crate::{error::{MacroError, MacroResult}, fields::{
-    read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields,
-}};
+use crate::{
+    error::{MacroError, MacroResult},
+    fields::{read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields},
+};
 
 //
 // Reads
 /////////////////////////////
 
-pub(crate) fn struct_read(
-    ident: &Ident,
-    fields: Fields,
-) -> MacroResult {
+pub(crate) fn struct_read(ident: &Ident, fields: Fields) -> MacroResult {
     match fields {
         Fields::Named(named_fields) => struct_read_fixed(named_fields),
         Fields::Unnamed(unnamed_fields) => tuple_struct_read_fixed(unnamed_fields),
-        Fields::Unit => {
-            Err(MacroError::new(
-                "Cannot derive ReadFixed for unit type",
-                ident.span()
-            ))
-        }
+        Fields::Unit => Err(MacroError::new(
+            "Cannot derive ReadFixed for unit type",
+            ident.span(),
+        )),
     }
 }
 
@@ -44,7 +40,7 @@ fn tuple_struct_read_fixed(fields: FieldsUnnamed) -> MacroResult {
 fn struct_read_fixed(fields: FieldsNamed) -> MacroResult {
     let (field_names, field_reads) = read_named_fields(&fields)?;
 
-   let function = quote! {
+    let function = quote! {
         fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixed::error::Error> {
             use fixed::FixedDeserializer;
             #(#field_reads)*
@@ -66,12 +62,10 @@ pub(crate) fn struct_write(ident: &Ident, fields: Fields) -> MacroResult {
     let writes = match fields {
         Fields::Named(named_fields) => struct_write_fixed(named_fields)?,
         Fields::Unnamed(unnamed_fields) => tuple_struct_write_fixed(unnamed_fields)?,
-        Fields::Unit => {
-            Err(MacroError::new(
-                "Cannot derive WriteFixed for unit structs.",
-                ident.span(),
-            ))?
-        }
+        Fields::Unit => Err(MacroError::new(
+            "Cannot derive WriteFixed for unit structs.",
+            ident.span(),
+        ))?,
     };
 
     Ok(writes)

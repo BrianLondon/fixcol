@@ -13,7 +13,7 @@
 //!
 //! [`ReadFixed`]: crate::ReadFixed
 //! [`WriteFixed`]: crate::WriteFixed
-//! 
+//!
 //! # Example
 //!
 //! ```
@@ -94,7 +94,7 @@ use std::string::FromUtf8Error;
 /// [`ReadFixed`]: crate::ReadFixed
 /// [`WriteFixed`]: crate::WriteFixed
 /// [`to_string`]: std::string::ToString::to_string()
-/// 
+///
 #[derive(Debug)]
 pub enum Error {
     /// An error that occured while parsing the formatted data
@@ -205,7 +205,7 @@ impl DataError {
     /// * `message` - A description of what went wrong
     ///
     /// [`FixedDeserializer`]: crate::FixedDeserializer
-    /// 
+    ///
     /// # Example
     ///
     /// Consider a data file that contains a one character column with a nullable

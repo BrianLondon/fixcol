@@ -70,8 +70,8 @@ impl From<Literal> for ValueToken {
     }
 }
 
-/// Holds a parsed parameter from an attribute 
-/// 
+/// Holds a parsed parameter from an attribute
+///
 /// The source for a `FieldParam`` started as "key = value" in an attribute
 /// like `#[fixed(key = value)]`. The field param itself holds the raw tokens
 /// but the raw values can be extracted.
@@ -96,7 +96,7 @@ impl FieldParam {
     fn test(key: &str, value: &str) -> Self {
         use quote::format_ident;
 
-        Self { 
+        Self {
             key: format_ident!("{}", key),
             value: ValueToken::Literal(Literal::from_str(value).unwrap()),
         }
@@ -155,36 +155,32 @@ fn parse_next_token(
         (ExpectedTokenState::Key, TokenTree::Ident(ident)) => {
             Ok((ExpectedTokenState::Equals(ident), None))
         }
-        (ExpectedTokenState::Key, t) => {
-            Err(MacroError::new("Expected identifier.", t.span()))
-        }
+        (ExpectedTokenState::Key, t) => Err(MacroError::new("Expected identifier.", t.span())),
         (ExpectedTokenState::Equals(key), TokenTree::Punct(p)) if p.as_char() == '=' => {
             Ok((ExpectedTokenState::Value(key), None))
         }
-        (ExpectedTokenState::Equals(_), t) => {
-            Err(MacroError::new("Expected assignment ('=' character).", t.span()))
-        }
-        (ExpectedTokenState::Value(key), TokenTree::Ident(ident)) => {
-            Ok((
-                ExpectedTokenState::Separator,
-                Some(FieldParam::new(key, ident.into())),
-            ))
-        }
-        (ExpectedTokenState::Value(key), TokenTree::Literal(literal)) => {
-            Ok((
-                ExpectedTokenState::Separator,
-                Some(FieldParam::new(key, literal.into())),
-            ))
-        }
+        (ExpectedTokenState::Equals(_), t) => Err(MacroError::new(
+            "Expected assignment ('=' character).",
+            t.span(),
+        )),
+        (ExpectedTokenState::Value(key), TokenTree::Ident(ident)) => Ok((
+            ExpectedTokenState::Separator,
+            Some(FieldParam::new(key, ident.into())),
+        )),
+        (ExpectedTokenState::Value(key), TokenTree::Literal(literal)) => Ok((
+            ExpectedTokenState::Separator,
+            Some(FieldParam::new(key, literal.into())),
+        )),
         (ExpectedTokenState::Value(_), t) => {
             Err(MacroError::new("Expected identifier or literal.", t.span()))
         }
         (ExpectedTokenState::Separator, TokenTree::Punct(p)) if p.as_char() == ',' => {
             Ok((ExpectedTokenState::Key, None))
         }
-        (ExpectedTokenState::Separator, t) => {
-            Err(MacroError::new("Expected separator (',' character) or end of sequence.", t.span()))
-        }
+        (ExpectedTokenState::Separator, t) => Err(MacroError::new(
+            "Expected separator (',' character) or end of sequence.",
+            t.span(),
+        )),
     }
 }
 
@@ -194,21 +190,17 @@ fn parse_attributes(attrs: &Vec<Attribute>) -> Result<Vec<FieldParam>, MacroErro
         .filter(|a| is_fixed_attr(*a))
         .map(|a| -> Result<Vec<FieldParam>, MacroError> {
             match &a.meta {
-                Meta::Path(_) => {
-                    Err(MacroError::new(
-                        "Could not read config from path style attribute. \
+                Meta::Path(_) => Err(MacroError::new(
+                    "Could not read config from path style attribute. \
                         \n\nExpected parameters like #[fixed(width = 4)]",
-                        a.meta.span(),
-                    ))
-                }
+                    a.meta.span(),
+                )),
                 Meta::List(m) => get_config_params(m.tokens.clone()),
-                Meta::NameValue(nv) => {
-                    Err(MacroError::new(
-                        "Could not read config from name/value style attribute. \
+                Meta::NameValue(nv) => Err(MacroError::new(
+                    "Could not read config from name/value style attribute. \
                         \n\nExpected parameters like #[fixed(width = 4)]",
-                        nv.value.span(),
-                    ))
-                },
+                    nv.value.span(),
+                )),
             }
         })
         .collect();
@@ -236,7 +228,7 @@ fn get_config_params(tokens: TokenStream) -> Result<Vec<FieldParam>, MacroError>
 
     if state != ExpectedTokenState::Separator && any_tokens {
         Err(MacroError::new(
-            format!("Expected {} found end of input.", state).as_str(), 
+            format!("Expected {} found end of input.", state).as_str(),
             last_span,
         ))
     } else {
@@ -315,7 +307,7 @@ fn check_none<T>(key: &str, span: Span, opt: Option<T>) -> Result<(), MacroError
 
 pub(crate) fn parse_field_attributes(
     span: &Span,
-    attrs: &Vec<Attribute>
+    attrs: &Vec<Attribute>,
 ) -> Result<FieldConfig, MacroError> {
     let params = parse_attributes(attrs)?;
     let mut conf = FieldConfigBuilder::new();
@@ -324,25 +316,31 @@ pub(crate) fn parse_field_attributes(
         match param.key().as_str() {
             "skip" => {
                 let err = "Expected numeric value for skip.";
-                let val: usize = param.value().to_string().parse().map_err(|_| {
-                    MacroError::new(err, param.value_span())
-                })?;
+                let val: usize = param
+                    .value()
+                    .to_string()
+                    .parse()
+                    .map_err(|_| MacroError::new(err, param.value_span()))?;
                 let old = conf.skip.replace(val);
                 check_none("skip", param.key_span(), old)?;
             }
             "width" => {
                 let err = "Expected numeric value for width.";
-                let val: usize = param.value().to_string().parse().map_err(|_| {
-                    MacroError::new(err, param.value_span())
-                })?;
+                let val: usize = param
+                    .value()
+                    .to_string()
+                    .parse()
+                    .map_err(|_| MacroError::new(err, param.value_span()))?;
                 let old = conf.width.replace(val);
                 check_none("width", param.key_span(), old)?;
             }
             "align" => {
                 let err = "Expected values for align are \"left\", \"right\", or \"full\".";
-                let val: Align = param.value().to_string().parse().map_err(|_| {
-                    MacroError::new(err, param.value_span())
-                })?;
+                let val: Align = param
+                    .value()
+                    .to_string()
+                    .parse()
+                    .map_err(|_| MacroError::new(err, param.value_span()))?;
                 let old = conf.align.replace(val);
                 check_none("align", param.key_span(), old)?;
             }
@@ -362,12 +360,13 @@ pub(crate) fn parse_field_attributes(
                 align: conf.align.unwrap_or(Align::Left),
                 width: width,
             };
-        
-            Ok(fc)        
-        },
-        None => {
-            Err(MacroError::new("Width must be specified for all fields.", *span))
-        },
+
+            Ok(fc)
+        }
+        None => Err(MacroError::new(
+            "Width must be specified for all fields.",
+            *span,
+        )),
     }
 }
 
@@ -389,7 +388,7 @@ pub(crate) struct EnumConfig {
 
 pub(crate) fn parse_enum_attributes(
     name: &Ident,
-    attrs: &Vec<Attribute>
+    attrs: &Vec<Attribute>,
 ) -> Result<EnumConfig, MacroError> {
     let params = parse_attributes(attrs)?;
     let mut conf = EnumConfigBuilder::new();
@@ -398,17 +397,21 @@ pub(crate) fn parse_enum_attributes(
         match param.key().as_str() {
             "ignore_others" => {
                 let err = "Expected true or false for ignore_others.";
-                let val: bool = param.value().to_string().parse().map_err(|_| {
-                    MacroError::new(err, param.value_span())
-                })?;
+                let val: bool = param
+                    .value()
+                    .to_string()
+                    .parse()
+                    .map_err(|_| MacroError::new(err, param.value_span()))?;
                 let old = conf.ignore_others.replace(val);
                 check_none("ignore_others", param.key_span(), old)?;
             }
             "key_width" => {
                 let err = "Expected numeric value for key_width.";
-                let val: usize = param.value().to_string().parse().map_err(|_| {
-                    MacroError::new(err, param.value_span())
-                })?;
+                let val: usize = param
+                    .value()
+                    .to_string()
+                    .parse()
+                    .map_err(|_| MacroError::new(err, param.value_span()))?;
                 let old = conf.key_width.replace(val);
                 check_none("key_width", param.key_span(), old)?;
             }
@@ -454,7 +457,7 @@ pub(crate) struct VariantConfig {
 
 pub(crate) fn parse_variant_attributes(
     name: &Ident,
-    attrs: &Vec<Attribute>
+    attrs: &Vec<Attribute>,
 ) -> Result<VariantConfig, MacroError> {
     let params = parse_attributes(attrs)?;
     let mut conf = VariantConfigBuilder::new();
@@ -467,9 +470,11 @@ pub(crate) fn parse_variant_attributes(
             }
             "embed" => {
                 let err = "Expected true or false for embed.";
-                let val: bool = param.value().to_string().parse().map_err(|_| {
-                    MacroError::new(err, param.value_span())
-                })?;
+                let val: bool = param
+                    .value()
+                    .to_string()
+                    .parse()
+                    .map_err(|_| MacroError::new(err, param.value_span()))?;
                 let old = conf.embed.replace(val);
                 check_none("embed", param.key_span(), old)?;
             }
@@ -603,7 +608,7 @@ mod tests {
     #[should_panic(
         expected = "called `Result::unwrap()` on an `Err` value: MacroError { message: \
         \"Expected separator (',' character) or end of sequence.\", span: Span }"
-   )]
+    )]
     fn parse_params_wrong_separator() {
         let code: MetaList = syn::parse_str("fixed(width=3; align = right)").unwrap();
         let _: Vec<FieldParam> = get_config_params(code.tokens).unwrap();

@@ -540,7 +540,7 @@ mod tests {
     //
     // Long Writes
     ///////////////////////////////////
-    
+
     #[test]
     fn write_trailing_over_gap() {
         // 200 spaces, 5 chars, 100 spaces
@@ -618,7 +618,8 @@ mod tests {
         assert!(res.is_ok());
 
         let re = Regex::new(r"^ {595}12345$").unwrap();
-        assert!(re.is_match(str::from_utf8(&v).unwrap()));    }
+        assert!(re.is_match(str::from_utf8(&v).unwrap()));
+    }
 
     #[test]
     fn write_extra_long_spaces_left_align() {
@@ -637,7 +638,7 @@ mod tests {
         assert!(res.is_ok());
 
         let re = Regex::new(r"^ {1000}12345 {995}$").unwrap();
-        assert!(re.is_match(str::from_utf8(&v).unwrap())); 
+        assert!(re.is_match(str::from_utf8(&v).unwrap()));
     }
 
     #[test]
@@ -657,7 +658,7 @@ mod tests {
         assert!(res.is_ok());
 
         let re = Regex::new(r"^ {1995}12345$").unwrap();
-        assert!(re.is_match(str::from_utf8(&v).unwrap())); 
+        assert!(re.is_match(str::from_utf8(&v).unwrap()));
     }
 
     #[test]
@@ -677,7 +678,7 @@ mod tests {
         assert!(res.is_ok());
 
         let re = Regex::new(r"^ {1000}(abcdefghij){100} {1000}$").unwrap();
-        assert!(re.is_match(str::from_utf8(&v).unwrap())); 
+        assert!(re.is_match(str::from_utf8(&v).unwrap()));
     }
 
     #[test]
@@ -697,6 +698,6 @@ mod tests {
         assert!(res.is_ok());
 
         let re = Regex::new(r"^ {2000}(abcdefghij){100}$").unwrap();
-        assert!(re.is_match(str::from_utf8(&v).unwrap())); 
+        assert!(re.is_match(str::from_utf8(&v).unwrap()));
     }
 }
