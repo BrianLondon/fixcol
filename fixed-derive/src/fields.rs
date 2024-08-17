@@ -20,7 +20,7 @@ pub(crate) fn read_unnamed_fields(
 
             let config = attrs::parse_field_attributes(&item.1.span(), &field.attrs)
                 .map_err(|e| e.replace_span(field.span()))?;
-            let FieldConfig { skip, width, align: _ } = config;
+            let FieldConfig { skip, width, .. } = config;
 
             let buf_size = skip + width;
 
@@ -52,7 +52,7 @@ pub(crate) fn read_named_fields(
             let name = field.ident.as_ref().unwrap().clone();
 
             let config = attrs::parse_field_attributes(&name.span(), &field.attrs)?;
-            let FieldConfig { skip, width, align: _ } = config;
+            let FieldConfig { skip, width, .. } = config;
 
             let buf_size = skip + width;
 

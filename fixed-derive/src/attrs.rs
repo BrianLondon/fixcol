@@ -259,13 +259,14 @@ pub(crate) struct FieldConfig {
     pub(crate) skip: usize,
     pub(crate) width: usize,
     pub(crate) align: Align,
+    pub(crate) strict: bool,
 }
 
 // This allows us to directly convert a FieldConfig (from the macro code)
 // into a FieldDescription literal in the generated code
 impl quote::ToTokens for FieldConfig {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let FieldConfig { skip, width, align } = &self;
+        let FieldConfig { skip, width, align, strict } = &self;
 
         let alignment = match &align {
             Align::Left => quote! { fixed::Alignment::Left },
@@ -278,6 +279,7 @@ impl quote::ToTokens for FieldConfig {
                 skip: #skip,
                 len: #width,
                 alignment: #alignment,
+                strict: #strict,
             }
         });
     }
@@ -287,11 +289,12 @@ struct FieldConfigBuilder {
     width: Option<usize>,
     skip: Option<usize>,
     align: Option<Align>,
+    strict: Option<bool>,
 }
 
 impl FieldConfigBuilder {
     fn new() -> Self {
-        Self { width: None, skip: None, align: None }
+        Self { width: None, skip: None, align: None, strict: None }
     }
 }
 
@@ -344,6 +347,17 @@ pub(crate) fn parse_field_attributes(
                 let old = conf.align.replace(val);
                 check_none("align", param.key_span(), old)?;
             }
+            "strict" => {
+                let err = "Expected boolean value for parameter strict.";
+                let val: bool = param
+                    .value()
+                    .to_string()
+                    .parse()
+                    .map_err(|_| MacroError::new(err, param.value_span()))?;
+                let old = conf.strict.replace(val);
+                check_none("strict", param.key_span(), old)?;
+
+            }
             key => {
                 return Err(MacroError::new(
                     format!("Unrecognized parameter \"{}\".", key).as_str(),
@@ -359,6 +373,8 @@ pub(crate) fn parse_field_attributes(
                 skip: conf.skip.unwrap_or(0),
                 align: conf.align.unwrap_or(Align::Left),
                 width: width,
+                // TODO: make this cascade instead of default to false
+                strict: conf.strict.unwrap_or(false),
             };
 
             Ok(fc)
@@ -426,8 +442,8 @@ pub(crate) fn parse_enum_attributes(
 
     let key_width = conf.key_width.ok_or(MacroError::new(
         "The parameter key must be provided for all enum variants.\n\n \
-        Try adding #[fixed(key_width = 10)] to this enum replacing \"10\" with the width of \
-        your key.",
+        Try adding #[fixed(key_width = 10)] to this enum replacing \"10\" with \
+        the width of your key.",
         name.span(),
     ))?;
 

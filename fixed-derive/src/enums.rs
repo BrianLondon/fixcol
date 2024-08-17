@@ -168,12 +168,14 @@ fn write_struct_variant(ident: &Ident, key: String, fields: &FieldsNamed) -> Mac
 
     let key_len = key.len();
 
+    // TODO: we may want to inherit strict for the key from the enum or variant
     let code = quote! {
         Self::#ident { #(#names),* } => {
             let key_config = fixed::FieldDescription {
                 skip: 0,
                 len: #key_len,
                 alignment: fixed::Alignment::Left,
+                strict: false,
             };
             let key = String::from(#key);
             let _ = key.write_fixed_field(buf, &key_config)?;
@@ -196,12 +198,14 @@ fn write_tuple_variant(ident: &Ident, key: String, fields: &FieldsUnnamed) -> Ma
 
     let key_len = key.len();
 
+    // TODO: we may want to inherit strict for the key from the enum or variant
     let code = quote! {
         Self::#ident(#(#named_fields),*) => {
             let key_config = fixed::FieldDescription {
                 skip: 0,
                 len: #key_len,
                 alignment: fixed::Alignment::Left,
+                strict: false,
             };
             let key = String::from(#key);
             let _ = key.write_fixed_field(buf, &key_config)?;
@@ -231,12 +235,14 @@ fn write_embedded_variant(ident: &Ident, key: String, fields: &FieldsUnnamed) ->
 
         let key_len = key.len();
 
+        // TODO: we may want to inherit strict for the key from the enum or variant
         let gen = quote! {
             Self::#ident(inner) => {
                 let key_config = fixed::FieldDescription {
                     skip: 0,
                     len: #key_len,
                     alignment: fixed::Alignment::Left,
+                    strict: false,
                 };
                 let key = String::from(#key);
                 let _ = key.write_fixed_field(buf, &key_config)?;
@@ -254,12 +260,14 @@ fn write_embedded_variant(ident: &Ident, key: String, fields: &FieldsUnnamed) ->
 fn write_unit_variant(ident: &Ident, key: String) -> TokenStream {
     let key_len = key.len();
 
+    // TODO: we may want to inherit strict for the key from the enum or variant
     quote! {
         Self::#ident => {
             let key_config = fixed::FieldDescription {
                 skip: 0,
                 len: #key_len,
                 alignment: fixed::Alignment::Left,
+                strict: false,
             };
             let key = String::from(#key);
             let _ = key.write_fixed_field(buf, &key_config)?;

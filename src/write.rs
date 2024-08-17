@@ -212,6 +212,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Left,
+            strict: false,
         };
 
         let foo = "foo".to_string();
@@ -229,6 +230,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let foo = "foo".to_string();
@@ -246,6 +248,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let foo = "foo".to_string();
@@ -263,6 +266,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let foo = "foo".to_string();
@@ -280,6 +284,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let foo = "foo".to_string();
@@ -297,6 +302,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let foo = "foo".to_string();
@@ -314,6 +320,7 @@ mod tests {
             skip: 1,
             len: 4,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let foo = "abcdefg".to_string();
@@ -331,6 +338,7 @@ mod tests {
             skip: 1,
             len: 4,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let foo = "abcdefg".to_string();
@@ -348,6 +356,7 @@ mod tests {
             skip: 1,
             len: 4,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let foo = "abcdefg".to_string();
@@ -369,6 +378,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let foo: u16 = 12345;
@@ -386,6 +396,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let foo: u16 = 12345;
@@ -403,6 +414,7 @@ mod tests {
             skip: 1,
             len: 8,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let foo: i16 = -12345;
@@ -420,6 +432,7 @@ mod tests {
             skip: 1,
             len: 8,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let foo: i16 = -12345;
@@ -441,6 +454,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let foo: f32 = 3.14;
@@ -458,6 +472,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let foo: f32 = 3.141592654;
@@ -475,6 +490,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Full,
+            strict: true,
         };
 
         let foo: f32 = 3.14;
@@ -492,6 +508,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Full,
+            strict: true,
         };
 
         let foo: f32 = 3.141592654;
@@ -509,6 +526,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let foo: f32 = 3.14;
@@ -526,6 +544,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let foo: f32 = 3.141592654;
@@ -548,6 +567,7 @@ mod tests {
             skip: 200,
             len: 105,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let num: u64 = 12345;
@@ -568,6 +588,7 @@ mod tests {
             skip: 300,
             len: 205,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let num: u64 = 12345;
@@ -588,6 +609,7 @@ mod tests {
             skip: 250,
             len: 310,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let num: u64 = 1234567890;
@@ -608,6 +630,7 @@ mod tests {
             skip: 300,
             len: 300,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let num: u64 = 12345;
@@ -628,6 +651,7 @@ mod tests {
             skip: 1000,
             len: 1000,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let num: u64 = 12345;
@@ -648,6 +672,7 @@ mod tests {
             skip: 1000,
             len: 1000,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let num: u64 = 12345;
@@ -668,6 +693,7 @@ mod tests {
             skip: 1000,
             len: 2000,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let s = "abcdefghij".repeat(100);
@@ -688,6 +714,7 @@ mod tests {
             skip: 1000,
             len: 2000,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let s = "abcdefghij".repeat(100);

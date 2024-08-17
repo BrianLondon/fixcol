@@ -24,4 +24,6 @@ pub struct FieldDescription {
     pub len: usize,
     /// How data in this field is aligned
     pub alignment: Alignment,
+    /// Whether strict mode is enabled for this field.
+    pub strict: bool,
 }

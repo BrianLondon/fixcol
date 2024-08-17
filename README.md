@@ -2,6 +2,20 @@
 
 A library for reading fixed width / column delimited data files.
 
+## Strict Mode
+
+We'll start by enabling it only on the field level and then allowing cascades
+as a future enhancement. There's currently no parsing of attributes on the
+`struct` level, so that also provides an impediment to the cascade behavior.
+
+What strict should enable
+ - require last field of line to be full length when reading
+ - require written `Full` columns to be the correct length
+ - require unread columns to contain only whitespace
+ - require no whitespace in numeric columns
+ - left aligned fields cannot start with white space
+ - right aligned fields cannot end with white space
+
 ## Wishlist of new features
 
  - Fixed column offsets
