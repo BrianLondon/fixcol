@@ -285,6 +285,10 @@ impl Display for DataError {
                 fmt_err(&self.text, f)?;
                 write!(f, "Unrecognized enum key")?;
             }
+            InnerError::InvalidWidth(exp, act) => {
+                fmt_err(&self.text, f)?;
+                write!(f, "Expected field of width {}. Found {}.", exp, act)?;
+            }
         }
 
         if let Some(line) = self.line {
@@ -303,6 +307,8 @@ pub enum InnerError {
     ParseFloatError(ParseFloatError),
     Utf8Error(Utf8Error),
     UnknownKey,
+    /// Params are expected len, actual len
+    InvalidWidth(u64, u64),
 }
 
 impl From<ParseFloatError> for InnerError {
