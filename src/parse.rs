@@ -706,4 +706,112 @@ mod tests {
         let expected = "Error decoding data from \"3a14\": invalid float literal\n";
         assert_eq!(actual.unwrap_err().to_string(), expected);
     }
+
+    #[test]
+    fn strict_numeric_zero_padding() {
+        // validate "strict" behavior
+        // require no whitespace in numeric `Full` columns
+        let desc = FieldDescription {
+            skip: 0,
+            len: 3,
+            alignment: Alignment::Right,
+            strict: false,
+        };
+        let actual = u8::parse_fixed("042", &desc).unwrap();
+        assert_eq!(actual, 42);
+        
+        let desc = FieldDescription {
+            skip: 0,
+            len: 3,
+            alignment: Alignment::Right,
+            strict: true,
+        };
+        let actual = u8::parse_fixed("042", &desc).unwrap();
+        assert_eq!(actual, 42);
+
+        let desc = FieldDescription {
+            skip: 0,
+            len: 3,
+            alignment: Alignment::Right,
+            strict: false,
+        };
+        let actual = u8::parse_fixed(" 42", &desc).unwrap();
+        assert_eq!(actual, 42);
+        
+        let desc = FieldDescription {
+            skip: 0,
+            len: 3,
+            alignment: Alignment::Right,
+            strict: true,
+        };
+        let actual = u8::parse_fixed(" 42", &desc);
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err().to_string(), "TODO: put expected value here");
+    }
+
+    #[test]
+    fn strict_left_align() {
+        // testing "strict" behavior
+        // left aligned fields cannot start with white space
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Left,
+            strict: false,
+        };
+        let actual = u8::parse_fixed(" 42  ", &desc).unwrap();
+        assert_eq!(actual, 42);
+
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Left,
+            strict: true,
+        };
+        let actual = u8::parse_fixed(" 42  ", &desc);
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err().to_string(), "TODO: put expected value here");
+
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Left,
+            strict: true,
+        };
+        let actual = u8::parse_fixed("42   ", &desc).unwrap();
+        assert_eq!(actual, 42);
+    }
+
+    #[test]
+    fn strict_right_align() {
+        // testing "strict" behavior:
+        // right aligned fields cannot end with white space
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Right,
+            strict: false,
+        };
+        let actual = u8::parse_fixed("  42 ", &desc).unwrap();
+        assert_eq!(actual, 42);
+
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Right,
+            strict: true,
+        };
+        let actual = u8::parse_fixed("  42 ", &desc);
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err().to_string(), "TODO: put expected value here");
+
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Right,
+            strict: true,
+        };
+        let actual = u8::parse_fixed("   42", &desc).unwrap();
+        assert_eq!(actual, 42);
+    }
 }

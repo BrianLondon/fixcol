@@ -262,8 +262,8 @@ mod tests {
         let desc = FieldDescription {
             skip: 0,
             len: 6,
-            alignment: Alignment::Left,
-            strict: true,
+            alignment: Alignment::Full,
+            strict: false,
         };
 
         let foo = "foo".to_string();
@@ -273,6 +273,27 @@ mod tests {
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), "foo   ");
+    }
+
+    #[test]
+    fn string_full_strict() {
+        // validate "strict" behavior:
+        // require written `Full` aligned text columns to be the correct length
+        let desc = FieldDescription {
+            skip: 0,
+            len: 6,
+            alignment: Alignment::Full,
+            strict: true,
+        };
+
+        let foo = "foo".to_string();
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_err());
+        let e = res.unwrap_err();
+        assert_eq!(e.to_string(), "Expected string of length 6. Found 3.");
     }
 
     #[test]
