@@ -193,22 +193,28 @@ pub trait FixedDeserializer {
         Self: Sized;
 }
 
-fn extract_trimmed<'a, 'b>(src: &'a str, desc: &'b FieldDescription) -> &'a str {
+fn extract_trimmed<'a, 'b>(src: &'a str, desc: &'b FieldDescription) -> Result<&'a str, DataError> {
+    if desc.strict && !&src[..desc.skip].trim().is_empty() {
+        return Err(DataError::whitespace_error());
+    }
+
     let slice = &src[desc.skip..desc.skip + desc.len];
 
-    match (desc.strict, desc.alignment) {
+    let res = match (desc.strict, desc.alignment) {
         (true, Alignment::Left) => slice.trim_end(),
         (true, Alignment::Right) => slice.trim_start(),
         (true, Alignment::Full) => slice,
         _ => slice.trim_start().trim_end(),
-    }
+    };
+
+    Ok(res)
 }
 
 macro_rules! fixed_deserializer_float_impl {
     ($t:ty) => {
         impl FixedDeserializer for $t {
             fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<$t, DataError> {
-                let trimmed = extract_trimmed(s, desc);
+                let trimmed = extract_trimmed(s, desc)?;
                 trimmed.parse::<$t>().map_err(|e| {
                     DataError::new_err(trimmed.to_string(), InnerError::ParseFloatError(e))
                 })
@@ -216,6 +222,7 @@ macro_rules! fixed_deserializer_float_impl {
         }
     };
 }
+
 fixed_deserializer_float_impl!(f32);
 fixed_deserializer_float_impl!(f64);
 
@@ -223,7 +230,7 @@ macro_rules! fixed_deserializer_int_impl {
     ($t:ty) => {
         impl FixedDeserializer for $t {
             fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<$t, DataError> {
-                let trimmed = extract_trimmed(s, desc);
+                let trimmed = extract_trimmed(s, desc)?;
                 trimmed.parse::<$t>().map_err(|e| {
                     DataError::new_err(trimmed.to_string(), InnerError::ParseIntError(e))
                 })
@@ -640,7 +647,7 @@ mod tests {
             skip: 2,
             len: 4,
             alignment: Alignment::Left,
-            strict: true,
+            strict: false,
         };
         let actual: f32 = f32::parse_fixed(" 3.14 ", &desc).unwrap();
         let expected: f32 = 0.14;

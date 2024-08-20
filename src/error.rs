@@ -196,13 +196,20 @@ impl DataError {
     }
 
     pub(crate) fn new_data_width_error(expected: usize, actual: usize) -> Self {
-        DataError::new_err(
+        Self::new_err(
             format!(
                 "Expected field to have width {} but supplied value has width {}.",
                 expected,
                 actual,
             ),
             InnerError::InvalidWidth(expected, actual)
+        )
+    }
+
+    pub(crate) fn whitespace_error() -> Self {
+        Self::new_err(
+            String::from("Found non-whitespace character between data fields (strict)"),
+            InnerError::WhitespaceError,
         )
     }
 
@@ -300,6 +307,10 @@ impl Display for DataError {
                 fmt_err(&self.text, f)?;
                 write!(f, "Expected field of width {}. Found {}.", exp, act)?;
             }
+            InnerError::WhitespaceError => {
+                fmt_err(&self.text, f)?;
+                write!(f, "Unexpected non-whitespace character")?;
+            }
         }
 
         if let Some(line) = self.line {
@@ -320,6 +331,7 @@ pub enum InnerError {
     UnknownKey,
     /// Params are expected len, actual len
     InvalidWidth(usize, usize),
+    WhitespaceError,
 }
 
 impl From<ParseFloatError> for InnerError {
