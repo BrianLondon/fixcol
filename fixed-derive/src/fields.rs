@@ -9,6 +9,8 @@ pub(crate) fn read_unnamed_fields(
     fields: &FieldsUnnamed,
     outer_config: &OuterConfig,
 ) -> Result<(Vec<Ident>, Vec<TokenStream>), MacroError> {
+    let last_field = fields.unnamed.len() - 1;
+
     let field_reads: Result<Vec<(Ident, TokenStream)>, MacroError> = fields
         .unnamed
         .iter()
@@ -21,15 +23,30 @@ pub(crate) fn read_unnamed_fields(
 
             let config = attrs::parse_field_attributes(&item.1.span(), &field.attrs, &outer_config)
                 .map_err(|e| e.replace_span(field.span()))?;
-            let FieldConfig { skip, width, .. } = config;
+            let FieldConfig { skip, width, strict, .. } = config;
 
             let buf_size = skip + width;
+
+            let read_field = if field_num == last_field && !strict {
+                quote! { 
+                    let n = buf.read(&mut s)
+                        .map_err(|e| fixed::error::Error::from(e))?;
+                    let raw = String::from_utf8(s[..n].to_vec())
+                        .map_err(|e| fixed::error::Error::from(e))?;                
+                }
+            } else {
+                quote! { 
+                    buf.read_exact(&mut s)
+                        .map_err(|e| fixed::error::Error::from(e))?; 
+                    let raw = String::from_utf8(s.to_vec())
+                        .map_err(|e| fixed::error::Error::from(e))?;
+                }
+            };
 
             // TODO: we shouldn't need a String here at all
             let read = quote! {
                 let mut s: [u8; #buf_size] = [0; #buf_size];
-                buf.read_exact(&mut s).map_err(|e| fixed::error::Error::from(e))?;
-                let raw = String::from_utf8(s.to_vec()).map_err(|e| fixed::error::Error::from(e))?;
+                #read_field
                 let #ident = #type_token::parse_fixed(raw.as_str(), #config)
                     .map_err(|e| fixed::error::Error::from(e))?;
             };
@@ -46,23 +63,44 @@ pub(crate) fn read_named_fields(
     fields: &FieldsNamed,
     outer_config: OuterConfig,
 ) -> Result<(Vec<Ident>, Vec<TokenStream>), MacroError> {
+    let last_field = fields.named.len().saturating_sub(1);
+
     let field_reads: Result<Vec<(Ident, TokenStream)>, MacroError> = fields
         .named
         .iter()
-        .map(|field| -> Result<(Ident, TokenStream), MacroError> {
+        .enumerate()
+        .map(|item| -> Result<(Ident, TokenStream), MacroError> {
+            let (field_num, field) = item;
+
             let type_token = field.ty.clone();
             let name = field.ident.as_ref().unwrap().clone();
 
             let config = parse_field_attributes(&name.span(), &field.attrs, &outer_config)?;
-            let FieldConfig { skip, width, .. } = config;
+            let FieldConfig { skip, width, strict, .. } = config;
 
             let buf_size = skip + width;
+
+            let read_field = if field_num == last_field && !strict {
+                quote! { 
+                    let n = buf.read(&mut s)
+                        .map_err(|e| fixed::error::Error::from(e))?;
+                    let raw = String::from_utf8(s[..n].to_vec())
+                        .map_err(|e| fixed::error::Error::from(e))?;                
+                }
+            } else {
+                quote! { 
+                    buf.read_exact(&mut s)
+                        .map_err(|e| fixed::error::Error::from(e))?; 
+                    let raw = String::from_utf8(s.to_vec())
+                        .map_err(|e| fixed::error::Error::from(e))?;
+                }
+            };
+
 
             // TODO: we shouldn't need a String here at all
             let read = quote! {
                 let mut s: [u8; #buf_size] = [0; #buf_size];
-                buf.read_exact(&mut s).map_err(|e| fixed::error::Error::from(e))?;
-                let raw = String::from_utf8(s.to_vec()).map_err(|e| fixed::error::Error::from(e))?;
+                #read_field
                 let #name = #type_token::parse_fixed(raw.as_str(), #config)
                     .map_err(|e| fixed::error::Error::from(e))?;
             };
