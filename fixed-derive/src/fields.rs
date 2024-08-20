@@ -9,7 +9,7 @@ pub(crate) fn read_unnamed_fields(
     fields: &FieldsUnnamed,
     outer_config: &OuterConfig,
 ) -> Result<(Vec<Ident>, Vec<TokenStream>), MacroError> {
-    let last_field = fields.unnamed.len() - 1;
+    let last_field = fields.unnamed.len().saturating_sub(1);
 
     let field_reads: Result<Vec<(Ident, TokenStream)>, MacroError> = fields
         .unnamed

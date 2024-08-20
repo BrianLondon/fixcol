@@ -195,13 +195,9 @@ impl DataError {
         }
     }
 
-    pub(crate) fn new_data_width_error(expected: usize, actual: usize) -> Self {
+    pub(crate) fn new_data_width_error(text: String, expected: usize, actual: usize) -> Self {
         Self::new_err(
-            format!(
-                "Expected field to have width {} but supplied value has width {}.",
-                expected,
-                actual,
-            ),
+            text,
             InnerError::InvalidWidth(expected, actual)
         )
     }
@@ -305,7 +301,7 @@ impl Display for DataError {
             }
             InnerError::InvalidWidth(exp, act) => {
                 fmt_err(&self.text, f)?;
-                write!(f, "Expected field of width {}. Found {}.", exp, act)?;
+                write!(f, "Expected field to have width {} but supplied value has width {}.", exp, act)?;
             }
             InnerError::WhitespaceError => {
                 fmt_err(&self.text, f)?;

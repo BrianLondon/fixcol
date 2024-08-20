@@ -770,7 +770,10 @@ mod tests {
         };
         let actual = u8::parse_fixed(" 42  ", &desc);
         assert!(actual.is_err());
-        assert_eq!(actual.unwrap_err().to_string(), "TODO: put expected value here");
+        assert_eq!(
+            actual.unwrap_err().to_string(),
+            "Error decoding data from \" 42\": invalid digit found in string\n"
+        );
 
         let desc = FieldDescription {
             skip: 0,
@@ -803,7 +806,10 @@ mod tests {
         };
         let actual = u8::parse_fixed("  42 ", &desc);
         assert!(actual.is_err());
-        assert_eq!(actual.unwrap_err().to_string(), "TODO: put expected value here");
+        assert_eq!(
+            actual.unwrap_err().to_string(), 
+            "Error decoding data from \"42 \": invalid digit found in string\n"
+        );
 
         let desc = FieldDescription {
             skip: 0,
