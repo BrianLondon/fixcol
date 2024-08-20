@@ -2,11 +2,12 @@ use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use syn::{spanned::Spanned, FieldsNamed, FieldsUnnamed, Index};
 
-use crate::attrs::{self, FieldConfig};
+use crate::attrs::{self, parse_field_attributes, FieldConfig, OuterConfig};
 use crate::error::MacroError;
 
 pub(crate) fn read_unnamed_fields(
     fields: &FieldsUnnamed,
+    outer_config: &OuterConfig,
 ) -> Result<(Vec<Ident>, Vec<TokenStream>), MacroError> {
     let field_reads: Result<Vec<(Ident, TokenStream)>, MacroError> = fields
         .unnamed
@@ -18,7 +19,7 @@ pub(crate) fn read_unnamed_fields(
             let type_token = field.ty.clone();
             let ident = format_ident!("_{}", field_num);
 
-            let config = attrs::parse_field_attributes(&item.1.span(), &field.attrs)
+            let config = attrs::parse_field_attributes(&item.1.span(), &field.attrs, &outer_config)
                 .map_err(|e| e.replace_span(field.span()))?;
             let FieldConfig { skip, width, .. } = config;
 
@@ -43,6 +44,7 @@ pub(crate) fn read_unnamed_fields(
 /// Retuns field names and code to read those fields
 pub(crate) fn read_named_fields(
     fields: &FieldsNamed,
+    outer_config: OuterConfig,
 ) -> Result<(Vec<Ident>, Vec<TokenStream>), MacroError> {
     let field_reads: Result<Vec<(Ident, TokenStream)>, MacroError> = fields
         .named
@@ -51,7 +53,7 @@ pub(crate) fn read_named_fields(
             let type_token = field.ty.clone();
             let name = field.ident.as_ref().unwrap().clone();
 
-            let config = attrs::parse_field_attributes(&name.span(), &field.attrs)?;
+            let config = parse_field_attributes(&name.span(), &field.attrs, &outer_config)?;
             let FieldConfig { skip, width, .. } = config;
 
             let buf_size = skip + width;
@@ -74,13 +76,14 @@ pub(crate) fn read_named_fields(
 
 pub(crate) fn write_named_fields(
     fields: &FieldsNamed,
+    outer_config: &OuterConfig,
 ) -> Result<(Vec<Ident>, Vec<FieldConfig>), MacroError> {
     let field_configs: Result<Vec<(Ident, FieldConfig)>, MacroError> = fields
         .named
         .iter()
         .map(|field| -> Result<(Ident, FieldConfig), MacroError> {
             let name = field.ident.as_ref().unwrap().clone();
-            let config = attrs::parse_field_attributes(&name.span(), &field.attrs)?;
+            let config = attrs::parse_field_attributes(&name.span(), &field.attrs, outer_config)?;
 
             Ok((name, config))
         })
@@ -91,6 +94,7 @@ pub(crate) fn write_named_fields(
 
 pub(crate) fn write_unnamed_fields(
     fields: &FieldsUnnamed,
+    outer_config: &OuterConfig,
 ) -> Result<(Vec<Index>, Vec<FieldConfig>), MacroError> {
     let field_configs: Result<Vec<(Index, FieldConfig)>, MacroError> = fields
         .unnamed
@@ -98,7 +102,7 @@ pub(crate) fn write_unnamed_fields(
         .enumerate()
         .map(|field| -> Result<(Index, FieldConfig), MacroError> {
             let name = syn::Index::from(field.0);
-            let config = attrs::parse_field_attributes(&field.1.span(), &field.1.attrs)?;
+            let config = attrs::parse_field_attributes(&field.1.span(), &field.1.attrs, outer_config)?;
 
             Ok((name, config))
         })

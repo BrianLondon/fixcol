@@ -9,6 +9,7 @@ use syn::{spanned::Spanned, Attribute, Ident, Meta, Path};
 use crate::error::MacroError;
 
 const FIXED_ATTR_KEY: &'static str = "fixed";
+const STRICT_DEFAULT: bool = true;
 
 // Extracts the ident name from a path
 fn ident_from_path(path: &Path) -> String {
@@ -67,6 +68,33 @@ impl From<Ident> for ValueToken {
 impl From<Literal> for ValueToken {
     fn from(value: Literal) -> Self {
         Self::Literal(value)
+    }
+}
+
+/// Wraps either a VariantConfig or a StructConfig to cascade to the field config
+pub(crate) enum OuterConfig {
+    Variant(VariantConfig),
+    Struct(StructConfig),
+}
+
+impl OuterConfig {
+    pub fn strict(&self) -> bool {
+        match self {
+            OuterConfig::Variant(vc) => vc.strict,
+            OuterConfig::Struct(sc) => sc.strict,
+        }
+    }
+}
+
+impl From<VariantConfig> for OuterConfig {
+    fn from(value: VariantConfig) -> Self {
+        Self::Variant(value)
+    }
+}
+
+impl From<StructConfig> for OuterConfig {
+    fn from(value: StructConfig) -> Self {
+        Self::Struct(value)
     }
 }
 
@@ -311,6 +339,7 @@ fn check_none<T>(key: &str, span: Span, opt: Option<T>) -> Result<(), MacroError
 pub(crate) fn parse_field_attributes(
     span: &Span,
     attrs: &Vec<Attribute>,
+    parent: &OuterConfig,
 ) -> Result<FieldConfig, MacroError> {
     let params = parse_attributes(attrs)?;
     let mut conf = FieldConfigBuilder::new();
@@ -373,8 +402,7 @@ pub(crate) fn parse_field_attributes(
                 skip: conf.skip.unwrap_or(0),
                 align: conf.align.unwrap_or(Align::Left),
                 width: width,
-                // TODO: make this cascade instead of default to false
-                strict: conf.strict.unwrap_or(false),
+                strict: conf.strict.unwrap_or(parent.strict()),
             };
 
             Ok(fc)
@@ -386,20 +414,71 @@ pub(crate) fn parse_field_attributes(
     }
 }
 
+// TODO: confirm these need to be public
+pub(crate) struct StructConfigBuilder { 
+    strict: Option<bool>,
+}
+
+impl StructConfigBuilder {
+    pub fn new() -> Self {
+        Self { strict: None }
+    }
+}
+
+pub(crate) struct StructConfig {
+    strict: bool,
+}
+
+pub(crate) fn parse_struct_attributes(
+    attrs: &Vec<Attribute>,
+) -> Result<StructConfig, MacroError> {
+    let params = parse_attributes(attrs)?;
+    let mut conf = StructConfigBuilder::new();
+
+    for param in params {
+        match param.key().as_str() {
+            "strict" => {
+                let err = "Expected numeric value for key_width.";
+                let val: bool = param
+                    .value()
+                    .to_string()
+                    .parse()
+                    .map_err(|_| MacroError::new(err, param.value_span()))?;
+                let old = conf.strict.replace(val);
+                check_none("strict", param.key_span(), old)?;
+            }
+            key => {
+                return Err(MacroError::new(
+                    format!("Unrecognized parameter \"{}\".", key).as_str(),
+                    param.key_span(),
+                ));
+            }
+        }
+    }
+
+    let sc = StructConfig {
+        strict: conf.strict.unwrap_or(STRICT_DEFAULT),
+    };
+
+    Ok(sc)
+}
+
 pub(crate) struct EnumConfigBuilder {
     ignore_others: Option<bool>,
     key_width: Option<usize>,
+    strict: Option<bool>,
 }
 
 impl EnumConfigBuilder {
     pub fn new() -> Self {
-        Self { ignore_others: None, key_width: None }
+        Self { ignore_others: None, key_width: None, strict: None }
     }
 }
 
 pub(crate) struct EnumConfig {
     pub _ignore_others: bool, // TODO: implement
     pub key_width: usize,
+    pub strict: bool,
 }
 
 pub(crate) fn parse_enum_attributes(
@@ -431,6 +510,16 @@ pub(crate) fn parse_enum_attributes(
                 let old = conf.key_width.replace(val);
                 check_none("key_width", param.key_span(), old)?;
             }
+            "strict" => {
+                let err = "Expected numeric value for key_width.";
+                let val: bool = param
+                    .value()
+                    .to_string()
+                    .parse()
+                    .map_err(|_| MacroError::new(err, param.value_span()))?;
+                let old = conf.strict.replace(val);
+                check_none("strict", param.key_span(), old)?;
+            }
             key => {
                 return Err(MacroError::new(
                     format!("Unrecognized parameter \"{}\".", key).as_str(),
@@ -449,6 +538,7 @@ pub(crate) fn parse_enum_attributes(
 
     let ec = EnumConfig {
         _ignore_others: conf.ignore_others.unwrap_or(false),
+        strict: conf.strict.unwrap_or(STRICT_DEFAULT),
         key_width,
     };
 
@@ -458,22 +548,26 @@ pub(crate) fn parse_enum_attributes(
 pub(crate) struct VariantConfigBuilder {
     key: Option<String>,
     embed: Option<bool>,
+    strict: Option<bool>,
 }
 
 impl VariantConfigBuilder {
     pub fn new() -> Self {
-        Self { key: None, embed: None }
+        Self { key: None, embed: None, strict: None }
     }
 }
 
+#[derive(Debug, Clone)]
 pub(crate) struct VariantConfig {
     pub key: String,
     pub embed: bool,
+    pub strict: bool,
 }
 
 pub(crate) fn parse_variant_attributes(
     name: &Ident,
     attrs: &Vec<Attribute>,
+    parent: &EnumConfig,
 ) -> Result<VariantConfig, MacroError> {
     let params = parse_attributes(attrs)?;
     let mut conf = VariantConfigBuilder::new();
@@ -494,6 +588,16 @@ pub(crate) fn parse_variant_attributes(
                 let old = conf.embed.replace(val);
                 check_none("embed", param.key_span(), old)?;
             }
+            "strict" => {
+                let err = "Expected numeric value for key_width.";
+                let val: bool = param
+                    .value()
+                    .to_string()
+                    .parse()
+                    .map_err(|_| MacroError::new(err, param.value_span()))?;
+                let old = conf.strict.replace(val);
+                check_none("strict", param.key_span(), old)?;
+            }
             key => {
                 return Err(MacroError::new(
                     format!("Unrecognized parameter \"{}\".", key).as_str(),
@@ -512,6 +616,7 @@ pub(crate) fn parse_variant_attributes(
     let vc = VariantConfig {
         key: key,
         embed: conf.embed.unwrap_or(false),
+        strict: conf.strict.unwrap_or(parent.strict),
     };
 
     Ok(vc)
