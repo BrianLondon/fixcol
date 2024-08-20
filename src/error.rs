@@ -195,6 +195,17 @@ impl DataError {
         }
     }
 
+    pub(crate) fn new_data_width_error(expected: usize, actual: usize) -> Self {
+        DataError::new_err(
+            format!(
+                "Expected field to have width {} but supplied value has width {}.",
+                expected,
+                actual,
+            ),
+            InnerError::InvalidWidth(expected, actual)
+        )
+    }
+
     /// Creates a new custom `DataError`
     ///
     /// This method will typically be used when implementing custom deserialization
@@ -308,7 +319,7 @@ pub enum InnerError {
     Utf8Error(Utf8Error),
     UnknownKey,
     /// Params are expected len, actual len
-    InvalidWidth(u64, u64),
+    InvalidWidth(usize, usize),
 }
 
 impl From<ParseFloatError> for InnerError {

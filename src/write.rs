@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use crate::error::Error;
+use crate::error::{DataError, Error, InnerError};
 use crate::format::{Alignment, FieldDescription};
 use crate::WriteFixed;
 
@@ -39,6 +39,16 @@ impl FixedSerializer for String {
         buf: &mut W,
         desc: &FieldDescription,
     ) -> Result<(), Error> {
+        // If strict fail on overflow
+        if desc.strict && self.len() > desc.len {
+            return Err(DataError::new_data_width_error(desc.len, self.len()).into())
+        }
+
+        // if strict and full-align fail on too short also
+        if desc.strict && desc.alignment == Alignment::Full && self.len() != desc.len {
+            return Err(DataError::new_data_width_error(desc.len, self.len()).into())
+        }
+
         // If so we'll need to truncate
         let string_is_too_long = self.len() > desc.len;
 
@@ -72,7 +82,6 @@ impl FixedSerializer for String {
 
 macro_rules! fixed_serializer_int_impl {
     ($t:ty) => {
-        // TODO: make this handle overflows
         impl FixedSerializer for $t {
             fn write_fixed_field<W: Write>(
                 &self,
@@ -81,6 +90,12 @@ macro_rules! fixed_serializer_int_impl {
             ) -> Result<(), Error> {
                 let mut s = self.to_string();
                 if s.len() > desc.len {
+                    if desc.strict {
+                        return Err(
+                            DataError::new_data_width_error(desc.len, s.len()).into()
+                        );
+                    }
+                    // truncate if not strict
                     s = s.as_str()[..desc.len].to_string();
                 }
 
@@ -320,7 +335,7 @@ mod tests {
             skip: 1,
             len: 4,
             alignment: Alignment::Left,
-            strict: true,
+            strict: false,
         };
 
         let foo = "abcdefg".to_string();
@@ -338,7 +353,7 @@ mod tests {
             skip: 1,
             len: 4,
             alignment: Alignment::Right,
-            strict: true,
+            strict: false,
         };
 
         let foo = "abcdefg".to_string();
@@ -356,7 +371,7 @@ mod tests {
             skip: 1,
             len: 4,
             alignment: Alignment::Left,
-            strict: true,
+            strict: false,
         };
 
         let foo = "abcdefg".to_string();
