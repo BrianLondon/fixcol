@@ -720,7 +720,6 @@ mod tests {
     }
 
     #[test]
-<<<<<<< HEAD
     fn strict_numeric_zero_padding() {
         // validate "strict" behavior
         // require no whitespace in numeric `Full` columns
@@ -835,7 +834,9 @@ mod tests {
         };
         let actual = u8::parse_fixed("   42", &desc).unwrap();
         assert_eq!(actual, 42);
-=======
+    }
+
+    #[test]
     fn impl_parse() {
         #[derive(PartialEq, Eq, Debug)]
         enum Thing {
@@ -868,10 +869,10 @@ mod tests {
                 skip: 1,
                 len: 2,
                 alignment: Alignment::Left,
+                strict: true,
             },
         );
 
         assert_eq!(thing.unwrap(), Thing::Thing1);
->>>>>>> 6aa6df5 (Fixed bug in implied parsing routine)
     }
 }
