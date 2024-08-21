@@ -193,21 +193,30 @@ pub trait FixedDeserializer {
         Self: Sized;
 }
 
-fn extract_trimmed<'a, 'b>(src: &'a str, desc: &'b FieldDescription) -> &'a str {
-    let slice = &src[desc.skip..desc.skip + desc.len];
-
-    match desc.alignment {
-        Alignment::Left => slice.trim_end(),
-        Alignment::Right => slice.trim_start(),
-        Alignment::Full => slice,
+fn extract_trimmed<'a, 'b>(src: &'a str, desc: &'b FieldDescription) -> Result<&'a str, DataError> {
+    if desc.strict && !&src[..desc.skip].trim().is_empty() {
+        return Err(DataError::whitespace_error(String::from(src)));
     }
+
+    let end = std::cmp::min(desc.skip + desc.len, src.len());
+
+    let slice = &src[desc.skip..end];
+
+    let res = match (desc.strict, desc.alignment) {
+        (true, Alignment::Left) => slice.trim_end(),
+        (true, Alignment::Right) => slice.trim_start(),
+        (true, Alignment::Full) => slice,
+        _ => slice.trim_start().trim_end(),
+    };
+
+    Ok(res)
 }
 
 macro_rules! fixed_deserializer_float_impl {
     ($t:ty) => {
         impl FixedDeserializer for $t {
             fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<$t, DataError> {
-                let trimmed = extract_trimmed(s, desc);
+                let trimmed = extract_trimmed(s, desc)?;
                 trimmed.parse::<$t>().map_err(|e| {
                     DataError::new_err(trimmed.to_string(), InnerError::ParseFloatError(e))
                 })
@@ -215,6 +224,7 @@ macro_rules! fixed_deserializer_float_impl {
         }
     };
 }
+
 fixed_deserializer_float_impl!(f32);
 fixed_deserializer_float_impl!(f64);
 
@@ -222,10 +232,16 @@ macro_rules! fixed_deserializer_int_impl {
     ($t:ty) => {
         impl FixedDeserializer for $t {
             fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<$t, DataError> {
-                let trimmed = extract_trimmed(s, desc);
-                trimmed.parse::<$t>().map_err(|e| {
-                    DataError::new_err(trimmed.to_string(), InnerError::ParseIntError(e))
-                })
+                let trimmed = extract_trimmed(s, desc)?;
+
+                if desc.strict && desc.alignment == Alignment::Full && trimmed.len() != s.len() {
+                    let trimmed_len = trimmed.len();
+                    Err(DataError::new_data_width_error(String::from(trimmed), trimmed_len, s.len()))
+                } else {
+                    trimmed.parse::<$t>().map_err(|e| {
+                        DataError::new_err(trimmed.to_string(), InnerError::ParseIntError(e))
+                    })    
+                }
             }
         }
     };
@@ -248,14 +264,20 @@ fixed_deserializer_int_impl!(isize);
 
 impl FixedDeserializer for String {
     fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<String, DataError> {
-        let trimmed = extract_trimmed(s, desc);
+        let slice = &s[desc.skip..desc.skip + desc.len];
+
+        let trimmed = match desc.alignment {
+            Alignment::Left => slice.trim_end(),
+            Alignment::Right => slice.trim_start(),
+            Alignment::Full => slice,
+        };
+
         Ok(trimmed.to_string())
     }
 }
 
 impl<T: ReadFixed> FixedDeserializer for T {
     fn parse_fixed(s: &str, _desc: &FieldDescription) -> Result<Self, DataError> {
-        println!("{}", s);
         let obj = T::read_fixed_str(s).map_err(|e| match e {
             Error::DataError(e) => e,
             Error::IoError(e) => {
@@ -277,6 +299,7 @@ mod tests {
             skip: 0,
             len: 3,
             alignment: Alignment::Left,
+            strict: false,
         };
         let actual: String = String::parse_fixed("abc   ", &desc).unwrap();
         let expected = "abc".to_string();
@@ -289,6 +312,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Left,
+            strict: false,
         };
         let actual: String = String::parse_fixed("abc   ", &desc).unwrap();
         let expected = "abc".to_string();
@@ -301,6 +325,7 @@ mod tests {
             skip: 1,
             len: 5,
             alignment: Alignment::Left,
+            strict: false,
         };
         let actual: String = String::parse_fixed("abc   ", &desc).unwrap();
         let expected = "bc".to_string();
@@ -313,6 +338,7 @@ mod tests {
             skip: 0,
             len: 2,
             alignment: Alignment::Left,
+            strict: false,
         };
         let actual: String = String::parse_fixed("abc   ", &desc).unwrap();
         let expected = "ab".to_string();
@@ -325,6 +351,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Left,
+            strict: false,
         };
         let actual: String = String::parse_fixed("a bc  ", &desc).unwrap();
         let expected = "a bc".to_string();
@@ -337,6 +364,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Left,
+            strict: false,
         };
         let actual: String = String::parse_fixed(" abc  ", &desc).unwrap();
         let expected = " abc".to_string();
@@ -349,6 +377,7 @@ mod tests {
             skip: 0,
             len: 3,
             alignment: Alignment::Right,
+            strict: false,
         };
         let actual: String = String::parse_fixed("   abc", &desc).unwrap();
         let expected = "".to_string();
@@ -361,6 +390,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Right,
+            strict: false,
         };
         let actual: String = String::parse_fixed("   abc", &desc).unwrap();
         let expected = "abc".to_string();
@@ -373,6 +403,7 @@ mod tests {
             skip: 1,
             len: 5,
             alignment: Alignment::Right,
+            strict: false,
         };
         let actual: String = String::parse_fixed("   abc", &desc).unwrap();
         let expected = "abc".to_string();
@@ -385,6 +416,7 @@ mod tests {
             skip: 4,
             len: 2,
             alignment: Alignment::Right,
+            strict: false,
         };
         let actual: String = String::parse_fixed("   abc", &desc).unwrap();
         let expected = "bc".to_string();
@@ -397,6 +429,7 @@ mod tests {
             skip: 1,
             len: 4,
             alignment: Alignment::Right,
+            strict: false,
         };
         let actual: String = String::parse_fixed("   abc", &desc).unwrap();
         let expected = "ab".to_string();
@@ -409,6 +442,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Right,
+            strict: false,
         };
         let actual: String = String::parse_fixed("  a bc", &desc).unwrap();
         let expected = "a bc".to_string();
@@ -421,6 +455,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Right,
+            strict: false,
         };
         let actual: String = String::parse_fixed(" abc  ", &desc).unwrap();
         let expected = "abc  ".to_string();
@@ -433,6 +468,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Full,
+            strict: false,
         };
         let actual: String = String::parse_fixed("abcdef", &desc).unwrap();
         let expected = "abcdef".to_string();
@@ -445,6 +481,7 @@ mod tests {
             skip: 1,
             len: 3,
             alignment: Alignment::Full,
+            strict: false,
         };
         let actual: String = String::parse_fixed("abcdef", &desc).unwrap();
         let expected = "bcd".to_string();
@@ -457,6 +494,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Full,
+            strict: false,
         };
         let actual: String = String::parse_fixed("abc   ", &desc).unwrap();
         let expected = "abc   ".to_string();
@@ -469,6 +507,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Full,
+            strict: false,
         };
         let actual: String = String::parse_fixed("   abc", &desc).unwrap();
         let expected = "   abc".to_string();
@@ -481,6 +520,7 @@ mod tests {
             skip: 1,
             len: 5,
             alignment: Alignment::Full,
+            strict: false,
         };
         let actual: String = String::parse_fixed("abc   ", &desc).unwrap();
         let expected = "bc   ".to_string();
@@ -493,6 +533,7 @@ mod tests {
             skip: 0,
             len: 4,
             alignment: Alignment::Full,
+            strict: false,
         };
         let actual: String = String::parse_fixed("abc   ", &desc).unwrap();
         let expected = "abc ".to_string();
@@ -505,6 +546,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Full,
+            strict: false,
         };
         let actual: String = String::parse_fixed(" a bc ", &desc).unwrap();
         let expected = " a bc ".to_string();
@@ -517,6 +559,7 @@ mod tests {
             skip: 1,
             len: 3,
             alignment: Alignment::Full,
+            strict: false,
         };
         let actual: String = String::parse_fixed(" ab c ", &desc).unwrap();
         let expected = "ab ".to_string();
@@ -529,39 +572,43 @@ mod tests {
             skip: 1,
             len: 4,
             alignment: Alignment::Full,
+            strict: false,
         };
         let actual: String = String::parse_fixed(" ab c ", &desc).unwrap();
         let expected = "ab c".to_string();
         assert_eq!(actual, expected);
     }
 
-    /* TODO: This is the behavior for a future non-strict implementation
     #[test]
     fn extract_f32_padding() {
         let descs = vec![
-            FieldDescription{ skip: 0, len: 6, alignment: Alignment::Full},
-            FieldDescription{ skip: 0, len: 6, alignment: Alignment::Left},
-            FieldDescription{ skip: 0, len: 6, alignment: Alignment::Right},
+            FieldDescription{ skip: 0, len: 6, alignment: Alignment::Full, strict: false },
+            FieldDescription{ skip: 0, len: 6, alignment: Alignment::Left, strict: false },
+            FieldDescription{ skip: 0, len: 6, alignment: Alignment::Right, strict: false },
         ];
         let expected: f32 = 3.14;
 
         let mut tests_run = 0;
         for desc in descs {
-            let actual: f32 = String::parse_fixed(" 3.14 ", &desc).unwrap();
+            println!("a {:?}", desc);
+            let actual: f32 = f32::parse_fixed(" 3.14 ", &desc).unwrap();
             assert_eq!(actual, expected);
+            println!("b {:?}", desc);
 
-            let actual: f32 = String::parse_fixed("3.14  ", &desc).unwrap();
+            let actual: f32 = f32::parse_fixed("3.14  ", &desc).unwrap();
             assert_eq!(actual, expected);
+            println!("c {:?}", desc);
 
-            let actual: f32 = String::parse_fixed("  3.14", &desc).unwrap();
+            let actual: f32 = f32::parse_fixed("  3.14", &desc).unwrap();
             assert_eq!(actual, expected);
+            println!("d {:?}", desc);
 
             tests_run += 1;
         }
 
         assert_eq!(tests_run, 3);
     }
-    */
+    
 
     #[test]
     fn extract_f32_full() {
@@ -569,6 +616,7 @@ mod tests {
             skip: 1,
             len: 4,
             alignment: Alignment::Full,
+            strict: true,
         };
         let actual: f32 = f32::parse_fixed(" 3.14 ", &desc).unwrap();
         let expected: f32 = 3.14;
@@ -578,6 +626,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Full,
+            strict: true,
         };
         let actual: Result<f32, DataError> = f32::parse_fixed(" 3.14 ", &desc);
 
@@ -596,6 +645,7 @@ mod tests {
             skip: 1,
             len: 5,
             alignment: Alignment::Left,
+            strict: true,
         };
         let actual: f32 = f32::parse_fixed(" 3.14 ", &desc).unwrap();
         let expected: f32 = 3.14;
@@ -605,6 +655,7 @@ mod tests {
             skip: 2,
             len: 4,
             alignment: Alignment::Left,
+            strict: false,
         };
         let actual: f32 = f32::parse_fixed(" 3.14 ", &desc).unwrap();
         let expected: f32 = 0.14;
@@ -617,10 +668,38 @@ mod tests {
             skip: 0,
             len: 5,
             alignment: Alignment::Right,
+            strict: true,
         };
         let actual: f32 = f32::parse_fixed(" 3.14 ", &desc).unwrap();
         let expected: f32 = 3.14;
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn extract_f32_right_strict() {
+        let desc = FieldDescription {
+            skip: 0,
+            len: 6,
+            alignment: Alignment::Right,
+            strict: false,
+        };
+        let actual: f32 = f32::parse_fixed(" 3.14 ", &desc).unwrap();
+        let expected: f32 = 3.14;
+        assert_eq!(actual, expected);
+
+        let desc = FieldDescription {
+            skip: 0,
+            len: 6,
+            alignment: Alignment::Right,
+            strict: true,
+        };
+        match f32::parse_fixed(" 3.14 ", &desc) {
+            Ok(_) => panic!("Expected parse_fixed call to fail"),
+            Err(e) => match e.inner_error() {
+                InnerError::ParseFloatError(_) => {}
+                _ => panic!("Expected ParseFloatError as inner error"),
+            },
+        }
     }
 
     #[test]
@@ -629,9 +708,127 @@ mod tests {
             skip: 0,
             len: 5,
             alignment: Alignment::Right,
+            strict: false,
         };
         let actual: Result<f32, DataError> = f32::parse_fixed(" 3a14 ", &desc);
         let expected = "Error decoding data from \"3a14\": invalid float literal\n";
         assert_eq!(actual.unwrap_err().to_string(), expected);
+    }
+
+    #[test]
+    fn strict_numeric_zero_padding() {
+        // validate "strict" behavior
+        // require no whitespace in numeric `Full` columns
+        let desc = FieldDescription {
+            skip: 0,
+            len: 3,
+            alignment: Alignment::Full,
+            strict: false,
+        };
+        let actual = u8::parse_fixed("042", &desc).unwrap();
+        assert_eq!(actual, 42);
+        
+        let desc = FieldDescription {
+            skip: 0,
+            len: 3,
+            alignment: Alignment::Full,
+            strict: true,
+        };
+        let actual = u8::parse_fixed("042", &desc).unwrap();
+        assert_eq!(actual, 42);
+
+        let desc = FieldDescription {
+            skip: 0,
+            len: 3,
+            alignment: Alignment::Full,
+            strict: false,
+        };
+        let actual = u8::parse_fixed(" 42", &desc).unwrap();
+        assert_eq!(actual, 42);
+        
+        let desc = FieldDescription {
+            skip: 0,
+            len: 3,
+            alignment: Alignment::Full,
+            strict: true,
+        };
+        let actual = u8::parse_fixed(" 42", &desc);
+        assert!(actual.is_err());
+        assert_eq!(
+            actual.unwrap_err().to_string(),
+            "Error decoding data from \" 42\": invalid digit found in string\n"
+        );
+    }
+
+    #[test]
+    fn strict_left_align() {
+        // testing "strict" behavior
+        // left aligned fields cannot start with white space
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Left,
+            strict: false,
+        };
+        let actual = u8::parse_fixed(" 42  ", &desc).unwrap();
+        assert_eq!(actual, 42);
+
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Left,
+            strict: true,
+        };
+        let actual = u8::parse_fixed(" 42  ", &desc);
+        assert!(actual.is_err());
+        assert_eq!(
+            actual.unwrap_err().to_string(),
+            "Error decoding data from \" 42\": invalid digit found in string\n"
+        );
+
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Left,
+            strict: true,
+        };
+        let actual = u8::parse_fixed("42   ", &desc).unwrap();
+        assert_eq!(actual, 42);
+    }
+
+    #[test]
+    fn strict_right_align() {
+        // testing "strict" behavior:
+        // right aligned fields cannot end with white space
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Right,
+            strict: false,
+        };
+        let actual = u8::parse_fixed("  42 ", &desc).unwrap();
+        assert_eq!(actual, 42);
+
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Right,
+            strict: true,
+        };
+        let actual = u8::parse_fixed("  42 ", &desc);
+        assert!(actual.is_err());
+        assert_eq!(
+            actual.unwrap_err().to_string(), 
+            "Error decoding data from \"42 \": invalid digit found in string\n"
+        );
+
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Right,
+            strict: true,
+        };
+        let actual = u8::parse_fixed("   42", &desc).unwrap();
+        assert_eq!(actual, 42);
     }
 }

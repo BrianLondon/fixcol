@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use crate::error::Error;
+use crate::error::{DataError, Error};
 use crate::format::{Alignment, FieldDescription};
 use crate::WriteFixed;
 
@@ -39,6 +39,16 @@ impl FixedSerializer for String {
         buf: &mut W,
         desc: &FieldDescription,
     ) -> Result<(), Error> {
+        // If strict fail on overflow
+        if desc.strict && self.len() > desc.len {
+            return Err(DataError::new_data_width_error(self.clone(), desc.len, self.len()).into())
+        }
+
+        // if strict and full-align fail on too short also
+        if desc.strict && desc.alignment == Alignment::Full && self.len() != desc.len {
+            return Err(DataError::new_data_width_error(self.clone(), desc.len, self.len()).into())
+        }
+
         // If so we'll need to truncate
         let string_is_too_long = self.len() > desc.len;
 
@@ -72,7 +82,6 @@ impl FixedSerializer for String {
 
 macro_rules! fixed_serializer_int_impl {
     ($t:ty) => {
-        // TODO: make this handle overflows
         impl FixedSerializer for $t {
             fn write_fixed_field<W: Write>(
                 &self,
@@ -81,6 +90,13 @@ macro_rules! fixed_serializer_int_impl {
             ) -> Result<(), Error> {
                 let mut s = self.to_string();
                 if s.len() > desc.len {
+                    if desc.strict {
+                        let len = s.len();
+                        return Err(
+                            DataError::new_data_width_error(s, desc.len, len).into()
+                        );
+                    }
+                    // truncate if not strict
                     s = s.as_str()[..desc.len].to_string();
                 }
 
@@ -212,6 +228,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Left,
+            strict: false,
         };
 
         let foo = "foo".to_string();
@@ -229,6 +246,7 @@ mod tests {
             skip: 0,
             len: 6,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let foo = "foo".to_string();
@@ -245,7 +263,8 @@ mod tests {
         let desc = FieldDescription {
             skip: 0,
             len: 6,
-            alignment: Alignment::Left,
+            alignment: Alignment::Full,
+            strict: false,
         };
 
         let foo = "foo".to_string();
@@ -258,11 +277,37 @@ mod tests {
     }
 
     #[test]
+    fn string_full_strict() {
+        // validate "strict" behavior:
+        // require written `Full` aligned text columns to be the correct length
+        let desc = FieldDescription {
+            skip: 0,
+            len: 6,
+            alignment: Alignment::Full,
+            strict: true,
+        };
+
+        let foo = "foo".to_string();
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_err());
+        let e = res.unwrap_err();
+        assert_eq!(
+            e.to_string(), 
+            "Error decoding data from \"foo\": Expected field to \
+            have width 6 but supplied value has width 3.\n"
+        );
+    }
+
+    #[test]
     fn skip_string_left() {
         let desc = FieldDescription {
             skip: 1,
             len: 6,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let foo = "foo".to_string();
@@ -280,6 +325,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let foo = "foo".to_string();
@@ -297,6 +343,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let foo = "foo".to_string();
@@ -314,6 +361,7 @@ mod tests {
             skip: 1,
             len: 4,
             alignment: Alignment::Left,
+            strict: false,
         };
 
         let foo = "abcdefg".to_string();
@@ -331,6 +379,7 @@ mod tests {
             skip: 1,
             len: 4,
             alignment: Alignment::Right,
+            strict: false,
         };
 
         let foo = "abcdefg".to_string();
@@ -348,6 +397,7 @@ mod tests {
             skip: 1,
             len: 4,
             alignment: Alignment::Left,
+            strict: false,
         };
 
         let foo = "abcdefg".to_string();
@@ -369,6 +419,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let foo: u16 = 12345;
@@ -386,6 +437,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let foo: u16 = 12345;
@@ -403,6 +455,7 @@ mod tests {
             skip: 1,
             len: 8,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let foo: i16 = -12345;
@@ -420,6 +473,7 @@ mod tests {
             skip: 1,
             len: 8,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let foo: i16 = -12345;
@@ -441,6 +495,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let foo: f32 = 3.14;
@@ -458,6 +513,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let foo: f32 = 3.141592654;
@@ -475,6 +531,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Full,
+            strict: true,
         };
 
         let foo: f32 = 3.14;
@@ -492,6 +549,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Full,
+            strict: true,
         };
 
         let foo: f32 = 3.141592654;
@@ -509,6 +567,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let foo: f32 = 3.14;
@@ -526,6 +585,7 @@ mod tests {
             skip: 1,
             len: 6,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let foo: f32 = 3.141592654;
@@ -548,6 +608,7 @@ mod tests {
             skip: 200,
             len: 105,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let num: u64 = 12345;
@@ -568,6 +629,7 @@ mod tests {
             skip: 300,
             len: 205,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let num: u64 = 12345;
@@ -588,6 +650,7 @@ mod tests {
             skip: 250,
             len: 310,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let num: u64 = 1234567890;
@@ -608,6 +671,7 @@ mod tests {
             skip: 300,
             len: 300,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let num: u64 = 12345;
@@ -628,6 +692,7 @@ mod tests {
             skip: 1000,
             len: 1000,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let num: u64 = 12345;
@@ -648,6 +713,7 @@ mod tests {
             skip: 1000,
             len: 1000,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let num: u64 = 12345;
@@ -668,6 +734,7 @@ mod tests {
             skip: 1000,
             len: 2000,
             alignment: Alignment::Left,
+            strict: true,
         };
 
         let s = "abcdefghij".repeat(100);
@@ -688,6 +755,7 @@ mod tests {
             skip: 1000,
             len: 2000,
             alignment: Alignment::Right,
+            strict: true,
         };
 
         let s = "abcdefghij".repeat(100);

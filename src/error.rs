@@ -195,6 +195,20 @@ impl DataError {
         }
     }
 
+    pub(crate) fn new_data_width_error(text: String, expected: usize, actual: usize) -> Self {
+        Self::new_err(
+            text,
+            InnerError::InvalidWidth(expected, actual)
+        )
+    }
+
+    pub(crate) fn whitespace_error(text: String) -> Self {
+        Self::new_err(
+            text,
+            InnerError::WhitespaceError,
+        )
+    }
+
     /// Creates a new custom `DataError`
     ///
     /// This method will typically be used when implementing custom deserialization
@@ -285,6 +299,14 @@ impl Display for DataError {
                 fmt_err(&self.text, f)?;
                 write!(f, "Unrecognized enum key")?;
             }
+            InnerError::InvalidWidth(exp, act) => {
+                fmt_err(&self.text, f)?;
+                write!(f, "Expected field to have width {} but supplied value has width {}.", exp, act)?;
+            }
+            InnerError::WhitespaceError => {
+                fmt_err(&self.text, f)?;
+                write!(f, "Found non-whitespace character between data fields (strict)")?;
+            }
         }
 
         if let Some(line) = self.line {
@@ -303,6 +325,9 @@ pub enum InnerError {
     ParseFloatError(ParseFloatError),
     Utf8Error(Utf8Error),
     UnknownKey,
+    /// Params are expected len, actual len
+    InvalidWidth(usize, usize),
+    WhitespaceError,
 }
 
 impl From<ParseFloatError> for InnerError {
