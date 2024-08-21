@@ -4,7 +4,7 @@ use std::path::Path;
 use fixed::ReadFixed;
 
 #[derive(Debug, Eq, PartialEq, ReadFixed)]
-#[fixed(key_width = 2)]
+#[fixed(key_width = 2, strict = false)]
 enum RelationType {
     #[fixed(key = "PC")]
     ParentChild,
@@ -16,34 +16,29 @@ enum RelationType {
 #[derive(Debug, Eq, PartialEq, ReadFixed)]
 #[fixed(key_width = 1)]
 enum Record {
-    #[fixed(key = "P", embed = true)]
-    Person(Person),
-    #[fixed(key = "R", embed = true)]
-    Relation(Relation),
-}
+    #[fixed(key = "P")]
+    Person{
+        #[fixed(width = 3)]
+        id: u8,
+        #[fixed(width = 11, align = "right")]
+        name: String,
+        #[fixed(skip = 1, width = 4)]
+        regnal_number: String,
+        #[fixed(width = 4)]
+        birth: u16,
+        #[fixed(skip = 1, width = 4, strict = false)]
+        death: u16,
+    },
 
-#[derive(Debug, Eq, PartialEq, ReadFixed)]
-struct Person {
-    #[fixed(width = 3)]
-    id: u8,
-    #[fixed(width = 11, align = "right")]
-    name: String,
-    #[fixed(skip = 1, width = 4)]
-    regnal_number: String,
-    #[fixed(width = 4)]
-    birth: u16,
-    #[fixed(skip = 1, width = 4)]
-    death: u16,
-}
-
-#[derive(Debug, Eq, PartialEq, ReadFixed)]
-struct Relation {
-    #[fixed(skip = 1, width = 2)]
-    rel_type: RelationType,
-    #[fixed(skip = 1, width = 3)]
-    from: u8,
-    #[fixed(width = 3)]
-    to: u8,
+    #[fixed(key = "R")]
+    Relation {
+        #[fixed(skip = 1, width = 2)]
+        rel_type: RelationType,
+        #[fixed(skip = 1, width = 3)]
+        from: u8,
+        #[fixed(width = 3, strict = false)]
+        to: u8,
+    },
 }
 
 pub fn main() {
@@ -69,5 +64,7 @@ pub fn main() {
         })
         .collect();
 
-    println!("{:?}", records);
+    for record in records {
+        println!("{:?}", record);
+    }
 }

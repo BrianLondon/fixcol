@@ -19,7 +19,7 @@ R HW 8  7
 P009     Philip II  1527-1598
 P010      Maria     1528-1603
 R PC 3  9
-P RC 3  10
+R PC 3  10
 R PC 4  9
 R PC 4  10
 P011 Maximilian II  1527-1576
@@ -54,7 +54,7 @@ R HW 22 21
 P023     Renata     1544-1602
 R PC 22 23
 R PC 21 23
-P HW 18 23
+R HW 18 23
 P024 Maria Anna     1574-1616
 R PC 18 24
 R PC 23 24
