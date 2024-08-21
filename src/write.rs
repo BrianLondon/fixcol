@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use crate::error::{DataError, Error, InnerError};
+use crate::error::{DataError, Error};
 use crate::format::{Alignment, FieldDescription};
 use crate::WriteFixed;
 

@@ -31,7 +31,7 @@ pub(crate) fn enum_read(
             let read = match &variant.fields {
                 syn::Fields::Named(fields) => read_struct_variant(var_name, fields, config.into())?,
                 syn::Fields::Unnamed(fields) if config.embed => {
-                    read_embedded_variant(var_name, fields, config.into())?
+                    read_embedded_variant(var_name, fields)?
                 }
                 syn::Fields::Unnamed(fields) => {
                     read_tuple_variant(var_name, fields, &config.into())?
@@ -77,7 +77,9 @@ fn read_struct_variant(name: &Ident, fields: &FieldsNamed, outer: OuterConfig) -
     Ok(read_code)
 }
 
-fn read_embedded_variant(name: &Ident, fields: &FieldsUnnamed, outer: OuterConfig) -> MacroResult {
+// TODO: figure out how to do strict cascade into embedded variants
+// deleted: "outer: OuterConfig" from the function arguments
+fn read_embedded_variant(name: &Ident, fields: &FieldsUnnamed) -> MacroResult {
     if fields.unnamed.len() != 1 {
         return Err(MacroError::new(
             "Embed param is only valid on variants with exactly one field",
