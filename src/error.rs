@@ -202,9 +202,9 @@ impl DataError {
         )
     }
 
-    pub(crate) fn whitespace_error() -> Self {
+    pub(crate) fn whitespace_error(text: String) -> Self {
         Self::new_err(
-            String::from("Found non-whitespace character between data fields (strict)"),
+            text,
             InnerError::WhitespaceError,
         )
     }
@@ -305,7 +305,7 @@ impl Display for DataError {
             }
             InnerError::WhitespaceError => {
                 fmt_err(&self.text, f)?;
-                write!(f, "Unexpected non-whitespace character")?;
+                write!(f, "Found non-whitespace character between data fields (strict)")?;
             }
         }
 

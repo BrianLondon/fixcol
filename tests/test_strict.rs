@@ -42,7 +42,7 @@ fn whitespace_well_formed_lax() {
 }
 
 #[test]
-fn whitespace_misformed_lax() {
+fn whitespace_malformed_lax() {
     let point = PointL::read_fixed_str("1234201").unwrap();
     assert_eq!(point, PointL::new(123, 201));
 }
@@ -54,9 +54,20 @@ fn whitespace_well_formed_strict() {
 }
 
 #[test]
-fn whitespace_misformed_strict() {
+fn whitespace_malformed_strict() {
     let err = PointS::read_fixed_str("1234201").unwrap_err();
-    assert_eq!(err.to_string(), "foo");
+    assert_eq!(
+        err.to_string(),
+        "Error decoding data from \"4201\": Found non-whitespace \
+        character between data fields (strict)\n",
+    );
+
+    let err = PointS::read_fixed_str("1  42  ").unwrap_err();
+    assert_eq!(
+        err.to_string(),
+        "Error decoding data from \"42  \": Found non-whitespace \
+        character between data fields (strict)\n",
+    );
 }
 
 // strict mode should require last field of line to be full length when reading
@@ -64,24 +75,26 @@ fn whitespace_misformed_strict() {
 
 #[test]
 fn short_line_lax() {
-    let point = PointL::read_fixed_str("7  21").unwrap();
+    println!("foo");
+    let point = PointL::read_fixed_str("7   21").unwrap();
     assert_eq!(point, PointL::new(7, 21));
 }
 
 #[test]
 fn short_line_strict() {
-    let err = PointS::read_fixed_str("7  21").unwrap_err();
-    assert_eq!(err.to_string(), "foo");
+    let err = PointS::read_fixed_str("7   21").unwrap_err();
+    // TODO: need better error messaging for this
+    assert_eq!(err.to_string(), "failed to fill whole buffer");
 }
 
 #[test]
 fn full_line_lax() {
-    let point = PointL::read_fixed_str("7  21 ").unwrap();
+    let point = PointL::read_fixed_str("7   21 ").unwrap();
     assert_eq!(point, PointL::new(7, 21));
 }
 
 #[test]
 fn full_line_strict() {
-    let point = PointS::read_fixed_str("7  21 ").unwrap();
+    let point = PointS::read_fixed_str("7   21 ").unwrap();
     assert_eq!(point, PointS::new(7, 21));
 }

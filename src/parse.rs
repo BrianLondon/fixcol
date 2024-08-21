@@ -195,10 +195,12 @@ pub trait FixedDeserializer {
 
 fn extract_trimmed<'a, 'b>(src: &'a str, desc: &'b FieldDescription) -> Result<&'a str, DataError> {
     if desc.strict && !&src[..desc.skip].trim().is_empty() {
-        return Err(DataError::whitespace_error());
+        return Err(DataError::whitespace_error(String::from(src)));
     }
 
-    let slice = &src[desc.skip..desc.skip + desc.len];
+    let end = std::cmp::min(desc.skip + desc.len, src.len());
+
+    let slice = &src[desc.skip..end];
 
     let res = match (desc.strict, desc.alignment) {
         (true, Alignment::Left) => slice.trim_end(),
@@ -231,9 +233,15 @@ macro_rules! fixed_deserializer_int_impl {
         impl FixedDeserializer for $t {
             fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<$t, DataError> {
                 let trimmed = extract_trimmed(s, desc)?;
-                trimmed.parse::<$t>().map_err(|e| {
-                    DataError::new_err(trimmed.to_string(), InnerError::ParseIntError(e))
-                })
+
+                if desc.strict && desc.alignment == Alignment::Full && trimmed.len() != s.len() {
+                    let trimmed_len = trimmed.len();
+                    Err(DataError::new_data_width_error(String::from(trimmed), trimmed_len, s.len()))
+                } else {
+                    trimmed.parse::<$t>().map_err(|e| {
+                        DataError::new_err(trimmed.to_string(), InnerError::ParseIntError(e))
+                    })    
+                }
             }
         }
     };
@@ -714,7 +722,7 @@ mod tests {
         let desc = FieldDescription {
             skip: 0,
             len: 3,
-            alignment: Alignment::Right,
+            alignment: Alignment::Full,
             strict: false,
         };
         let actual = u8::parse_fixed("042", &desc).unwrap();
@@ -723,7 +731,7 @@ mod tests {
         let desc = FieldDescription {
             skip: 0,
             len: 3,
-            alignment: Alignment::Right,
+            alignment: Alignment::Full,
             strict: true,
         };
         let actual = u8::parse_fixed("042", &desc).unwrap();
@@ -732,7 +740,7 @@ mod tests {
         let desc = FieldDescription {
             skip: 0,
             len: 3,
-            alignment: Alignment::Right,
+            alignment: Alignment::Full,
             strict: false,
         };
         let actual = u8::parse_fixed(" 42", &desc).unwrap();
@@ -741,12 +749,15 @@ mod tests {
         let desc = FieldDescription {
             skip: 0,
             len: 3,
-            alignment: Alignment::Right,
+            alignment: Alignment::Full,
             strict: true,
         };
         let actual = u8::parse_fixed(" 42", &desc);
         assert!(actual.is_err());
-        assert_eq!(actual.unwrap_err().to_string(), "TODO: put expected value here");
+        assert_eq!(
+            actual.unwrap_err().to_string(),
+            "Error decoding data from \" 42\": invalid digit found in string\n"
+        );
     }
 
     #[test]
