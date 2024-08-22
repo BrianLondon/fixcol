@@ -9,8 +9,8 @@ enum RelationType {
     #[fixed(key = "PC")]
     ParentChild,
 
-    #[fixed(key = "HW")]
-    HusbandWife,
+    #[fixed(key = "SP")]
+    Spouse,
 }
 
 #[derive(Debug, Eq, PartialEq, ReadFixed)]
