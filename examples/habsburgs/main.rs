@@ -1,7 +1,10 @@
 use std::fs::File;
 use std::path::Path;
 
-use fixed::ReadFixed;
+use alg::coi_for_data_set;
+use fixed::{ReadFixed, WriteFixed};
+
+mod alg;
 
 #[derive(Debug, Eq, PartialEq, ReadFixed)]
 #[fixed(key_width = 2, strict = false)]
@@ -41,6 +44,14 @@ enum Record {
     },
 }
 
+#[derive(Debug, WriteFixed)]
+struct OutputRecord {
+    #[fixed(width = 6)]
+    coi: f32,
+    #[fixed(skip = 1, width = 30)]
+    name: String,
+}
+
 pub fn main() {
     let path = Path::new(file!())
         .parent()
@@ -64,7 +75,7 @@ pub fn main() {
         })
         .collect();
 
-    for record in records {
-        println!("{:?}", record);
-    }
+    let out = coi_for_data_set(records);
+
+    println!("{:?}", out);
 }
