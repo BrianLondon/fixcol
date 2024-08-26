@@ -4,7 +4,7 @@
 //! here is not important for the serialization example, but is used
 //! to transform the data from the input format to an output format
 
-use std::{cmp::Ordering, collections::HashMap};
+use std::collections::HashMap;
 
 use crate::{OutputRecord, Record, RelationType};
 
@@ -76,10 +76,8 @@ pub(crate) fn coi_for_data_set(records: Vec<Record>) -> Vec<OutputRecord> {
 
     out.sort_by(|a, b| {
         b.coi.partial_cmp(&a.coi)
-            .unwrap_or(
-                b.name.partial_cmp(&a.name)
-                .unwrap_or(Ordering::Less)
-            )
+            .unwrap_or(a.name.cmp(&b.name))
+            .then(a.name.cmp(&b.name))
     });
     out
 }
