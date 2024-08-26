@@ -1,5 +1,5 @@
 P001     Philip I   1478-1506
-P002      Joana     1479-1555
+P002     Joanna     1479-1555
 R SP 2  1
 P003    Charles V   1500-1558
 R PC 1  3
@@ -10,11 +10,11 @@ P006       Anna     1503-1547
 P007   Isabella     1501-1526
 P008  Christian II  1481-1559
 R SP 4  3
+R PC 1  7
+R PC 2  7
 R PC 1  5
 R PC 2  5
 R SP 6  5
-R PC 1  6
-R PC 2  6
 R SP 7  8
 P009     Philip II  1527-1598
 P010      Maria     1528-1603
@@ -25,12 +25,12 @@ R PC 4  10
 P011 Maximilian II  1527-1576
 P012    Charles II  1540-1590
 P013       Anna     1528-1590
-R PC 3  11
-R PC 3  12
-R PC 3  13
-R PC 4  11
-R PC 4  12
-R PC 4  13
+R PC 5  11
+R PC 5  12
+R PC 5  13
+R PC 6  11
+R PC 6  12
+R PC 6  13
 R SP 10 11
 P014       Anna     1549-1580
 R PC 11 14
@@ -42,10 +42,18 @@ R PC 14 15
 P016     Albert V   1528-1579
 R SP 13 16
 P017 Maria Anna     1551-1608
+R PC 13 17
+R PC 16 17
 P018    William V   1548-1626
 R SP 17 12
+R PC 13 18
+R PC 16 18
 P019   Margaret     1584-1611
+R PC 17 19
+R PC 12 19
 P020  Ferdinand II  1578-1637
+R PC 17 20
+R PC 12 20
 P021  Christina     1522-1590
 R PC 7  21
 R PC 8  21
@@ -70,6 +78,8 @@ R PC 19 26
 R PC 19 27
 P028    Mariana     1634-1696
 R SP 28 27
+R PC 26 28
+R PC 25 28
 P029    Charles II  1661-1700
 R PC 27 29
 R PC 28 29

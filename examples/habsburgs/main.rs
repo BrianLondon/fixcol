@@ -1,8 +1,8 @@
-use std::fs::File;
+use std::{fs::File, io};
 use std::path::Path;
 
 use alg::coi_for_data_set;
-use fixed::{ReadFixed, WriteFixed};
+use fixed::{ReadFixed, WriteFixed, WriteFixedAll};
 
 mod alg;
 
@@ -62,10 +62,10 @@ pub fn main() {
 
     let file = File::open(path).unwrap();
 
+    // Read the data file
     let records: Vec<Record> = Record::read_fixed_all(file)
         .map(|result| match result {
             Ok(record) => {
-                println!("{:?}", record);
                 record
             }
             Err(err) => {
@@ -75,7 +75,10 @@ pub fn main() {
         })
         .collect();
 
-    let out = coi_for_data_set(records);
+    // Run the coi calculation
+    let results = coi_for_data_set(records).into_iter().filter(|r| r.coi > 0.0);
 
-    println!("{:?}", out);
+    // Write the serialized output to STDOUT
+    let mut stdout = io::stdout();
+    let _ = results.write_fixed_all(&mut stdout);
 }
