@@ -1,6 +1,6 @@
-extern crate fixed;
+extern crate fixcol;
 
-use fixed::{ReadFixed, WriteFixed, WriteFixedAll};
+use fixcol::{ReadFixed, WriteFixed, WriteFixedAll};
 
 // Converted the struct Atom to AtomS and the MoleculeRow
 // variant Atom to AtomV to act as a regression test where

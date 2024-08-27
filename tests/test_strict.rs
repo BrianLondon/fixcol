@@ -1,6 +1,6 @@
-extern crate fixed;
+extern crate fixcol;
 
-use fixed::ReadFixed;
+use fixcol::ReadFixed;
 
 #[derive(PartialEq, Eq, Debug, ReadFixed)]
 #[fixed(strict = true)]

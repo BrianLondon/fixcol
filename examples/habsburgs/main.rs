@@ -2,7 +2,7 @@ use std::{fs::File, io};
 use std::path::Path;
 
 use alg::coi_for_data_set;
-use fixed::{ReadFixed, WriteFixed, WriteFixedAll};
+use fixcol::{ReadFixed, WriteFixed, WriteFixedAll};
 
 mod alg;
 

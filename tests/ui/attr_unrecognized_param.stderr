@@ -1,4 +1,4 @@
-error: fixed-derive error: Unrecognized parameter "thing".
+error: fixcol-derive error: Unrecognized parameter "thing".
  --> tests/ui/attr_unrecognized_param.rs:7:24
   |
 7 |     #[fixed(width = 5, thing = true)]

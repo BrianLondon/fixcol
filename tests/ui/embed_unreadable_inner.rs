@@ -1,4 +1,4 @@
-use fixed_derive::{ReadFixed, WriteFixed};
+use fixcol_derive::{ReadFixed, WriteFixed};
 
 struct Point {
     point_x: u16,

@@ -1,4 +1,4 @@
-error: fixed-derive error: Could not read config from name/value style attribute.
+error: fixcol-derive error: Could not read config from name/value style attribute.
 
        Expected parameters like #[fixed(width = 4)]
  --> tests/ui/attr_name_value.rs:5:15

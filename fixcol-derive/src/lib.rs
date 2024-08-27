@@ -40,7 +40,7 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
     let gen = match function_impl_result {
         Ok(function_impl) => {
             quote! {
-                impl #impl_generics fixed::ReadFixed for #name #ty_generics #where_clause {
+                impl #impl_generics fixcol::ReadFixed for #name #ty_generics #where_clause {
                     #function_impl
                 }
             }
@@ -73,7 +73,7 @@ pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
     let gen = match function_impl_result {
         Ok(function_impl) => {
             quote! {
-                impl #impl_generics fixed::WriteFixed for #name #ty_generics #where_clause {
+                impl #impl_generics fixcol::WriteFixed for #name #ty_generics #where_clause {
                     #function_impl
                 }
             }

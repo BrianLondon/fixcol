@@ -1,4 +1,4 @@
-use fixed_derive::{ReadFixed, WriteFixed};
+use fixcol::{ReadFixed, WriteFixed};
 
 #[derive(ReadFixed)]
 struct Foo(u64);

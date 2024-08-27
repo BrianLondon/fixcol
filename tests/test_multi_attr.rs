@@ -1,5 +1,6 @@
-extern crate fixed;
-use fixed::{ReadFixed, WriteFixed};
+extern crate fixcol;
+
+use fixcol::{ReadFixed, WriteFixed};
 
 #[derive(Debug, ReadFixed, WriteFixed, Eq, PartialEq)]
 struct Point {

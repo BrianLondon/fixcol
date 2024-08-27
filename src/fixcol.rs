@@ -19,7 +19,7 @@ pub trait WriteFixed {
     /// # Example
     ///
     /// ```
-    /// # use fixed::WriteFixed;
+    /// # use fixcol::WriteFixed;
     /// # use std::io;
     /// #[derive(WriteFixed)]
     /// struct Point {
@@ -51,7 +51,7 @@ pub trait WriteFixed {
 ///
 /// # Example
 /// ```
-/// use fixed_derive::WriteFixed;
+/// use fixcol_derive::WriteFixed;
 /// #[derive(WriteFixed)]
 /// struct Point {
 ///     #[fixed(width=3)] x: u8,
@@ -59,7 +59,7 @@ pub trait WriteFixed {
 /// }
 /// // Point implements WriteFixed
 ///
-/// use fixed::WriteFixedAll;
+/// use fixcol::WriteFixedAll;
 /// let v: Vec<Point> = Vec::new();
 /// // Therefore Vec<Point> implements WriteFixedAll
 /// ```
@@ -68,7 +68,7 @@ pub trait WriteFixedAll {
     ///
     /// # Example
     /// ```
-    /// # use fixed_derive::WriteFixed;
+    /// # use fixcol_derive::WriteFixed;
     /// # use std::fs::File;
     /// # use std::io;
     /// #[derive(WriteFixed)]
@@ -88,7 +88,7 @@ pub trait WriteFixedAll {
     /// # }
     /// # let mut file: Vec<u8> = Vec::new();
     ///
-    /// use fixed::WriteFixedAll;
+    /// use fixcol::WriteFixedAll;
     /// v.write_fixed_all(&mut file);
     /// # let s = std::str::from_utf8(file.as_slice()).unwrap();
     /// # assert_eq!(s, "0  3  \n12342 \n42 123\n");
@@ -188,7 +188,7 @@ pub trait ReadFixed {
     ///
     /// # Example
     /// ```
-    /// # use fixed::ReadFixed;
+    /// # use fixcol::ReadFixed;
     /// # use std::fs::File;
     /// # use std::io;
     /// #[derive(ReadFixed)]
@@ -216,7 +216,7 @@ pub trait ReadFixed {
     ///
     /// # Example
     /// ```
-    /// # use fixed::ReadFixed;
+    /// # use fixcol::ReadFixed;
     /// # use std::fs::File;
     /// # use std::io;
     /// #[derive(ReadFixed)]
@@ -253,9 +253,9 @@ pub trait ReadFixed {
     ///
     /// We can parse directly from `str` literals
     /// ```
-    /// # use fixed::ReadFixed;
-    /// # use fixed::FixedDeserializer;
-    /// # use fixed::FieldDescription;
+    /// # use fixcol::ReadFixed;
+    /// # use fixcol::FixedDeserializer;
+    /// # use fixcol::FieldDescription;
     /// #[derive(ReadFixed)]
     /// struct Point {
     ///     #[fixed(width=3, align="right")]
@@ -271,7 +271,7 @@ pub trait ReadFixed {
     ///
     /// It can also be useful to pull directly from slices.
     /// ```
-    /// # use fixed::{FixedDeserializer, FieldDescription, ReadFixed};
+    /// # use fixcol::{FixedDeserializer, FieldDescription, ReadFixed};
     /// # #[derive(ReadFixed)]
     /// # struct Point {
     /// #     #[fixed(width=3)]
@@ -302,9 +302,9 @@ pub trait ReadFixed {
     ///
     /// We can parse directly from `str` literals
     /// ```
-    /// # use fixed::ReadFixed;
-    /// # use fixed::FixedDeserializer;
-    /// # use fixed::FieldDescription;
+    /// # use fixcol::ReadFixed;
+    /// # use fixcol::FixedDeserializer;
+    /// # use fixcol::FieldDescription;
     /// #[derive(ReadFixed)]
     /// struct Point {
     ///     #[fixed(width=3, align="right")]
@@ -329,7 +329,7 @@ pub trait ReadFixed {
 
 #[cfg(test)]
 mod tests {
-    use fixed_derive::{ReadFixed, WriteFixed};
+    use fixcol_derive::{ReadFixed, WriteFixed};
 
     use super::*;
     use crate::error::Error;
@@ -405,7 +405,7 @@ mod tests {
         str::from_utf8(inp.as_slice()).unwrap().to_string()
     }
 
-    use crate as fixed;
+    use crate as fixcol;
 
     #[derive(ReadFixed, WriteFixed, Eq, PartialEq, Debug)]
     struct MyStruct {

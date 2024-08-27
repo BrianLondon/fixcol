@@ -24,10 +24,10 @@ use crate::ReadFixed;
 /// ### Custom deserialization
 ///
 /// ```
-/// # use fixed::ReadFixed;
-/// # use fixed::FixedDeserializer;
-/// # use fixed::FieldDescription;
-/// # use fixed::error::DataError;
+/// # use fixcol::ReadFixed;
+/// # use fixcol::FixedDeserializer;
+/// # use fixcol::FieldDescription;
+/// # use fixcol::error::DataError;
 /// #[derive(PartialEq, Eq, Debug)]
 /// enum EyeColor {
 ///     Blue,
@@ -83,9 +83,9 @@ use crate::ReadFixed;
 /// Naive implementation
 ///
 /// ```
-/// # use fixed::ReadFixed;
-/// # use fixed::FixedDeserializer;
-/// # use fixed::FieldDescription;
+/// # use fixcol::ReadFixed;
+/// # use fixcol::FixedDeserializer;
+/// # use fixcol::FieldDescription;
 /// # use std::fs::File;
 /// #[derive(ReadFixed)]
 /// # #[derive(Eq, PartialEq, Debug)]
@@ -120,10 +120,10 @@ use crate::ReadFixed;
 /// [`chrono::NaiveDate`]: https://docs.rs/chrono/latest/chrono/struct.NaiveDate.html
 ///
 /// ```
-/// # use fixed::ReadFixed;
-/// # use fixed::FixedDeserializer;
-/// # use fixed::FieldDescription;
-/// # use fixed::error::DataError;
+/// # use fixcol::ReadFixed;
+/// # use fixcol::FixedDeserializer;
+/// # use fixcol::FieldDescription;
+/// # use fixcol::error::DataError;
 /// # use std::fs::File;
 /// #[derive(ReadFixed)]
 /// # #[derive(Eq, PartialEq, Debug)]

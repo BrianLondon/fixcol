@@ -1,18 +1,18 @@
 //! A crate used for fixed width column serialization and deserialization
 pub mod error;
-mod fixed;
+mod fixcol;
 mod format;
 mod parse;
 mod write;
 
-extern crate fixed_derive;
+extern crate fixcol_derive;
 
-pub use fixed::{Iter, ReadFixed, WriteFixed, WriteFixedAll};
+pub use fixcol::{Iter, ReadFixed, WriteFixed, WriteFixedAll};
 pub use format::{Alignment, FieldDescription};
 pub use parse::FixedDeserializer;
 pub use write::FixedSerializer;
 
-pub use fixed_derive::{ReadFixed, WriteFixed};
+pub use fixcol_derive::{ReadFixed, WriteFixed};
 
 #[cfg(test)]
 mod tests {

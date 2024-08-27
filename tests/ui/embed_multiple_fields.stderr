@@ -1,4 +1,4 @@
-error: fixed-derive error: Embed param is only valid on variants with exactly one field
+error: fixcol-derive error: Embed param is only valid on variants with exactly one field
   --> tests/ui/embed_multiple_fields.rs:17:10
    |
 17 |     Point(Point, u16),

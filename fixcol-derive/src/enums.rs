@@ -48,17 +48,17 @@ pub(crate) fn enum_read(
     let key_width = enum_config.key_width;
 
     let fun = quote! {
-        fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixed::error::Error> {
-            use fixed::FixedDeserializer;
+        fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixcol::error::Error> {
+            use fixcol::FixedDeserializer;
 
             let mut s: [u8; #key_width] = [0; #key_width];
-            buf.read_exact(&mut s).map_err(|e| fixed::error::Error::from(e))?;
+            buf.read_exact(&mut s).map_err(|e| fixcol::error::Error::from(e))?;
             let key: String = String::from_utf8(s.to_vec())
-                .map_err(|e| fixed::error::Error::from(e))?;
+                .map_err(|e| fixcol::error::Error::from(e))?;
 
             match key.as_str() {
                 #(#var_name => { #var_read },)*
-                k => Err(fixed::error::Error::unknown_key_error(k.to_owned())),
+                k => Err(fixcol::error::Error::unknown_key_error(k.to_owned())),
             }
         }
     };
@@ -163,8 +163,8 @@ pub(crate) fn enum_write(
     let write_variants = write_variants?;
 
     let code = quote! {
-        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), fixed::error::Error> {
-            use fixed::FixedSerializer;
+        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), fixcol::error::Error> {
+            use fixcol::FixedSerializer;
 
             match self {
                 #(#write_variants)*
@@ -185,10 +185,10 @@ fn write_struct_variant(ident: &Ident, config: &VariantConfig, fields: &FieldsNa
     // TODO: we may want to inherit strict for the key from the enum or variant
     let code = quote! {
         Self::#ident { #(#names),* } => {
-            let key_config = fixed::FieldDescription {
+            let key_config = fixcol::FieldDescription {
                 skip: 0,
                 len: #key_len,
-                alignment: fixed::Alignment::Left,
+                alignment: fixcol::Alignment::Left,
                 strict: false,
             };
             let key = String::from(#key);
@@ -216,10 +216,10 @@ fn write_tuple_variant(ident: &Ident, config: &VariantConfig, fields: &FieldsUnn
     // TODO: we may want to inherit strict for the key from the enum or variant
     let code = quote! {
         Self::#ident(#(#named_fields),*) => {
-            let key_config = fixed::FieldDescription {
+            let key_config = fixcol::FieldDescription {
                 skip: 0,
                 len: #key_len,
-                alignment: fixed::Alignment::Left,
+                alignment: fixcol::Alignment::Left,
                 strict: #strict,
             };
             let key = String::from(#key);
@@ -254,10 +254,10 @@ fn write_embedded_variant(ident: &Ident, config: &VariantConfig, fields: &Fields
         // TODO: we may want to inherit strict for the key from the enum or variant
         let gen = quote! {
             Self::#ident(inner) => {
-                let key_config = fixed::FieldDescription {
+                let key_config = fixcol::FieldDescription {
                     skip: 0,
                     len: #key_len,
-                    alignment: fixed::Alignment::Left,
+                    alignment: fixcol::Alignment::Left,
                     strict: false,
                 };
                 let key = String::from(#key);
@@ -280,10 +280,10 @@ fn write_unit_variant(ident: &Ident, config: &VariantConfig) -> TokenStream {
     // TODO: we may want to inherit strict for the key from the enum or variant
     quote! {
         Self::#ident => {
-            let key_config = fixed::FieldDescription {
+            let key_config = fixcol::FieldDescription {
                 skip: 0,
                 len: #key_len,
-                alignment: fixed::Alignment::Left,
+                alignment: fixcol::Alignment::Left,
                 strict: false,
             };
             let key = String::from(#key);

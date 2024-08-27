@@ -1,5 +1,6 @@
-extern crate fixed;
-use fixed::{ReadFixed, WriteFixed};
+extern crate fixcol;
+
+use fixcol::{ReadFixed, WriteFixed};
 
 #[derive(Debug, Eq, PartialEq, ReadFixed, WriteFixed)]
 #[fixed(key_width = 1)]

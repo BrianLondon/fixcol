@@ -297,13 +297,13 @@ impl quote::ToTokens for FieldConfig {
         let FieldConfig { skip, width, align, strict } = &self;
 
         let alignment = match &align {
-            Align::Left => quote! { fixed::Alignment::Left },
-            Align::Right => quote! { fixed::Alignment::Right },
-            Align::Full => quote! { fixed::Alignment::Full },
+            Align::Left => quote! { fixcol::Alignment::Left },
+            Align::Right => quote! { fixcol::Alignment::Right },
+            Align::Full => quote! { fixcol::Alignment::Full },
         };
 
         tokens.extend(quote! {
-            &fixed::FieldDescription {
+            &fixcol::FieldDescription {
                 skip: #skip,
                 len: #width,
                 alignment: #alignment,

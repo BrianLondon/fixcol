@@ -1,9 +1,9 @@
-extern crate fixed;
+extern crate fixcol;
 
 use std::io::{Error as IoError, ErrorKind, Write};
 
-use fixed::error::Error;
-use fixed::{WriteFixed, WriteFixedAll};
+use fixcol::error::Error;
+use fixcol::{WriteFixed, WriteFixedAll};
 
 /// A writable buffer that accepts a maximum number of bytes and then errors
 ///

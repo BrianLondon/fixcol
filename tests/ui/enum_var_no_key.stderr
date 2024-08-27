@@ -1,4 +1,4 @@
-error: fixed-derive error: The parameter key must be provided for all enum variants.
+error: fixcol-derive error: The parameter key must be provided for all enum variants.
 
         Try adding #[fixed(key = "<my key>")] to this variant.
   --> tests/ui/enum_var_no_key.rs:15:5
@@ -6,7 +6,7 @@ error: fixed-derive error: The parameter key must be provided for all enum varia
 15 |     Thing2(MyStruct),
    |     ^^^^^^
 
-error: fixed-derive error: The parameter key must be provided for all enum variants.
+error: fixcol-derive error: The parameter key must be provided for all enum variants.
 
         Try adding #[fixed(key = "<my key>")] to this variant.
   --> tests/ui/enum_var_no_key.rs:21:5

@@ -1,4 +1,4 @@
-use fixed_derive::ReadFixed;
+use fixcol::ReadFixed;
 
 #[derive(ReadFixed)]
 struct Thing {

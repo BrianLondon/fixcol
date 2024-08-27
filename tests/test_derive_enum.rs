@@ -1,5 +1,5 @@
-extern crate fixed;
-use fixed::{ReadFixed, WriteFixed, WriteFixedAll};
+extern crate fixcol;
+use fixcol::{ReadFixed, WriteFixed, WriteFixedAll};
 
 const SAMPLE_DATA: &'static str = r#"NODE ME
 NODE NH

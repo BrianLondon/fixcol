@@ -17,7 +17,7 @@
 //! # Example
 //!
 //! ```
-//! use fixed::ReadFixed;
+//! use fixcol::ReadFixed;
 //! #[derive(ReadFixed)]
 //! struct MyType {
 //!     // Fields here
@@ -61,7 +61,7 @@ use std::string::FromUtf8Error;
 /// # Example
 ///
 /// ```
-/// use fixed::ReadFixed;
+/// use fixcol::ReadFixed;
 /// #[derive(ReadFixed)]
 /// struct MyType {
 ///     // Fields here
@@ -230,8 +230,8 @@ impl DataError {
     /// use `DataError::custom` to provide error context.
     ///
     /// ```
-    /// use fixed::{FixedDeserializer, FieldDescription};
-    /// use fixed::error::DataError;
+    /// use fixcol::{FixedDeserializer, FieldDescription};
+    /// use fixcol::error::DataError;
     ///
     /// struct TriState(Option<bool>);
     ///

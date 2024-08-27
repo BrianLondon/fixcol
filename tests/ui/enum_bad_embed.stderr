@@ -1,4 +1,4 @@
-error: fixed-derive error: Did not expect fixed attribute on embedded enum variant
+error: fixcol-derive error: Did not expect fixed attribute on embedded enum variant
   --> tests/ui/enum_bad_embed.rs:13:14
    |
 13 |     Thing1(#[fixed(width = 5)] u16),
