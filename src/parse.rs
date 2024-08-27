@@ -277,8 +277,10 @@ impl FixedDeserializer for String {
 }
 
 impl<T: ReadFixed> FixedDeserializer for T {
-    fn parse_fixed(s: &str, _desc: &FieldDescription) -> Result<Self, DataError> {
-        let obj = T::read_fixed_str(s).map_err(|e| match e {
+    fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<Self, DataError> {
+        let slice = &s[desc.skip..desc.skip + desc.len];
+
+        let obj = T::read_fixed_str(slice).map_err(|e| match e {
             Error::DataError(e) => e,
             Error::IoError(e) => {
                 panic!("I/O error while reading internal memory: {:?}", e);
@@ -291,6 +293,8 @@ impl<T: ReadFixed> FixedDeserializer for T {
 
 #[cfg(test)]
 mod tests {
+    use std::str::from_utf8;
+
     use super::*;
 
     #[test]
@@ -830,5 +834,45 @@ mod tests {
         };
         let actual = u8::parse_fixed("   42", &desc).unwrap();
         assert_eq!(actual, 42);
+    }
+
+    #[test]
+    fn impl_parse() {
+        #[derive(PartialEq, Eq, Debug)]
+        enum Thing {
+            Thing1,
+            Thing2,
+        }
+
+        impl ReadFixed for Thing {
+            fn read_fixed<R>(buf: &mut R) -> Result<Self, Error>
+            where
+                Self: Sized,
+                R: std::io::Read,
+            {
+                let mut v: [u8; 2] = [0; 2];
+                let res = buf.read_exact(&mut v);
+                assert!(res.is_ok());
+                let s = from_utf8(v.as_slice()).unwrap();
+
+                match s {
+                    "T1" => Ok(Self::Thing1),
+                    "T2" => Ok(Self::Thing2),
+                    x => Err(DataError::custom(x, "failed").into()),
+                }
+            }
+        }
+
+        let thing = Thing::parse_fixed(
+            " T1 ",
+            &FieldDescription {
+                skip: 1,
+                len: 2,
+                alignment: Alignment::Left,
+                strict: true,
+            },
+        );
+
+        assert_eq!(thing.unwrap(), Thing::Thing1);
     }
 }
