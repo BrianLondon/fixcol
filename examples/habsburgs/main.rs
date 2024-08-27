@@ -65,11 +65,9 @@ pub fn main() {
     // Read the data file
     let records: Vec<Record> = Record::read_fixed_all(file)
         .map(|result| match result {
-            Ok(record) => {
-                record
-            }
+            Ok(record) => record,
             Err(err) => {
-                println!("{}", err);
+                eprintln!("{}", err);
                 std::process::exit(1);
             }
         })

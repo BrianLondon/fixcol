@@ -11,5 +11,6 @@ fixed-derive = {path = "fixed-derive"}
 
 [dev-dependencies]
 chrono = "0.4.38"
+escargot = "0.5.12"
 regex = "1.10.6"
 trybuild = "1.0.99"

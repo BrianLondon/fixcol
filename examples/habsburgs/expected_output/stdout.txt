@@ -1,0 +1,10 @@
+0.2309 Charles II                    
+0.1562 Philip III                    
+0.1357 Mariana                       
+0.125  Ferdinand II                  
+0.125  Margaret                      
+0.1054 Ferdinand III                 
+0.0820 Maria Anna                    
+0.0820 Philip IV                     
+0.0625 Anna                          
+0.0156 Maria Anna                    
