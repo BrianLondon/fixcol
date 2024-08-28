@@ -19,9 +19,8 @@ fn ident_from_path(path: &Path) -> String {
         .unwrap_or("".to_string())
 }
 
-// TODO: Update this method name
-/// Indicates whether the attribute is used by Fixed
-fn is_fixed_attr(attr: &Attribute) -> bool {
+/// Indicates whether the attribute is used by Fixcol
+fn is_fixcol_attr(attr: &Attribute) -> bool {
     let ident = match &attr.meta {
         Meta::Path(path) => ident_from_path(path),
         Meta::NameValue(named_value) => ident_from_path(&named_value.path),
@@ -31,9 +30,8 @@ fn is_fixed_attr(attr: &Attribute) -> bool {
     ident == FIXED_ATTR_KEY
 }
 
-// TODO: Update this function name
-pub(crate) fn fixed_attrs(attrs: &Vec<Attribute>) -> Vec<&Attribute> {
-    attrs.iter().filter(|a| is_fixed_attr(a)).collect()
+pub(crate) fn fixcol_attrs(attrs: &Vec<Attribute>) -> Vec<&Attribute> {
+    attrs.iter().filter(|a| is_fixcol_attr(a)).collect()
 }
 
 /// Wraps either a literal or an identifier
@@ -217,7 +215,7 @@ fn parse_next_token(
 fn parse_attributes(attrs: &Vec<Attribute>) -> Result<Vec<FieldParam>, MacroError> {
     let params: Vec<Result<Vec<FieldParam>, MacroError>> = attrs
         .iter()
-        .filter(|a| is_fixed_attr(*a))
+        .filter(|a| is_fixcol_attr(*a))
         .map(|a| -> Result<Vec<FieldParam>, MacroError> {
             match &a.meta {
                 Meta::Path(_) => Err(MacroError::new(
