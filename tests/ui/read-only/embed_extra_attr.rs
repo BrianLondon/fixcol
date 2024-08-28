@@ -1,6 +1,6 @@
-use fixcol_derive::{ReadFixed, WriteFixed};
+use fixcol::ReadFixed;
 
-#[derive(ReadFixed, WriteFixed)]
+#[derive(ReadFixed)]
 struct Point {
     #[fixcol(width = 5)]
     point_x: u16,
@@ -8,13 +8,13 @@ struct Point {
     point_y: u16,
 }
 
-#[derive(ReadFixed, WriteFixed)]
+#[derive(ReadFixed)]
 #[fixcol(key_width = 1)]
 enum Alg {
     #[fixcol(key = "N")]
     Num(#[fixcol(width = 5)] u16),
     #[fixcol(key = "P", embed = true)]
-    Point(Point, u16),
+    Point(#[fixcol(width = 5)] Point),
     #[fixcol(key = "Z")]
     Zero,
 }

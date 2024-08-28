@@ -1,0 +1,5 @@
+error: fixcol-derive error: Embed param is only valid on variants with exactly one field
+  --> tests/ui/read-only/embed_multiple_fields.rs:17:10
+   |
+17 |     Point(Point, u16),
+   |          ^^^^^^^^^^^^

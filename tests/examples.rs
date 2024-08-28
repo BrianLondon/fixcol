@@ -35,6 +35,7 @@ fn run_example_as_test(name: &str, features: &str) {
     assert_eq!(String::from_utf8(output.stderr).unwrap(), expected_stderr);
 }
 
+#[cfg(feature = "experimental-write")]
 #[test]
 fn test_habsburgs() {
     run_example_as_test("habsburgs", "experimental-write");

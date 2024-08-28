@@ -406,6 +406,10 @@ mod tests {
     }
 
     // Derive tests (struct)
+    ////////////////////////////////
+    
+    // Helper function only used in write tests
+    #[cfg(feature = "experimental-write")]
     fn to_str(inp: Vec<u8>) -> String {
         use std::str;
         str::from_utf8(inp.as_slice()).unwrap().to_string()
