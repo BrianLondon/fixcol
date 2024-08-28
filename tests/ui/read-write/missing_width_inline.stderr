@@ -1,11 +1,11 @@
 error: fixcol-derive error: Width must be specified for all fields.
- --> tests/ui/missing_width_inline.rs:4:12
+ --> tests/ui/read-write/missing_width_inline.rs:4:12
   |
 4 | struct Foo(u64);
   |            ^^^
 
 error: fixcol-derive error: Width must be specified for all fields.
- --> tests/ui/missing_width_inline.rs:7:12
+ --> tests/ui/read-write/missing_width_inline.rs:7:12
   |
 7 | struct Bar(u64);
   |            ^^^

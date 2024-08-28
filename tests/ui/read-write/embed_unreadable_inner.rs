@@ -1,14 +1,11 @@
-use fixcol::ReadFixed;
-#[cfg(feature = "experimental-write")]
-use fixcol::WriteFixed;
+use fixcol::{ReadFixed, WriteFixed};
 
 struct Point {
     point_x: u16,
     point_y: u16,
 }
 
-#[derive(ReadFixed)]
-#[cfg_attr(feature = "experimental-write", derive(WriteFixed))]
+#[derive(ReadFixed, WriteFixed)]
 #[fixcol(key_width = 1)]
 enum Alg {
     #[fixcol(key = "N")]

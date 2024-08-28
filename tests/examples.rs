@@ -17,6 +17,9 @@ fn read_expected_output_file(name: &str, variant: &str) -> String {
     }
 }
 
+// We allow dead code here because currently the only example uses the experimental-write feature.
+// After adding some additional examples this lint exemption will be removed.
+#[allow(dead_code)]
 fn run_example_as_test(name: &str, features: &str) {
     let expected_stdout = read_expected_output_file(name, "stdout");
     let expected_stderr = read_expected_output_file(name, "stderr");

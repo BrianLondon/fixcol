@@ -416,6 +416,8 @@ mod tests {
     }
 
     use crate as fixcol;
+    #[cfg(feature = "experimental-write")]
+    use fixcol::WriteFixed;
 
     #[cfg_attr(feature = "experimental-write", derive(WriteFixed))]
     #[derive(ReadFixed, Eq, PartialEq, Debug)]
