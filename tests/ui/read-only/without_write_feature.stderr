@@ -1,0 +1,18 @@
+error[E0432]: unresolved import `fixcol::WriteFixed`
+ --> tests/ui/read-only/without_write_feature.rs:1:25
+  |
+1 | use fixcol::{ReadFixed, WriteFixed};
+  |                         ^^^^^^^^^^ no `WriteFixed` in the root
+  |
+note: found an item that was configured out
+ --> src/lib.rs
+  |
+  | pub use fixcol::{WriteFixed, WriteFixedAll};
+  |                  ^^^^^^^^^^
+  = note: the item is gated behind the `experimental-write` feature
+note: found an item that was configured out
+ --> src/lib.rs
+  |
+  | pub use fixcol_derive::WriteFixed;
+  |                        ^^^^^^^^^^
+  = note: the item is gated behind the `experimental-write` feature
