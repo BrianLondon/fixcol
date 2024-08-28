@@ -2,7 +2,7 @@ use fixcol_derive::ReadFixed;
 
 #[derive(ReadFixed)]
 struct Thing {
-    #[fixed(width = 5, align =)]
+    #[fixcol(width = 5, align =)]
     field: String,
 }
 

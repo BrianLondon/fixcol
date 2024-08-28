@@ -3,11 +3,11 @@ extern crate fixcol;
 use fixcol::ReadFixed;
 
 #[derive(PartialEq, Eq, Debug, ReadFixed)]
-#[fixed(strict = true)]
+#[fixcol(strict = true)]
 struct PointS {
-    #[fixed(width = 3)]
+    #[fixcol(width = 3)]
     x: u8,
-    #[fixed(skip = 1, width = 3)]
+    #[fixcol(skip = 1, width = 3)]
     y: u8,
 }
 
@@ -18,11 +18,11 @@ impl PointS {
 }
 
 #[derive(PartialEq, Eq, Debug, ReadFixed)]
-#[fixed(strict = false)]
+#[fixcol(strict = false)]
 struct PointL {
-    #[fixed(width = 3)]
+    #[fixcol(width = 3)]
     x: u8,
-    #[fixed(skip = 1, width = 3)]
+    #[fixcol(skip = 1, width = 3)]
     y: u8,
 }
 

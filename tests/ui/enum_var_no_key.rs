@@ -2,24 +2,24 @@ use fixcol::ReadFixed;
 
 #[derive(ReadFixed)]
 struct MyStruct {
-    #[fixed(width = 5)]
+    #[fixcol(width = 5)]
     my_int: u16
 }
 
 #[derive(ReadFixed)]
-#[fixed(key_width = 3)]
+#[fixcol(key_width = 3)]
 enum Thing1 {
-    #[fixed(key = "one")]
-    Thing1(#[fixed(width = 5)] u16),
-    #[fixed(embed = true)]
+    #[fixcol(key = "one")]
+    Thing1(#[fixcol(width = 5)] u16),
+    #[fixcol(embed = true)]
     Thing2(MyStruct),
 }
 
 #[derive(ReadFixed)]
-#[fixed(key_width = 3)]
+#[fixcol(key_width = 3)]
 enum Thing2 {
-    Thing1(#[fixed(width = 5)] u16),
-    #[fixed(embed = true)]
+    Thing1(#[fixcol(width = 5)] u16),
+    #[fixcol(embed = true)]
     Thing2(MyStruct),
 }
 

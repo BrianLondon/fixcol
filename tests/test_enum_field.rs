@@ -3,25 +3,25 @@ extern crate fixcol;
 use fixcol::{ReadFixed, WriteFixed};
 
 #[derive(Debug, Eq, PartialEq, ReadFixed, WriteFixed)]
-#[fixed(key_width = 1)]
+#[fixcol(key_width = 1)]
 enum Color {
-    #[fixed(key = "R")]
+    #[fixcol(key = "R")]
     Red,
-    #[fixed(key = "G")]
+    #[fixcol(key = "G")]
     Green,
-    #[fixed(key = "B")]
+    #[fixcol(key = "B")]
     Blue,
 }
 
 #[derive(Debug, ReadFixed, WriteFixed, Eq, PartialEq)]
 struct Light {
-    #[fixed(width = 8)]
+    #[fixcol(width = 8)]
     name: String,
-    #[fixed(width = 1)] // TODO: this is redundant -- find a way to inherit
+    #[fixcol(width = 1)] // TODO: this is redundant -- find a way to inherit
     color: Color,
-    #[fixed(width = 3, align = "right")]
+    #[fixcol(width = 3, align = "right")]
     pos_x: u8,
-    #[fixed(width = 3, align = "right")]
+    #[fixcol(width = 3, align = "right")]
     pos_y: u8,
 }
 

@@ -7,48 +7,48 @@ use fixcol::{ReadFixed, WriteFixed, WriteFixedAll};
 mod alg;
 
 #[derive(Debug, Eq, PartialEq, ReadFixed)]
-#[fixed(key_width = 2, strict = false)]
+#[fixcol(key_width = 2, strict = false)]
 enum RelationType {
-    #[fixed(key = "PC")]
+    #[fixcol(key = "PC")]
     ParentChild,
 
-    #[fixed(key = "SP")]
+    #[fixcol(key = "SP")]
     Spouse,
 }
 
 #[derive(Debug, Eq, PartialEq, ReadFixed)]
-#[fixed(key_width = 1)]
+#[fixcol(key_width = 1)]
 enum Record {
-    #[fixed(key = "P")]
+    #[fixcol(key = "P")]
     Person{
-        #[fixed(width = 3)]
+        #[fixcol(width = 3)]
         id: u8,
-        #[fixed(width = 11, align = "right")]
+        #[fixcol(width = 11, align = "right")]
         name: String,
-        #[fixed(skip = 1, width = 4)]
+        #[fixcol(skip = 1, width = 4)]
         regnal_number: String,
-        #[fixed(width = 4)]
+        #[fixcol(width = 4)]
         birth: u16,
-        #[fixed(skip = 1, width = 4, strict = false)]
+        #[fixcol(skip = 1, width = 4, strict = false)]
         death: u16,
     },
 
-    #[fixed(key = "R")]
+    #[fixcol(key = "R")]
     Relation {
-        #[fixed(skip = 1, width = 2)]
+        #[fixcol(skip = 1, width = 2)]
         rel_type: RelationType,
-        #[fixed(skip = 1, width = 3)]
+        #[fixcol(skip = 1, width = 3)]
         from: u8,
-        #[fixed(width = 3, strict = false)]
+        #[fixcol(width = 3, strict = false)]
         to: u8,
     },
 }
 
 #[derive(Debug, WriteFixed)]
 struct OutputRecord {
-    #[fixed(width = 6)]
+    #[fixcol(width = 6)]
     coi: f32,
-    #[fixed(skip = 1, width = 30)]
+    #[fixcol(skip = 1, width = 30)]
     name: String,
 }
 

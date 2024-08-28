@@ -1,5 +1,5 @@
 error: fixcol-derive error: Unrecognized parameter "thing".
- --> tests/ui/attr_unrecognized_param.rs:7:24
+ --> tests/ui/attr_unrecognized_param.rs:7:25
   |
-7 |     #[fixed(width = 5, thing = true)]
-  |                        ^^^^^
+7 |     #[fixcol(width = 5, thing = true)]
+  |                         ^^^^^

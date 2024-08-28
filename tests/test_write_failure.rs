@@ -63,9 +63,9 @@ const EXPECTED_STRUCT_TEXT: &'static str = r#"91 115
 
 #[derive(Debug, Eq, PartialEq, WriteFixed)]
 struct Point {
-    #[fixed(width = 3)]
+    #[fixcol(width = 3)]
     x: u8,
-    #[fixed(width = 3)]
+    #[fixcol(width = 3)]
     y: u8,
 }
 
@@ -133,18 +133,18 @@ fn struct_out_of_space_test() {
 //
 
 #[derive(Debug, Eq, PartialEq, WriteFixed)]
-#[fixed(key_width = 1)]
+#[fixcol(key_width = 1)]
 enum Datum {
-    #[fixed(key = "S")]
-    Scalar(#[fixed(width = 10, align = "right")] u16),
-    #[fixed(key = "P")]
+    #[fixcol(key = "S")]
+    Scalar(#[fixcol(width = 10, align = "right")] u16),
+    #[fixcol(key = "P")]
     Pair {
-        #[fixed(width = 5)]
+        #[fixcol(width = 5)]
         x: u16,
-        #[fixed(width = 5)]
+        #[fixcol(width = 5)]
         y: u16,
     },
-    #[fixed(key = "U")]
+    #[fixcol(key = "U")]
     Unit,
 }
 

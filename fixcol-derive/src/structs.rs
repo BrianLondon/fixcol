@@ -2,9 +2,9 @@ use proc_macro2::Ident;
 use quote::quote;
 use syn::{Attribute, Fields, FieldsNamed, FieldsUnnamed};
 
-use crate::{
-    attrs::{parse_struct_attributes, OuterConfig, StructConfig}, error::{MacroError, MacroResult}, fields::{read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields}
-};
+use crate::attrs::{parse_struct_attributes, OuterConfig, StructConfig};
+use crate::error::{MacroError, MacroResult};
+use crate::fields::{read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields};
 
 //
 // Reads

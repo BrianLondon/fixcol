@@ -1,5 +1,5 @@
 error: fixcol-derive error: Expected assignment ('=' character).
- --> tests/ui/attr_expected_assignment.rs:5:30
+ --> tests/ui/attr_expected_assignment.rs:5:31
   |
-5 |     #[fixed(width = 5, align "right")]
-  |                              ^^^^^^^
+5 |     #[fixcol(width = 5, align "right")]
+  |                               ^^^^^^^

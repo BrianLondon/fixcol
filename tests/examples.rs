@@ -4,6 +4,8 @@ use std::process::Command;
 
 extern crate escargot;
 
+// TODO: Capture stdout from external process
+
 fn read_expected_output_file(name: &str, variant: &str) -> String {
     let file_name = format!("{}.txt", variant);
 

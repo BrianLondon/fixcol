@@ -9,28 +9,28 @@ use fixcol::{ReadFixed, WriteFixed, WriteFixedAll};
 
 #[derive(Debug, PartialEq, Eq, ReadFixed, WriteFixed)]
 struct AtomS {
-    #[fixed(width = 5, align = "right")]
+    #[fixcol(width = 5, align = "right")]
     id: u16,
-    #[fixed(width = 5, align = "right")]
+    #[fixcol(width = 5, align = "right")]
     molecule: u16,
-    #[fixed(skip = 1, width = 8)]
+    #[fixcol(skip = 1, width = 8)]
     name: String,
 }
 
 #[derive(Debug, PartialEq, Eq, ReadFixed, WriteFixed)]
-#[fixed(key_width = 3)]
+#[fixcol(key_width = 3)]
 enum MoleculeRow {
-    #[fixed(key = "Mol")]
+    #[fixcol(key = "Mol")]
     Molecule {
-        #[fixed(skip = 1, width = 5)]
+        #[fixcol(skip = 1, width = 5)]
         id: u16,
-        #[fixed(width = 8)]
+        #[fixcol(width = 8)]
         name: String,
     },
-    #[fixed(key = "Atm", embed = true)]
+    #[fixcol(key = "Atm", embed = true)]
     AtomV(AtomS),
-    #[fixed(key = "Bnd")]
-    Bond(#[fixed(width = 5)] u16, #[fixed(width = 5)] u16),
+    #[fixcol(key = "Bnd")]
+    Bond(#[fixcol(width = 5)] u16, #[fixcol(width = 5)] u16),
 }
 
 fn molecule_data() -> Vec<MoleculeRow> {

@@ -1,5 +1,5 @@
 error: fixcol-derive error: Expected true or false for ignore_others.
-  --> tests/ui/enum_ignore_others_type.rs:10:25
+  --> tests/ui/enum_ignore_others_type.rs:10:26
    |
-10 | #[fixed(ignore_others = 1)]
-   |                         ^
+10 | #[fixcol(ignore_others = 1)]
+   |                          ^

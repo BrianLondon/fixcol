@@ -409,9 +409,9 @@ mod tests {
 
     #[derive(ReadFixed, WriteFixed, Eq, PartialEq, Debug)]
     struct MyStruct {
-        #[fixed(width = 10)]
+        #[fixcol(width = 10)]
         string: String,
-        #[fixed(width = 10, align = "right")]
+        #[fixcol(width = 10, align = "right")]
         num: i64,
     }
 
@@ -448,21 +448,21 @@ mod tests {
 
     // Derive tests (enum)
     #[derive(ReadFixed, WriteFixed, Eq, PartialEq, Debug)]
-    #[fixed(key_width = 2)]
+    #[fixcol(key_width = 2)]
     enum MyEnum {
-        #[fixed(key = "st")]
+        #[fixcol(key = "st")]
         Struct {
-            #[fixed(width = 10)]
+            #[fixcol(width = 10)]
             string: String,
-            #[fixed(width = 10, align = "right")]
+            #[fixcol(width = 10, align = "right")]
             num: i64,
         },
-        #[fixed(key = "tu")]
+        #[fixcol(key = "tu")]
         Tuple(
-            #[fixed(width = 10)] String,
-            #[fixed(width = 10, align = "right")] i64,
+            #[fixcol(width = 10)] String,
+            #[fixcol(width = 10, align = "right")] i64,
         ),
-        #[fixed(key = "un")]
+        #[fixcol(key = "un")]
         Unit,
     }
 

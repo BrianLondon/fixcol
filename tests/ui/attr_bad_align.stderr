@@ -1,5 +1,5 @@
 error: fixcol-derive error: Expected values for align are "left", "right", or "full".
- --> tests/ui/attr_bad_align.rs:5:32
+ --> tests/ui/attr_bad_align.rs:5:33
   |
-5 |     #[fixed(width = 5, align = "backwards")]
-  |                                ^^^^^^^^^^^
+5 |     #[fixcol(width = 5, align = "backwards")]
+  |                                 ^^^^^^^^^^^

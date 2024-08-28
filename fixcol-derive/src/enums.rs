@@ -6,7 +6,10 @@ use syn::{Attribute, FieldsNamed, FieldsUnnamed, Ident, Variant};
 use crate::attrs::{fixed_attrs, parse_enum_attributes, parse_variant_attributes, OuterConfig, VariantConfig};
 use crate::error::{MacroError, MacroResult};
 use crate::fields::{
-    read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields,
+    read_named_fields,
+    read_unnamed_fields,
+    write_named_fields,
+    write_unnamed_fields,
 };
 
 //
@@ -89,7 +92,7 @@ fn read_embedded_variant(name: &Ident, fields: &FieldsUnnamed) -> MacroResult {
     if let Some(field) = fields.unnamed.first() {
         if let Some(fa) = fixed_attrs(&field.attrs).first() {
             return Err(MacroError::new(
-                "Did not expect fixed attribute on embedded enum variant",
+                "Did not expect fixcol attribute on embedded enum variant",
                 fa.meta.span(),
             ));
         }
@@ -243,7 +246,7 @@ fn write_embedded_variant(ident: &Ident, config: &VariantConfig, fields: &Fields
     if let Some(field) = fields.unnamed.first() {
         if let Some(fa) = fixed_attrs(&field.attrs).first() {
             return Err(MacroError::new(
-                "Did not expect fixed attribute on embedded enum variant",
+                "Did not expect fixcol attribute on embedded enum variant",
                 fa.meta.span(),
             ));
         }

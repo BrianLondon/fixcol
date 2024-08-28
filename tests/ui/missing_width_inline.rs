@@ -7,6 +7,6 @@ struct Foo(u64);
 struct Bar(u64);
 
 #[derive(ReadFixed, WriteFixed)]
-struct Baz(#[fixed(width = 20)] u64);
+struct Baz(#[fixcol(width = 20)] u64);
 
 pub fn main() {}

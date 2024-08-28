@@ -1,5 +1,5 @@
-error: fixcol-derive error: Did not expect fixed attribute on embedded enum variant
+error: fixcol-derive error: Did not expect fixcol attribute on embedded enum variant
   --> tests/ui/enum_bad_embed.rs:13:14
    |
-13 |     Thing1(#[fixed(width = 5)] u16),
-   |              ^^^^^
+13 |     Thing1(#[fixcol(width = 5)] u16),
+   |              ^^^^^^
