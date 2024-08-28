@@ -5,17 +5,6 @@ on that data and then write a result set out in a different, column delimited da
 The basic job flow is in `main.rs`. The specifics of the computation are contained in
 `alg.rs` but are not relevant to the example use of the serialization library.
 
-The data file is a custom genealogy format depicting the
-[genealogy Spanish branch of the Habsburg Dynasty](https://en.wikipedia.org/wiki/Habsburg_family_tree#Ancestors_of_Charles_II_of_Spain)
-and derived from that Wikipedia page. Then we run a graph algorithm on the 
-resulting data structure to calculate the [COI](https://en.wikipedia.org/wiki/Coefficient_of_inbreeding)
-for each of the people in that genealogy. Finally, we write an output file with
-that calculated data when it's value is greater than zero. Note that the value
-for Charles II is lower than is somewhat reported in the literature because we
-only look back seven generations. See:
-[Alvarez, Ceballos, and Quinteiro (2009)](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0005174)
-for a discussion of the effect of the look back window.
-
 ## Input format
 
 There are two types of records in the data file: person records and relation records.
