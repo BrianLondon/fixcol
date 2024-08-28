@@ -1,5 +1,5 @@
 error: fixcol-derive error: Did not expect fixcol attribute on embedded enum variant
-  --> tests/ui/embed_extra_attr.rs:17:13
+  --> tests/ui/read-only/embed_extra_attr.rs:17:13
    |
 17 |     Point(#[fixcol(width = 5)] Point),
    |             ^^^^^^

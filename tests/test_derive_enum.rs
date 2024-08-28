@@ -1,5 +1,8 @@
 extern crate fixcol;
-use fixcol::{ReadFixed, WriteFixed, WriteFixedAll};
+
+use fixcol::ReadFixed;
+#[cfg(feature = "experimental-write")]
+use fixcol::{WriteFixed, WriteFixedAll};
 
 const SAMPLE_DATA: &'static str = r#"NODE ME
 NODE NH
@@ -21,7 +24,8 @@ EDGE RI MA 2948120
 
 // TODO: "Width must be specified for all fields" should we provid an "until end of line option"?
 
-#[derive(Debug, ReadFixed, WriteFixed, Eq, PartialEq)]
+#[cfg_attr(feature = "experimental-write", derive(WriteFixed))]
+#[derive(Debug, ReadFixed, Eq, PartialEq)]
 #[fixcol(key_width = 4, ignore_others = true)]
 enum GraphObject {
     #[fixcol(key = "NODE")]
@@ -77,6 +81,7 @@ fn read_enums() {
 }
 
 #[test]
+#[cfg(feature = "experimental-write")]
 fn write_enum() {
     use std::str::from_utf8;
 

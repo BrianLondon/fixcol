@@ -17,12 +17,18 @@ fn read_expected_output_file(name: &str, variant: &str) -> String {
     }
 }
 
-fn run_example_as_test(name: &str) {
+// We allow dead code here because currently the only example uses the experimental-write feature.
+// After adding some additional examples this lint exemption will be removed.
+#[allow(dead_code)]
+fn run_example_as_test(name: &str, features: &str) {
     let expected_stdout = read_expected_output_file(name, "stdout");
     let expected_stderr = read_expected_output_file(name, "stderr");
 
+    let target_dir = tempfile::TempDir::new().unwrap();
     let example_bin = escargot::CargoBuild::new()
         .example(name)
+        .target_dir(target_dir.path())
+        .features(features)
         .run()
         .unwrap();
 
@@ -32,7 +38,8 @@ fn run_example_as_test(name: &str) {
     assert_eq!(String::from_utf8(output.stderr).unwrap(), expected_stderr);
 }
 
+#[cfg(feature = "experimental-write")]
 #[test]
 fn test_habsburgs() {
-    run_example_as_test("habsburgs");
+    run_example_as_test("habsburgs", "experimental-write");
 }

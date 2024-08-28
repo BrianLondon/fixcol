@@ -1,3 +1,4 @@
+#![cfg(feature = "experimental-write")]
 extern crate fixcol;
 
 use std::io::{Error as IoError, ErrorKind, Write};

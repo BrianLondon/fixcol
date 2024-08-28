@@ -1,8 +1,11 @@
 extern crate fixcol;
 
-use fixcol::{ReadFixed, WriteFixed};
+use fixcol::ReadFixed;
+#[cfg(feature = "experimental-write")]
+use fixcol::WriteFixed;
 
-#[derive(Debug, Eq, PartialEq, ReadFixed, WriteFixed)]
+#[cfg_attr(feature = "experimental-write", derive(WriteFixed))]
+#[derive(Debug, Eq, PartialEq, ReadFixed)]
 #[fixcol(key_width = 1)]
 enum Color {
     #[fixcol(key = "R")]
@@ -13,7 +16,8 @@ enum Color {
     Blue,
 }
 
-#[derive(Debug, ReadFixed, WriteFixed, Eq, PartialEq)]
+#[cfg_attr(feature = "experimental-write", derive(WriteFixed))]
+#[derive(Debug, ReadFixed, Eq, PartialEq)]
 struct Light {
     #[fixcol(width = 8)]
     name: String,
@@ -40,6 +44,7 @@ fn derive_read() {
     assert_eq!(actual, expected);
 }
 
+#[cfg(feature = "experimental-write")]
 #[test]
 fn derive_write() {
     use std::str;

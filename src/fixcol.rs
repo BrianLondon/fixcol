@@ -1,4 +1,6 @@
-use std::io::{BufRead, BufReader, Lines, Read, Write};
+use std::io::{BufRead, BufReader, Lines, Read};
+#[cfg(feature = "experimental-write")]
+use std::io::Write;
 use std::marker::PhantomData;
 
 use crate::error::Error;
@@ -10,6 +12,7 @@ use crate::error::Error;
 /// While one can always manually implement `WriteFixed`, it is normally derived
 /// using the proc macro, which offers full string and integer support and
 /// limited floating point formatting.
+#[cfg(feature = "experimental-write")]
 pub trait WriteFixed {
     /// Writes the object into the supplied buffer
     ///
@@ -63,6 +66,7 @@ pub trait WriteFixed {
 /// let v: Vec<Point> = Vec::new();
 /// // Therefore Vec<Point> implements WriteFixedAll
 /// ```
+#[cfg(feature = "experimental-write")]
 pub trait WriteFixedAll {
     /// Writes a set of objects to the supplied buffer (newline delimited)
     ///
@@ -99,6 +103,7 @@ pub trait WriteFixedAll {
 /// Blanket implementation of WriteFixedAll for collections of `impl WriteFixed`
 ///
 /// See also: [`WriteFixed`]
+#[cfg(feature = "experimental-write")]
 impl<T: WriteFixed, Iter: IntoIterator<Item = T>> WriteFixedAll for Iter {
     fn write_fixed_all<W: Write>(self, buf: &mut W) -> Result<(), Error> {
         for item in self.into_iter() {
@@ -330,7 +335,7 @@ pub trait ReadFixed {
 
 #[cfg(test)]
 mod tests {
-    use fixcol_derive::{ReadFixed, WriteFixed};
+    use fixcol_derive::ReadFixed;
 
     use super::*;
     use crate::error::Error;
@@ -401,14 +406,21 @@ mod tests {
     }
 
     // Derive tests (struct)
+    ////////////////////////////////
+    
+    // Helper function only used in write tests
+    #[cfg(feature = "experimental-write")]
     fn to_str(inp: Vec<u8>) -> String {
         use std::str;
         str::from_utf8(inp.as_slice()).unwrap().to_string()
     }
 
     use crate as fixcol;
+    #[cfg(feature = "experimental-write")]
+    use fixcol::WriteFixed;
 
-    #[derive(ReadFixed, WriteFixed, Eq, PartialEq, Debug)]
+    #[cfg_attr(feature = "experimental-write", derive(WriteFixed))]
+    #[derive(ReadFixed, Eq, PartialEq, Debug)]
     struct MyStruct {
         #[fixcol(width = 10)]
         string: String,
@@ -432,6 +444,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "experimental-write")]
     fn write_struct_derived() {
         let expected = "my string        981";
         assert_eq!(expected.len(), 20);
@@ -448,7 +461,8 @@ mod tests {
     }
 
     // Derive tests (enum)
-    #[derive(ReadFixed, WriteFixed, Eq, PartialEq, Debug)]
+    #[cfg_attr(feature = "experimental-write", derive(WriteFixed))]
+    #[derive(ReadFixed, Eq, PartialEq, Debug)]
     #[fixcol(key_width = 2)]
     enum MyEnum {
         #[fixcol(key = "st")]
@@ -483,6 +497,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "experimental-write")]
     fn write_struct_enum_derived() {
         let expected = "stmy string        981";
         assert_eq!(expected.len(), 22);
@@ -511,6 +526,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "experimental-write")]
     fn write_tuple_enum_derived() {
         let expected = "tumy string        981";
         assert_eq!(expected.len(), 22);
@@ -536,6 +552,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "experimental-write")]
     fn write_unit_enum_derived() {
         let expected = "un";
 

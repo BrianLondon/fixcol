@@ -1,8 +1,11 @@
 extern crate fixcol;
 
-use fixcol::{ReadFixed, WriteFixed};
+use fixcol::ReadFixed;
+#[cfg(feature = "experimental-write")]
+use fixcol::WriteFixed;
 
-#[derive(Debug, ReadFixed, WriteFixed, Eq, PartialEq)]
+#[cfg_attr(feature = "experimental-write", derive(WriteFixed))]
+#[derive(Debug, ReadFixed, Eq, PartialEq)]
 struct Point {
     /// The x coordinate
     #[fixcol(width = 5, align = "right")]
@@ -21,6 +24,7 @@ fn derive_read_struct() {
     assert_eq!(point, Point { x: 42, y: 212 });
 }
 
+#[cfg(feature = "experimental-write")]
 #[test]
 fn derive_write_struct() {
     let point = Point { x: 42, y: 212 };
