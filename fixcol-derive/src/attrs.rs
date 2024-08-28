@@ -415,7 +415,7 @@ pub(crate) fn parse_field_attributes(
 }
 
 // TODO: confirm these need to be public
-pub(crate) struct StructConfigBuilder { 
+struct StructConfigBuilder { 
     strict: Option<bool>,
 }
 
@@ -463,7 +463,7 @@ pub(crate) fn parse_struct_attributes(
     Ok(sc)
 }
 
-pub(crate) struct EnumConfigBuilder {
+struct EnumConfigBuilder {
     ignore_others: Option<bool>,
     key_width: Option<usize>,
     strict: Option<bool>,
