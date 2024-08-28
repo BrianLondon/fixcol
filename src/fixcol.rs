@@ -5,7 +5,7 @@ use crate::error::Error;
 
 /// Trait for writing to fixed width (column based) serialization
 ///
-/// The `fixed` library provides limited writing functionality out of the box.
+/// The `fixcol` library provides limited writing functionality out of the box.
 /// `WriteFixed` is the main entry point to that serialization functionality.
 /// While one can always manually implement `WriteFixed`, it is normally derived
 /// using the proc macro, which offers full string and integer support and
@@ -23,9 +23,9 @@ pub trait WriteFixed {
     /// # use std::io;
     /// #[derive(WriteFixed)]
     /// struct Point {
-    ///     #[fixed(width=3)]
+    ///     #[fixcol(width=3)]
     ///     x: u8,
-    ///     #[fixed(width=3)]
+    ///     #[fixcol(width=3)]
     ///     y: u8,
     /// }
     ///
@@ -51,11 +51,11 @@ pub trait WriteFixed {
 ///
 /// # Example
 /// ```
-/// use fixcol_derive::WriteFixed;
+/// use fixcol::WriteFixed;
 /// #[derive(WriteFixed)]
 /// struct Point {
-///     #[fixed(width=3)] x: u8,
-///     #[fixed(width=3)] y: u8,
+///     #[fixcol(width=3)] x: u8,
+///     #[fixcol(width=3)] y: u8,
 /// }
 /// // Point implements WriteFixed
 ///
@@ -68,13 +68,13 @@ pub trait WriteFixedAll {
     ///
     /// # Example
     /// ```
-    /// # use fixcol_derive::WriteFixed;
+    /// # use fixcol::WriteFixed;
     /// # use std::fs::File;
     /// # use std::io;
     /// #[derive(WriteFixed)]
     /// struct Point {
-    ///     #[fixed(width=3)] x: u8,
-    ///     #[fixed(width=3)] y: u8,
+    ///     #[fixcol(width=3)] x: u8,
+    ///     #[fixcol(width=3)] y: u8,
     /// }
     ///
     /// let v: Vec<Point> = vec![
@@ -176,10 +176,10 @@ impl<T: ReadFixed, R: Read> Iterator for Iter<T, R> {
 
 /// Trait for reading from fixed width (column based) serializaiton
 ///
-/// This trait is the main entry point to using `fixed` for deserializing
+/// This trait is the main entry point to using `fixcol` for deserializing
 /// column delimited data files. This trait is not normally implemented manually
-/// but derived using the [`fixed_derive`] crate. The deserialization behavior
-/// of individual columns is defined using the `#[fixed(...)]` annotation.
+/// but derived using the [`fixcol_derive`] crate. The deserialization behavior
+/// of individual columns is defined using the `#[fixcol(...)]` annotation.
 pub trait ReadFixed {
     /// Reads an instance of the object from the supplied buffer
     ///
@@ -188,14 +188,15 @@ pub trait ReadFixed {
     ///
     /// # Example
     /// ```
-    /// # use fixcol::ReadFixed;
-    /// # use std::fs::File;
-    /// # use std::io;
+    /// use fixcol::ReadFixed;
+    /// use std::fs::File;
+    /// use std::io;
+    /// 
     /// #[derive(ReadFixed)]
     /// struct Foo {
-    ///     #[fixed(width=3)]
+    ///     #[fixcol(width=3)]
     ///     foo: String,
-    ///     #[fixed(width=3)]
+    ///     #[fixcol(width=3)]
     ///     bar: String,
     /// }
     ///
@@ -258,9 +259,9 @@ pub trait ReadFixed {
     /// # use fixcol::FieldDescription;
     /// #[derive(ReadFixed)]
     /// struct Point {
-    ///     #[fixed(width=3, align="right")]
+    ///     #[fixcol(width=3, align="right")]
     ///     x: u8,
-    ///     #[fixed(width=3, align="right")]
+    ///     #[fixcol(width=3, align="right")]
     ///     y: u8,
     /// }
     ///
@@ -274,9 +275,9 @@ pub trait ReadFixed {
     /// # use fixcol::{FixedDeserializer, FieldDescription, ReadFixed};
     /// # #[derive(ReadFixed)]
     /// # struct Point {
-    /// #     #[fixed(width=3)]
+    /// #     #[fixcol(width=3)]
     /// #     x: u8,
-    /// #     #[fixed(width=3)]
+    /// #     #[fixcol(width=3)]
     /// #     y: u8,
     /// # }
     /// let s = ">>12361 <<";
@@ -307,9 +308,9 @@ pub trait ReadFixed {
     /// # use fixcol::FieldDescription;
     /// #[derive(ReadFixed)]
     /// struct Point {
-    ///     #[fixed(width=3, align="right")]
+    ///     #[fixcol(width=3, align="right")]
     ///     x: u8,
-    ///     #[fixed(width=3, align="right")]
+    ///     #[fixcol(width=3, align="right")]
     ///     y: u8,
     /// }
     ///

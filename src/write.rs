@@ -4,9 +4,9 @@ use crate::error::{DataError, Error};
 use crate::format::{Alignment, FieldDescription};
 use crate::WriteFixed;
 
-/// A trait that represents the field types that can be encoded to fix len strings
+/// A trait that represents the field types that can be encoded to fixed length strings
 pub trait FixedSerializer {
-    /// Serialize a fixed with representation of the object.
+    /// Serialize a fixed width representation of the object.
     ///
     /// Uses the provided [`FieldDescription`] to determine how to serialize a fixed
     /// with representation of `self` and writes that representation to the supplie
