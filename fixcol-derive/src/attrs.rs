@@ -8,7 +8,7 @@ use syn::{spanned::Spanned, Attribute, Ident, Meta, Path};
 
 use crate::error::MacroError;
 
-const FIXED_ATTR_KEY: &'static str = "fixed";
+const FIXED_ATTR_KEY: &'static str = "fixcol";
 const STRICT_DEFAULT: bool = true;
 
 // Extracts the ident name from a path
@@ -19,8 +19,8 @@ fn ident_from_path(path: &Path) -> String {
         .unwrap_or("".to_string())
 }
 
-/// Indicates whether the attribute is used by Fixed
-fn is_fixed_attr(attr: &Attribute) -> bool {
+/// Indicates whether the attribute is used by Fixcol
+fn is_fixcol_attr(attr: &Attribute) -> bool {
     let ident = match &attr.meta {
         Meta::Path(path) => ident_from_path(path),
         Meta::NameValue(named_value) => ident_from_path(&named_value.path),
@@ -30,8 +30,8 @@ fn is_fixed_attr(attr: &Attribute) -> bool {
     ident == FIXED_ATTR_KEY
 }
 
-pub(crate) fn fixed_attrs(attrs: &Vec<Attribute>) -> Vec<&Attribute> {
-    attrs.iter().filter(|a| is_fixed_attr(a)).collect()
+pub(crate) fn fixcol_attrs(attrs: &Vec<Attribute>) -> Vec<&Attribute> {
+    attrs.iter().filter(|a| is_fixcol_attr(a)).collect()
 }
 
 /// Wraps either a literal or an identifier
@@ -101,7 +101,7 @@ impl From<StructConfig> for OuterConfig {
 /// Holds a parsed parameter from an attribute
 ///
 /// The source for a `FieldParam`` started as "key = value" in an attribute
-/// like `#[fixed(key = value)]`. The field param itself holds the raw tokens
+/// like `#[fixcol(key = value)]`. The field param itself holds the raw tokens
 /// but the raw values can be extracted.
 #[derive(Debug)]
 struct FieldParam {
@@ -215,18 +215,18 @@ fn parse_next_token(
 fn parse_attributes(attrs: &Vec<Attribute>) -> Result<Vec<FieldParam>, MacroError> {
     let params: Vec<Result<Vec<FieldParam>, MacroError>> = attrs
         .iter()
-        .filter(|a| is_fixed_attr(*a))
+        .filter(|a| is_fixcol_attr(*a))
         .map(|a| -> Result<Vec<FieldParam>, MacroError> {
             match &a.meta {
                 Meta::Path(_) => Err(MacroError::new(
                     "Could not read config from path style attribute. \
-                        \n\nExpected parameters like #[fixed(width = 4)]",
+                        \n\nExpected parameters like #[fixcol(width = 4)]",
                     a.meta.span(),
                 )),
                 Meta::List(m) => get_config_params(m.tokens.clone()),
                 Meta::NameValue(nv) => Err(MacroError::new(
                     "Could not read config from name/value style attribute. \
-                        \n\nExpected parameters like #[fixed(width = 4)]",
+                        \n\nExpected parameters like #[fixcol(width = 4)]",
                     nv.value.span(),
                 )),
             }
@@ -297,13 +297,13 @@ impl quote::ToTokens for FieldConfig {
         let FieldConfig { skip, width, align, strict } = &self;
 
         let alignment = match &align {
-            Align::Left => quote! { fixed::Alignment::Left },
-            Align::Right => quote! { fixed::Alignment::Right },
-            Align::Full => quote! { fixed::Alignment::Full },
+            Align::Left => quote! { fixcol::Alignment::Left },
+            Align::Right => quote! { fixcol::Alignment::Right },
+            Align::Full => quote! { fixcol::Alignment::Full },
         };
 
         tokens.extend(quote! {
-            &fixed::FieldDescription {
+            &fixcol::FieldDescription {
                 skip: #skip,
                 len: #width,
                 alignment: #alignment,
@@ -415,7 +415,7 @@ pub(crate) fn parse_field_attributes(
 }
 
 // TODO: confirm these need to be public
-pub(crate) struct StructConfigBuilder { 
+struct StructConfigBuilder { 
     strict: Option<bool>,
 }
 
@@ -463,7 +463,7 @@ pub(crate) fn parse_struct_attributes(
     Ok(sc)
 }
 
-pub(crate) struct EnumConfigBuilder {
+struct EnumConfigBuilder {
     ignore_others: Option<bool>,
     key_width: Option<usize>,
     strict: Option<bool>,
@@ -530,8 +530,8 @@ pub(crate) fn parse_enum_attributes(
     }
 
     let key_width = conf.key_width.ok_or(MacroError::new(
-        "The parameter key must be provided for all enum variants.\n\n \
-        Try adding #[fixed(key_width = 10)] to this enum replacing \"10\" with \
+        "The parameter 'key' must be provided for all enum variants.\n\n \
+        Try adding #[fixcol(key_width = 10)] to this enum replacing \"10\" with \
         the width of your key.",
         name.span(),
     ))?;
@@ -609,7 +609,7 @@ pub(crate) fn parse_variant_attributes(
 
     let key = conf.key.ok_or(MacroError::new(
         "The parameter key must be provided for all enum variants.\n\n \
-        Try adding #[fixed(key = \"<my key>\")] to this variant.",
+        Try adding #[fixcol(key = \"<my key>\")] to this variant.",
         name.span(),
     ))?;
 
@@ -647,7 +647,7 @@ mod tests {
 
     #[test]
     fn parse_zero_field_params() {
-        let code: MetaList = syn::parse_str("fixed()").unwrap();
+        let code: MetaList = syn::parse_str("fixcol()").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
 
         assert_eq!(params.len(), 0);
@@ -657,7 +657,7 @@ mod tests {
     fn parse_one_field_param() {
         let expected = FieldParam::test("align", "\"right\"");
 
-        let code: MetaList = syn::parse_str("fixed(align=right)").unwrap();
+        let code: MetaList = syn::parse_str("fixcol(align=right)").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
 
         assert_eq!(params.len(), 1);
@@ -670,7 +670,7 @@ mod tests {
             FieldParam::test("width", "3"),
             FieldParam::test("align", "\"right\""),
         ];
-        let code: MetaList = syn::parse_str("fixed(width=3, align = right)").unwrap();
+        let code: MetaList = syn::parse_str("fixcol(width=3, align = right)").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
 
         assert_eq!(params, expected);
@@ -683,7 +683,7 @@ mod tests {
             FieldParam::test("width", "3"),
             FieldParam::test("align", "\"right\""),
         ];
-        let code: MetaList = syn::parse_str("fixed(skip=1,width=3, align = right)").unwrap();
+        let code: MetaList = syn::parse_str("fixcol(skip=1,width=3, align = right)").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
 
         assert_eq!(params, expected);
@@ -692,7 +692,7 @@ mod tests {
     #[test]
     fn parse_with_quotes() {
         let expected = FieldParam::test("align", "\"right\"");
-        let code: MetaList = syn::parse_str("fixed(align=\"right\")").unwrap();
+        let code: MetaList = syn::parse_str("fixcol(align=\"right\")").unwrap();
         let params: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
 
         assert_eq!(params.len(), 1);
@@ -702,7 +702,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Expected assignment found end of input.")]
     fn parse_params_ident_only() {
-        let code: MetaList = syn::parse_str("fixed(width)").unwrap();
+        let code: MetaList = syn::parse_str("fixcol(width)").unwrap();
         let x: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
         println!("{:?}", x)
     }
@@ -710,7 +710,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Expected value found end of input.")]
     fn parse_params_ident_equal_only() {
-        let code: MetaList = syn::parse_str("fixed(width=)").unwrap();
+        let code: MetaList = syn::parse_str("fixcol(width=)").unwrap();
         let x: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
         println!("{:?}", x)
     }
@@ -721,7 +721,7 @@ mod tests {
          \"Expected separator (',' character) or end of sequence.\", span: Span }"
     )]
     fn parse_params_missing_comma() {
-        let code: MetaList = syn::parse_str("fixed(width=3 align = right)").unwrap();
+        let code: MetaList = syn::parse_str("fixcol(width=3 align = right)").unwrap();
         let _: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
     }
 
@@ -731,7 +731,7 @@ mod tests {
         \"Expected separator (',' character) or end of sequence.\", span: Span }"
     )]
     fn parse_params_wrong_separator() {
-        let code: MetaList = syn::parse_str("fixed(width=3; align = right)").unwrap();
+        let code: MetaList = syn::parse_str("fixcol(width=3; align = right)").unwrap();
         let _: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
     }
 }

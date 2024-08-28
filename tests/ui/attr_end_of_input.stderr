@@ -1,5 +1,5 @@
-error: fixed-derive error: Expected value found end of input.
- --> tests/ui/attr_end_of_input.rs:5:30
+error: fixcol-derive error: Expected value found end of input.
+ --> tests/ui/attr_end_of_input.rs:5:31
   |
-5 |     #[fixed(width = 5, align =)]
-  |                              ^
+5 |     #[fixcol(width = 5, align =)]
+  |                               ^

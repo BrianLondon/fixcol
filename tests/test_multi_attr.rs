@@ -1,15 +1,16 @@
-extern crate fixed;
-use fixed::{ReadFixed, WriteFixed};
+extern crate fixcol;
+
+use fixcol::{ReadFixed, WriteFixed};
 
 #[derive(Debug, ReadFixed, WriteFixed, Eq, PartialEq)]
 struct Point {
     /// The x coordinate
-    #[fixed(width = 5, align = "right")]
+    #[fixcol(width = 5, align = "right")]
     x: u16,
 
     /// The y coordinate
-    #[fixed(width = 5)]
-    #[fixed(align = "right")]
+    #[fixcol(width = 5)]
+    #[fixcol(align = "right")]
     y: u16,
 }
 

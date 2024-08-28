@@ -1,5 +1,5 @@
-extern crate fixed;
-use fixed::{ReadFixed, WriteFixed, WriteFixedAll};
+extern crate fixcol;
+use fixcol::{ReadFixed, WriteFixed, WriteFixedAll};
 
 const SAMPLE_DATA: &'static str = r#"NODE ME
 NODE NH
@@ -22,17 +22,17 @@ EDGE RI MA 2948120
 // TODO: "Width must be specified for all fields" should we provid an "until end of line option"?
 
 #[derive(Debug, ReadFixed, WriteFixed, Eq, PartialEq)]
-#[fixed(key_width = 4, ignore_others = true)]
+#[fixcol(key_width = 4, ignore_others = true)]
 enum GraphObject {
-    #[fixed(key = "NODE")]
-    Node(#[fixed(skip = 1, width = 2)] String),
-    #[fixed(key = "EDGE")]
+    #[fixcol(key = "NODE")]
+    Node(#[fixcol(skip = 1, width = 2)] String),
+    #[fixcol(key = "EDGE")]
     Edge {
-        #[fixed(skip = 1, width = 2)]
+        #[fixcol(skip = 1, width = 2)]
         from: String,
-        #[fixed(skip = 1, width = 2)]
+        #[fixcol(skip = 1, width = 2)]
         to: String,
-        #[fixed(skip = 1, width = 7, align = "right")]
+        #[fixcol(skip = 1, width = 7, align = "right")]
         weight: u64,
     },
 }

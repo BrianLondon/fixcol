@@ -5,7 +5,7 @@ use crate::error::Error;
 
 /// Trait for writing to fixed width (column based) serialization
 ///
-/// The `fixed` library provides limited writing functionality out of the box.
+/// The `fixcol` library provides limited writing functionality out of the box.
 /// `WriteFixed` is the main entry point to that serialization functionality.
 /// While one can always manually implement `WriteFixed`, it is normally derived
 /// using the proc macro, which offers full string and integer support and
@@ -19,13 +19,13 @@ pub trait WriteFixed {
     /// # Example
     ///
     /// ```
-    /// # use fixed::WriteFixed;
+    /// # use fixcol::WriteFixed;
     /// # use std::io;
     /// #[derive(WriteFixed)]
     /// struct Point {
-    ///     #[fixed(width=3)]
+    ///     #[fixcol(width=3)]
     ///     x: u8,
-    ///     #[fixed(width=3)]
+    ///     #[fixcol(width=3)]
     ///     y: u8,
     /// }
     ///
@@ -51,15 +51,15 @@ pub trait WriteFixed {
 ///
 /// # Example
 /// ```
-/// use fixed_derive::WriteFixed;
+/// use fixcol::WriteFixed;
 /// #[derive(WriteFixed)]
 /// struct Point {
-///     #[fixed(width=3)] x: u8,
-///     #[fixed(width=3)] y: u8,
+///     #[fixcol(width=3)] x: u8,
+///     #[fixcol(width=3)] y: u8,
 /// }
 /// // Point implements WriteFixed
 ///
-/// use fixed::WriteFixedAll;
+/// use fixcol::WriteFixedAll;
 /// let v: Vec<Point> = Vec::new();
 /// // Therefore Vec<Point> implements WriteFixedAll
 /// ```
@@ -68,13 +68,13 @@ pub trait WriteFixedAll {
     ///
     /// # Example
     /// ```
-    /// # use fixed_derive::WriteFixed;
+    /// # use fixcol::WriteFixed;
     /// # use std::fs::File;
     /// # use std::io;
     /// #[derive(WriteFixed)]
     /// struct Point {
-    ///     #[fixed(width=3)] x: u8,
-    ///     #[fixed(width=3)] y: u8,
+    ///     #[fixcol(width=3)] x: u8,
+    ///     #[fixcol(width=3)] y: u8,
     /// }
     ///
     /// let v: Vec<Point> = vec![
@@ -88,7 +88,7 @@ pub trait WriteFixedAll {
     /// # }
     /// # let mut file: Vec<u8> = Vec::new();
     ///
-    /// use fixed::WriteFixedAll;
+    /// use fixcol::WriteFixedAll;
     /// v.write_fixed_all(&mut file);
     /// # let s = std::str::from_utf8(file.as_slice()).unwrap();
     /// # assert_eq!(s, "0  3  \n12342 \n42 123\n");
@@ -176,10 +176,10 @@ impl<T: ReadFixed, R: Read> Iterator for Iter<T, R> {
 
 /// Trait for reading from fixed width (column based) serializaiton
 ///
-/// This trait is the main entry point to using `fixed` for deserializing
+/// This trait is the main entry point to using `fixcol` for deserializing
 /// column delimited data files. This trait is not normally implemented manually
-/// but derived using the [`fixed_derive`] crate. The deserialization behavior
-/// of individual columns is defined using the `#[fixed(...)]` annotation.
+/// but derived using the [`fixcol_derive`] crate. The deserialization behavior
+/// of individual columns is defined using the `#[fixcol(...)]` annotation.
 pub trait ReadFixed {
     /// Reads an instance of the object from the supplied buffer
     ///
@@ -188,14 +188,15 @@ pub trait ReadFixed {
     ///
     /// # Example
     /// ```
-    /// # use fixed::ReadFixed;
-    /// # use std::fs::File;
-    /// # use std::io;
+    /// use fixcol::ReadFixed;
+    /// use std::fs::File;
+    /// use std::io;
+    /// 
     /// #[derive(ReadFixed)]
     /// struct Foo {
-    ///     #[fixed(width=3)]
+    ///     #[fixcol(width=3)]
     ///     foo: String,
-    ///     #[fixed(width=3)]
+    ///     #[fixcol(width=3)]
     ///     bar: String,
     /// }
     ///
@@ -216,7 +217,7 @@ pub trait ReadFixed {
     ///
     /// # Example
     /// ```
-    /// # use fixed::ReadFixed;
+    /// # use fixcol::ReadFixed;
     /// # use std::fs::File;
     /// # use std::io;
     /// #[derive(ReadFixed)]
@@ -253,14 +254,14 @@ pub trait ReadFixed {
     ///
     /// We can parse directly from `str` literals
     /// ```
-    /// # use fixed::ReadFixed;
-    /// # use fixed::FixedDeserializer;
-    /// # use fixed::FieldDescription;
+    /// # use fixcol::ReadFixed;
+    /// # use fixcol::FixedDeserializer;
+    /// # use fixcol::FieldDescription;
     /// #[derive(ReadFixed)]
     /// struct Point {
-    ///     #[fixed(width=3, align="right")]
+    ///     #[fixcol(width=3, align="right")]
     ///     x: u8,
-    ///     #[fixed(width=3, align="right")]
+    ///     #[fixcol(width=3, align="right")]
     ///     y: u8,
     /// }
     ///
@@ -271,12 +272,12 @@ pub trait ReadFixed {
     ///
     /// It can also be useful to pull directly from slices.
     /// ```
-    /// # use fixed::{FixedDeserializer, FieldDescription, ReadFixed};
+    /// # use fixcol::{FixedDeserializer, FieldDescription, ReadFixed};
     /// # #[derive(ReadFixed)]
     /// # struct Point {
-    /// #     #[fixed(width=3)]
+    /// #     #[fixcol(width=3)]
     /// #     x: u8,
-    /// #     #[fixed(width=3)]
+    /// #     #[fixcol(width=3)]
     /// #     y: u8,
     /// # }
     /// let s = ">>12361 <<";
@@ -302,14 +303,14 @@ pub trait ReadFixed {
     ///
     /// We can parse directly from `str` literals
     /// ```
-    /// # use fixed::ReadFixed;
-    /// # use fixed::FixedDeserializer;
-    /// # use fixed::FieldDescription;
+    /// # use fixcol::ReadFixed;
+    /// # use fixcol::FixedDeserializer;
+    /// # use fixcol::FieldDescription;
     /// #[derive(ReadFixed)]
     /// struct Point {
-    ///     #[fixed(width=3, align="right")]
+    ///     #[fixcol(width=3, align="right")]
     ///     x: u8,
-    ///     #[fixed(width=3, align="right")]
+    ///     #[fixcol(width=3, align="right")]
     ///     y: u8,
     /// }
     ///
@@ -329,7 +330,7 @@ pub trait ReadFixed {
 
 #[cfg(test)]
 mod tests {
-    use fixed_derive::{ReadFixed, WriteFixed};
+    use fixcol_derive::{ReadFixed, WriteFixed};
 
     use super::*;
     use crate::error::Error;
@@ -405,13 +406,13 @@ mod tests {
         str::from_utf8(inp.as_slice()).unwrap().to_string()
     }
 
-    use crate as fixed;
+    use crate as fixcol;
 
     #[derive(ReadFixed, WriteFixed, Eq, PartialEq, Debug)]
     struct MyStruct {
-        #[fixed(width = 10)]
+        #[fixcol(width = 10)]
         string: String,
-        #[fixed(width = 10, align = "right")]
+        #[fixcol(width = 10, align = "right")]
         num: i64,
     }
 
@@ -448,21 +449,21 @@ mod tests {
 
     // Derive tests (enum)
     #[derive(ReadFixed, WriteFixed, Eq, PartialEq, Debug)]
-    #[fixed(key_width = 2)]
+    #[fixcol(key_width = 2)]
     enum MyEnum {
-        #[fixed(key = "st")]
+        #[fixcol(key = "st")]
         Struct {
-            #[fixed(width = 10)]
+            #[fixcol(width = 10)]
             string: String,
-            #[fixed(width = 10, align = "right")]
+            #[fixcol(width = 10, align = "right")]
             num: i64,
         },
-        #[fixed(key = "tu")]
+        #[fixcol(key = "tu")]
         Tuple(
-            #[fixed(width = 10)] String,
-            #[fixed(width = 10, align = "right")] i64,
+            #[fixcol(width = 10)] String,
+            #[fixcol(width = 10, align = "right")] i64,
         ),
-        #[fixed(key = "un")]
+        #[fixcol(key = "un")]
         Unit,
     }
 

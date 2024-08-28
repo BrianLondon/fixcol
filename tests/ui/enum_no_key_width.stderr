@@ -1,21 +1,21 @@
-error: fixed-derive error: The parameter key must be provided for all enum variants.
+error: fixcol-derive error: The parameter 'key' must be provided for all enum variants.
 
-        Try adding #[fixed(key_width = 10)] to this enum replacing "10" with the width of your key.
+        Try adding #[fixcol(key_width = 10)] to this enum replacing "10" with the width of your key.
   --> tests/ui/enum_no_key_width.rs:11:6
    |
 11 | enum Thing1 {
    |      ^^^^^^
 
-error: fixed-derive error: The parameter key must be provided for all enum variants.
+error: fixcol-derive error: The parameter 'key' must be provided for all enum variants.
 
-        Try adding #[fixed(key_width = 10)] to this enum replacing "10" with the width of your key.
+        Try adding #[fixcol(key_width = 10)] to this enum replacing "10" with the width of your key.
   --> tests/ui/enum_no_key_width.rs:19:6
    |
 19 | enum Thing2 {
    |      ^^^^^^
 
-error: fixed-derive error: Expected numeric value for key_width.
-  --> tests/ui/enum_no_key_width.rs:27:21
+error: fixcol-derive error: Expected numeric value for key_width.
+  --> tests/ui/enum_no_key_width.rs:27:22
    |
-27 | #[fixed(key_width = three)]
-   |                     ^^^^^
+27 | #[fixcol(key_width = three)]
+   |                      ^^^^^

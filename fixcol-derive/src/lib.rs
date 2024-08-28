@@ -20,7 +20,7 @@ use syn::{Data, DataEnum, DataStruct, DeriveInput};
 use crate::enums::enum_read;
 use crate::structs::{struct_read, struct_write};
 
-#[proc_macro_derive(ReadFixed, attributes(fixed))]
+#[proc_macro_derive(ReadFixed, attributes(fixcol))]
 pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
     let ast: DeriveInput = syn::parse(input).unwrap();
 
@@ -40,7 +40,7 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
     let gen = match function_impl_result {
         Ok(function_impl) => {
             quote! {
-                impl #impl_generics fixed::ReadFixed for #name #ty_generics #where_clause {
+                impl #impl_generics fixcol::ReadFixed for #name #ty_generics #where_clause {
                     #function_impl
                 }
             }
@@ -53,7 +53,7 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
     gen.into()
 }
 
-#[proc_macro_derive(WriteFixed, attributes(fixed))]
+#[proc_macro_derive(WriteFixed, attributes(fixcol))]
 pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
     let ast: DeriveInput = syn::parse(input).unwrap();
 
@@ -73,7 +73,7 @@ pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
     let gen = match function_impl_result {
         Ok(function_impl) => {
             quote! {
-                impl #impl_generics fixed::WriteFixed for #name #ty_generics #where_clause {
+                impl #impl_generics fixcol::WriteFixed for #name #ty_generics #where_clause {
                     #function_impl
                 }
             }

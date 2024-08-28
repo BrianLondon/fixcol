@@ -2,9 +2,9 @@ use proc_macro2::Ident;
 use quote::quote;
 use syn::{Attribute, Fields, FieldsNamed, FieldsUnnamed};
 
-use crate::{
-    attrs::{parse_struct_attributes, OuterConfig, StructConfig}, error::{MacroError, MacroResult}, fields::{read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields}
-};
+use crate::attrs::{parse_struct_attributes, OuterConfig, StructConfig};
+use crate::error::{MacroError, MacroResult};
+use crate::fields::{read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields};
 
 //
 // Reads
@@ -28,8 +28,8 @@ fn tuple_struct_read_fixed(fields: FieldsUnnamed, outer: StructConfig) -> MacroR
     let (names, reads) = read_unnamed_fields(&fields, &outer)?;
 
     let fun = quote! {
-        fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixed::error::Error> {
-            use fixed::FixedDeserializer;
+        fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixcol::error::Error> {
+            use fixcol::FixedDeserializer;
             #( #reads )*
 
             Ok(Self(#(#names),*))
@@ -44,8 +44,8 @@ fn struct_read_fixed(fields: FieldsNamed, outer: StructConfig) -> MacroResult {
     let (field_names, field_reads) = read_named_fields(&fields, outer)?;
 
     let function = quote! {
-        fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixed::error::Error> {
-            use fixed::FixedDeserializer;
+        fn read_fixed<R: std::io::Read>(buf: &mut R) -> Result<Self, fixcol::error::Error> {
+            use fixcol::FixedDeserializer;
             #(#field_reads)*
 
             Ok(Self {
@@ -80,8 +80,8 @@ fn struct_write_fixed(fields: FieldsNamed, config: StructConfig) -> MacroResult 
     let (names, configs) = write_named_fields(&fields, &OuterConfig::Struct(config))?;
 
     let gen = quote! {
-        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), fixed::error::Error> {
-            use fixed::FixedSerializer;
+        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), fixcol::error::Error> {
+            use fixcol::FixedSerializer;
 
             #( let _ = self.#names.write_fixed_field(buf, #configs)?; )*
 
@@ -96,8 +96,8 @@ fn tuple_struct_write_fixed(fields: FieldsUnnamed, config: StructConfig) -> Macr
     let (names, configs) = write_unnamed_fields(&fields, &OuterConfig::Struct(config))?;
 
     let gen = quote! {
-        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), fixed::error::Error> {
-            use fixed::FixedSerializer;
+        fn write_fixed<W: std::io::Write>(&self, buf: &mut W) -> Result<(), fixcol::error::Error> {
+            use fixcol::FixedSerializer;
 
             #( let _ = self.#names.write_fixed_field(buf, #configs)?; )*
 

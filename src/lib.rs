@@ -1,18 +1,24 @@
-//! A crate used for fixed width column serialization and deserialization
+//! A crate used for *fixed* width *column* serialization and deserialization
+//! 
+//! Fixcol provides a derive based deserialization framework for parsing text files
+//! with fixed column width serialization formats. While file formats using character
+//! delimeters such as CSV or JSON are more common today, fixed column file formats
+//! are more naturally human readable and many older data sets, especially public
+//! domain data sets continue to use them.
 pub mod error;
-mod fixed;
+mod fixcol;
 mod format;
 mod parse;
 mod write;
 
-extern crate fixed_derive;
+extern crate fixcol_derive;
 
-pub use fixed::{Iter, ReadFixed, WriteFixed, WriteFixedAll};
+pub use fixcol::{Iter, ReadFixed, WriteFixed, WriteFixedAll};
 pub use format::{Alignment, FieldDescription};
 pub use parse::FixedDeserializer;
 pub use write::FixedSerializer;
 
-pub use fixed_derive::{ReadFixed, WriteFixed};
+pub use fixcol_derive::{ReadFixed, WriteFixed};
 
 #[cfg(test)]
 mod tests {

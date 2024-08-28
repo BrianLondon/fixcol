@@ -1,9 +1,9 @@
-//! Type definitions and helpers for error handling in the `fixed` library.
+//! Type definitions and helpers for error handling in the `fixcol` library.
 //!
 //! The main data type for this module is [`Error`] which will frequently be the
 //! only type encountered by application authors, unless they are defining
 //! custom deserialization logic, parsing nested types, etc. [`Error`] captures
-//! deserialization errors encountered using `fixed` and many of the methods
+//! deserialization errors encountered using `fixcol` and many of the methods
 //! provided by [`ReadFixed`] and [`WriteFixed`] return a [`Result<T, Error>`].
 //!
 //! Typical usage of the library in a command line application will have the
@@ -17,7 +17,7 @@
 //! # Example
 //!
 //! ```
-//! use fixed::ReadFixed;
+//! use fixcol::ReadFixed;
 //! #[derive(ReadFixed)]
 //! struct MyType {
 //!     // Fields here
@@ -45,7 +45,7 @@ use std::num::{ParseFloatError, ParseIntError};
 use std::str::Utf8Error;
 use std::string::FromUtf8Error;
 
-/// The standard error for the `fixed` library.
+/// The standard error for the `fixcol` library.
 ///
 /// `Error` captures both I/O errors and errors resulting from malformed inputs
 /// that do not meet the expected format specification. Many of the methods
@@ -61,7 +61,7 @@ use std::string::FromUtf8Error;
 /// # Example
 ///
 /// ```
-/// use fixed::ReadFixed;
+/// use fixcol::ReadFixed;
 /// #[derive(ReadFixed)]
 /// struct MyType {
 ///     // Fields here
@@ -121,7 +121,7 @@ impl Display for Error {
 }
 
 impl From<io::Error> for Error {
-    /// Wraps an `std::io::Error` in a `fixed::error::Error`
+    /// Wraps an `std::io::Error` in a `fixcol::error::Error`
     ///
     /// See [`From::from`] docs for more information.
     fn from(value: io::Error) -> Self {
@@ -175,7 +175,7 @@ impl Error {
     }
 }
 
-/// Error indicating `fixed` failed to parse the supplied input
+/// Error indicating `fixcol` failed to parse the supplied input
 #[derive(Debug, Clone)]
 pub struct DataError {
     text: String,
@@ -230,8 +230,8 @@ impl DataError {
     /// use `DataError::custom` to provide error context.
     ///
     /// ```
-    /// use fixed::{FixedDeserializer, FieldDescription};
-    /// use fixed::error::DataError;
+    /// use fixcol::{FixedDeserializer, FieldDescription};
+    /// use fixcol::error::DataError;
     ///
     /// struct TriState(Option<bool>);
     ///
@@ -419,7 +419,7 @@ mod tests {
 
         fn try_write<W: Write>(buf: &mut W, bytes: &[u8]) -> Result<usize, Error> {
             let mut bytes_written = 0;
-            // The conversion from io::Error to fixed::error::Error is what this
+            // The conversion from io::Error to fixcol::error::Error is what this
             // unit test is supposed to be evaluating
             bytes_written += buf.write(bytes)?;
             Ok(bytes_written)

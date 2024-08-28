@@ -1,5 +1,5 @@
-error: fixed-derive error: Expected identifier or literal.
- --> tests/ui/attr_expected_value.rs:5:31
+error: fixcol-derive error: Expected identifier or literal.
+ --> tests/ui/attr_expected_value.rs:5:32
   |
-5 |     #[fixed(width = 5, align =, default = "none")]
-  |                               ^
+5 |     #[fixcol(width = 5, align =, default = "none")]
+  |                                ^

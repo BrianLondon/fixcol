@@ -2,7 +2,7 @@ use crate::error::{DataError, Error, InnerError};
 use crate::format::{Alignment, FieldDescription};
 use crate::ReadFixed;
 
-/// A trait the represents field types that can be decoded from fixed len strings
+/// A trait the represents field types that can be decoded from fixed length strings
 ///
 /// Implementations are provided for `&str` that are used internally in the macro
 /// generated code to derive [`ReadFixed`]. It is unlikely end users will need to
@@ -24,10 +24,10 @@ use crate::ReadFixed;
 /// ### Custom deserialization
 ///
 /// ```
-/// # use fixed::ReadFixed;
-/// # use fixed::FixedDeserializer;
-/// # use fixed::FieldDescription;
-/// # use fixed::error::DataError;
+/// # use fixcol::ReadFixed;
+/// # use fixcol::FixedDeserializer;
+/// # use fixcol::FieldDescription;
+/// # use fixcol::error::DataError;
 /// #[derive(PartialEq, Eq, Debug)]
 /// enum EyeColor {
 ///     Blue,
@@ -48,11 +48,11 @@ use crate::ReadFixed;
 ///
 /// #[derive(ReadFixed)]
 /// struct Person {
-///     #[fixed(width=10)]
+///     #[fixcol(width=10)]
 ///     pub name: String,
-///     #[fixed(width=3, align=right)]
+///     #[fixcol(width=3, align=right)]
 ///     pub age: u8,
-///     #[fixed(width=2)]
+///     #[fixcol(width=2)]
 ///     pub eye_color: EyeColor,
 /// }
 ///
@@ -83,20 +83,20 @@ use crate::ReadFixed;
 /// Naive implementation
 ///
 /// ```
-/// # use fixed::ReadFixed;
-/// # use fixed::FixedDeserializer;
-/// # use fixed::FieldDescription;
+/// # use fixcol::ReadFixed;
+/// # use fixcol::FixedDeserializer;
+/// # use fixcol::FieldDescription;
 /// # use std::fs::File;
 /// #[derive(ReadFixed)]
 /// # #[derive(Eq, PartialEq, Debug)]
 /// struct Person {
-///     #[fixed(width=12)]
+///     #[fixcol(width=12)]
 ///     name: String,
-///     #[fixed(width=4, skip=1, align="right")]
+///     #[fixcol(width=4, skip=1, align="right")]
 ///     birth_year: u16,
-///     #[fixed(width=2, skip=1, align="right")]
+///     #[fixcol(width=2, skip=1, align="right")]
 ///     birth_month: u8,
-///     #[fixed(width=2, skip=1, align="right")]
+///     #[fixcol(width=2, skip=1, align="right")]
 ///     birth_date: u8,
 /// }
 ///
@@ -120,17 +120,17 @@ use crate::ReadFixed;
 /// [`chrono::NaiveDate`]: https://docs.rs/chrono/latest/chrono/struct.NaiveDate.html
 ///
 /// ```
-/// # use fixed::ReadFixed;
-/// # use fixed::FixedDeserializer;
-/// # use fixed::FieldDescription;
-/// # use fixed::error::DataError;
+/// # use fixcol::ReadFixed;
+/// # use fixcol::FixedDeserializer;
+/// # use fixcol::FieldDescription;
+/// # use fixcol::error::DataError;
 /// # use std::fs::File;
 /// #[derive(ReadFixed)]
 /// # #[derive(Eq, PartialEq, Debug)]
 /// struct Person {
-///     #[fixed(width=12)]
+///     #[fixcol(width=12)]
 ///     name: String,
-///     #[fixed(width=10, skip=1)]
+///     #[fixcol(width=10, skip=1)]
 ///     birthday: Birthday,
 /// }
 ///
@@ -187,7 +187,7 @@ pub trait FixedDeserializer {
     /// Read an object of type `T` from the current object.
     ///
     /// Uses the provided [`FieldDescription`] to determine how to parse a data field
-    /// from a fixed width representation.
+    /// from a fixed column representation.
     fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<Self, DataError>
     where
         Self: Sized;

@@ -1,5 +1,5 @@
-error: fixed-derive error: Unrecognized parameter "thing".
-  --> tests/ui/enum_bad_param.rs:10:24
+error: fixcol-derive error: Unrecognized parameter "thing".
+  --> tests/ui/enum_bad_param.rs:10:25
    |
-10 | #[fixed(key_width = 3, thing = yes)]
-   |                        ^^^^^
+10 | #[fixcol(key_width = 3, thing = yes)]
+   |                         ^^^^^

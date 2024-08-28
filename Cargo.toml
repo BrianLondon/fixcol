@@ -1,13 +1,13 @@
 [package]
-name = "fixed"
+name = "fixcol"
 version = "0.1.0"
 edition = "2021"
 
 [workspace]
-members = ["fixed-derive"]
+members = ["fixcol-derive"]
 
 [dependencies]
-fixed-derive = {path = "fixed-derive"}
+fixcol-derive = {path = "fixcol-derive"}
 
 [dev-dependencies]
 chrono = "0.4.38"

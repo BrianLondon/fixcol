@@ -1,7 +1,7 @@
-error: fixed-derive error: Could not read config from path style attribute.
+error: fixcol-derive error: Could not read config from path style attribute.
 
-       Expected parameters like #[fixed(width = 4)]
+       Expected parameters like #[fixcol(width = 4)]
  --> tests/ui/attr_path.rs:5:7
   |
-5 |     #[fixed]
-  |       ^^^^^
+5 |     #[fixcol]
+  |       ^^^^^^
