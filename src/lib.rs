@@ -20,7 +20,7 @@ pub use format::{Alignment, FieldDescription};
 pub use parse::FixedDeserializer;
 
 #[cfg(feature = "experimental-write")]
-pub use fixed::{WriteFixed, WriteFixedAll};
+pub use fixcol::{WriteFixed, WriteFixedAll};
 #[cfg(feature = "experimental-write")]
 pub use write::FixedSerializer;
 
