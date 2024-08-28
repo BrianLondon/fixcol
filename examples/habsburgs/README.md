@@ -57,3 +57,17 @@ R XX YYYZZZ -- coding for explanation below
 The output format is comparatively simple. It consists of a six column floating
 point number (holding the COI), followed by a space and the person's name, left
 aligned. The serialization format is defined on the `OutputRecord` struct.
+
+## References
+
+The data file is a custom genealogy format depicting the
+[genealogy Spanish branch of the Habsburg Dynasty](https://en.wikipedia.org/wiki/Habsburg_family_tree#Ancestors_of_Charles_II_of_Spain)
+and derived from that Wikipedia page. Then we run a graph algorithm on the
+resulting data structure to calculate the [COI](https://en.wikipedia.org/wiki/Coefficient_of_inbreeding)
+for each of the people in that genealogy. Finally, we write an output file with
+that calculated data when it's value is greater than zero. Note that the value
+for Charles II is lower than is somewhat reported in the literature because we
+only look back seven generations. See:
+[Alvarez, Ceballos, and Quinteiro (2009)](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0005174)
+for a discussion of the effect of the look back window. The COI calculation is performed
+using the "tabular method" by Wright (1922) as described in [Tier (1990)](https://hal.science/hal-00893856/document).
