@@ -4,8 +4,6 @@ use std::process::Command;
 
 extern crate escargot;
 
-// TODO: Capture stdout from external process
-
 fn read_expected_output_file(name: &str, variant: &str) -> String {
     let file_name = format!("{}.txt", variant);
 
@@ -28,12 +26,8 @@ fn run_example_as_test(name: &str) {
         .run()
         .unwrap();
 
-    let mut  cmd = Command::new(example_bin.path());
-    let mut child = cmd.spawn().unwrap();
-    child.wait().unwrap();
+    let output = Command::new(example_bin.path()).output().unwrap();
 
-    let output = cmd.output().unwrap();
-    
     assert_eq!(String::from_utf8(output.stdout).unwrap(), expected_stdout);
     assert_eq!(String::from_utf8(output.stderr).unwrap(), expected_stderr);
 }
