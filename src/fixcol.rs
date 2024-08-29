@@ -185,8 +185,8 @@ impl<T: ReadFixed, R: Read> Iterator for Iter<T, R> {
 ///
 /// This trait is the main entry point to using `fixcol` for deserializing
 /// column delimited data files. This trait is not normally implemented manually
-/// but derived using the [`fixcol_derive`] crate. The deserialization behavior
-/// of individual columns is defined using the `#[fixcol(...)]` annotation.
+/// but derived. The deserialization behavior of individual columns is defined
+/// using the `#[fixcol(...)]` annotation.
 pub trait ReadFixed {
     /// Reads an instance of the object from the supplied buffer
     ///
