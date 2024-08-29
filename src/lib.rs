@@ -5,6 +5,8 @@
 //! delimeters such as CSV or JSON are more common today, fixed column file formats
 //! are more naturally human readable and many older data sets, especially public
 //! domain data sets continue to use them.
+#![feature(doc_auto_cfg)]
+
 pub mod error;
 mod fixcol;
 mod format;

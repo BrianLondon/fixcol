@@ -1,5 +1,5 @@
 use std::io::{BufRead, BufReader, Lines, Read};
-#[cfg(feature = "experimental-write")]
+#[cfg(any(feature = "experimental-write", doc))]
 use std::io::Write;
 use std::marker::PhantomData;
 
@@ -13,6 +13,7 @@ use crate::error::Error;
 /// using the proc macro, which offers full string and integer support and
 /// limited floating point formatting.
 #[cfg(feature = "experimental-write")]
+// #[cfg(any(feature = "experimental-write", doc))]
 pub trait WriteFixed {
     /// Writes the object into the supplied buffer
     ///
@@ -97,6 +98,7 @@ pub trait WriteFixedAll {
     /// # let s = std::str::from_utf8(file.as_slice()).unwrap();
     /// # assert_eq!(s, "0  3  \n12342 \n42 123\n");
     /// ```
+    #[cfg_attr(docsrs, doc(cfg(feature = "experimental-write")))]
     fn write_fixed_all<W: Write>(self, buf: &mut W) -> Result<(), Error>;
 }
 
