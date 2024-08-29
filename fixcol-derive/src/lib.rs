@@ -20,6 +20,11 @@ use syn::{Data, DataEnum, DataStruct, DeriveInput};
 use crate::enums::enum_read;
 use crate::structs::{struct_read, struct_write};
 
+/// Derive proc-macro for ReadFixed
+//
+// See documentation on [`ReadFixed`] for a full description.
+// 
+// [`ReadFixed`]: fixcol::ReadFixed 
 #[proc_macro_derive(ReadFixed, attributes(fixcol))]
 pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
     let ast: DeriveInput = syn::parse(input).unwrap();
@@ -53,6 +58,9 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
     gen.into()
 }
 
+/// Derive proc-macro for WriteFixed
+// 
+// See [[`WriteFixed`]] for a complete discuassion.
 #[proc_macro_derive(WriteFixed, attributes(fixcol))]
 pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
     let ast: DeriveInput = syn::parse(input).unwrap();

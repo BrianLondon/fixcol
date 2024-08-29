@@ -62,6 +62,7 @@ use std::string::FromUtf8Error;
 ///
 /// ```
 /// use fixcol::ReadFixed;
+/// 
 /// #[derive(ReadFixed)]
 /// struct MyType {
 ///     // Fields here
@@ -70,6 +71,7 @@ use std::string::FromUtf8Error;
 /// use std::fs::File;
 /// # fn f() {
 /// let mut file = File::open("my_file.txt").unwrap();
+/// 
 /// for row in MyType::read_fixed_all(file) {
 ///     match row {
 ///         Ok(my_type) => {
@@ -266,6 +268,7 @@ impl DataError {
         new_error
     }
 
+    /// Returns the internal error that was the source of this error.
     pub fn inner_error(&self) -> &InnerError {
         &self.inner_error
     }
@@ -320,13 +323,24 @@ impl Display for DataError {
 /// Wrapper type for the known errors that can cause a [`DataError`].
 #[derive(Debug, Clone)]
 pub enum InnerError {
+    /// Other error sources for `DataErrors` that don't fit one of the other archtypes.
     Custom(String),
+    /// Inner error capturing failure to parse an integer.
     ParseIntError(ParseIntError),
+    /// Inner error capturing a failure to parse a float.
     ParseFloatError(ParseFloatError),
+    /// Error decoding utf8 string from a string data field
     Utf8Error(Utf8Error),
+    /// While decoding an enum found a key that does not match any known variant
     UnknownKey,
+    /// Aparent width of parsed field do not match declared field size
+    /// 
     /// Params are expected len, actual len
     InvalidWidth(usize, usize),
+    /// Whitespace error in `strict` mode.
+    /// 
+    /// While parsing serialized data in `strict` mode, found missing whitespace
+    /// at end of line or a non-whitespace character where whitespace was expected.
     WhitespaceError,
 }
 

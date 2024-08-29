@@ -13,7 +13,7 @@ pub enum Alignment {
     Full, // TODO: handle incorrect length writes (with strict mode)
 }
 
-/// Represents how a field should be encoded in fixed len representation
+/// Represents how a field should be encoded in a fixed width column representation
 #[derive(Clone, Copy, Debug)]
 pub struct FieldDescription {
     /// How many characters to skip between the prior field and this one
