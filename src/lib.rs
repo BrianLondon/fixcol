@@ -1,3 +1,5 @@
+#![feature(doc_auto_cfg)]
+
 //! A crate used for *fixed* width *column* serialization and deserialization
 //! 
 //! Fixcol provides a derive based deserialization framework for parsing text files
@@ -26,7 +28,7 @@
 //! Mexico City  9209944   19.433  -99.133
 //! ```
 //! 
-//! We can create a basic data structure coresponding to the records in the file
+//! We can create a basic data structure corresponding to the records in the file
 //! and then read the data file as shown.
 //! 
 //! ```
@@ -224,8 +226,114 @@
 //! 
 //! ## Schema Definition Parameters
 //! 
+//! Fixcol defines serialization and deserialization schemas using `fixcol` 
+//! annotations that contain a list of one or more parameters in the form
+//! `#[fixcol(param1 = value1, param2 = value2, ...)]`.
 //! 
-#![feature(doc_auto_cfg)]
+//! #### Align
+//! 
+//! Indicates the text alignment of the specified field.
+//! 
+//! **Can be applied to**: Field
+//! 
+//! **Allowed Values**: `"left"`, `"right"`, `"full"`
+//! 
+//! | Value | Meaning |
+//! |-------|---------|
+//! | Left  | The value is left aligned and trailing whitespace can be ignored |
+//! | Right | The caule is right aligned and leading whitespace can be ignored |
+//! | Full  | The value is expected to occupy the full defined width. Leading and trailing whitespace are considered significant. |
+//! 
+//! The values of the `align` parameter are mapped to an instance of [`Alignment`]
+//! internally.
+//! 
+//! **Default**: Left
+//!
+//! **Example**: `#[fixcol(width = 6, align = "right")]`
+//! 
+//! #### Embed
+//! 
+//! When decoding a single valued tuple-style enum variant, use the [`ReadFixed`]
+//! implementation on the inner type.
+//! 
+//! **Can be applied to**: Enum Variant
+//! 
+//! **Allowed Values**: `true`, `false`
+//! 
+//! **Default**: `false`
+//!
+//! **Example**: `#[fixcol(embed = true)]`
+//! 
+//! #### Key
+//! 
+//! When decoding multiple record types into an enum, indicates the key that
+//! signifies this particular enum variant should be used to decode the line.
+//! 
+//! To encode keys of different lengths, space pad the shorter keys so that all
+//! declared keys are explicitly `key_width` characters.
+//! 
+//! **Can be applied to**: Enum Variant
+//! 
+//! **Allowed Values**: Strings of length `key_width`
+//! 
+//! **Default**: Must be set **explicitly**.
+//!
+//! **Example**: `#[fixcol(key = "EDGE")]`
+//! 
+//! #### Key Width
+//! 
+//! When decoding multiple record types into an enum, indicates how many characters
+//! at the begining of each line should be considered the *key* used to identify
+//! which record type the line contains and therefore which enum variant should
+//! be used to decode the line.
+//! 
+//! **Can be applied to**: Enum
+//! 
+//! **Allowed Values**: Positive integers
+//! 
+//! **Default**: Must be set **explicitly**.
+//!
+//! **Example**: `#[fixcol(key_width = 4)]`
+//! 
+//! #### Skip
+//! 
+//! Indicates the number of columns (measured in bytes) that are expected to be
+//! blank between the prior data field and the current data field.
+//! 
+//! **Can be applied to**: Field
+//! 
+//! **Allowed Values**: Non-negative integers
+//! 
+//! **Default**: Zero
+//!
+//! **Example**: `#[fixcol(skip = 1, width = 12)]`
+//! 
+//! #### Strict
+//! 
+//! Indicates whether [strict mode](crate#strict-mode) should be enabled (See above).
+//! 
+//! **Can be applied to**: Struct, Enum, Enum Varriant, Field
+//! 
+//! **Allowed Values**: `true`, `false`
+//! 
+//! **Default**: Cascades from outer context, outermost default `true`.
+//!
+//! **Example**: `#[fixcol(strict = true)]`
+//! 
+//! 
+//! #### Width
+//! 
+//! Indicates the number of columns (measured in bytes) used to encode the
+//! target field.
+//! 
+//! **Can be applied to**: Field
+//! 
+//! **Allowed Values**: Positive integers
+//! 
+//! **Default**: Must be set **explicitly**.
+//!
+//! **Example**: `#[fixcol(width = 12)]`
+//! 
 
 pub mod error;
 mod fixcol;

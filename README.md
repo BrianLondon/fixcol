@@ -2,21 +2,57 @@
 
 A library for reading fixed width / column delimited data files.
 
-## Strict Mode
+## Basic Usage
 
-We'll start by enabling it only on the field level and then allowing cascades
-as a future enhancement. There's currently no parsing of attributes on the
-`struct` level, so that also provides an impediment to the cascade behavior.
+Consider the following data file:
+```text
+Tokyo       13515271   35.689  139.692
+Delhi       16753235   28.610   77.230
+Shanghai    24870895   31.229  121.475
+São Paulo   12252023  -23.550  -46.333
+Mexico City  9209944   19.433  -99.133
+```
 
-What strict should enable
- - require last field of line to be full length when reading
- - require written `Full` aligned text columns to be the correct length
- - require `Left` and `Right` aligned text columns to not overflow <!-- TODO: need test coverage for this -->
- - require unread columns to contain only whitespace
- - require no whitespace in numeric `Full` columns
- - left aligned fields cannot start with white space
- - right aligned fields cannot end with white space
- - error on integer width overflow on write <!-- TODO: need test coverage for this -->
+We can create a basic data structure corresponding to the records in the file
+and then read the data file as shown.
+
+```rust
+use fixcol::ReadFixed;
+use std::fs::File;
+
+#[derive(ReadFixed)]
+struct City {
+    #[fixcol(width = 12)]
+    name: String,
+    #[fixcol(width = 8, align = "right")]
+    population: u64,
+    #[fixcol(skip = 1, width = 8, align = "right")]
+    lat: f32,
+    #[fixcol(skip = 1, width = 8, align = "right")]
+    lon: f32,
+}
+
+let mut file = File::open("cities.txt");
+let cities: Vec<City> = City::read_fixed_all(file).map(|res| match res {
+    Ok(city) => city,
+    Err(err) => {
+        eprintln!("{}", err);
+        std::process::exit(1);
+    }
+}).collect();
+```
+
+Please see the official documentation for complete usage guidance.
+
+ <!-- 
+ 
+  TODO: need test coverage for:
+  require `Left` and `Right` aligned text columns to not overflow in strict mode
+
+  TODO: need test coverage for:
+  error on overflow on write (esp. integers)
+  -->
+
 
 ## Wishlist of new features
 
@@ -26,6 +62,7 @@ What strict should enable
    valid parameters.
  - Allow a function based custom deserialization on individual columns
  - Clear error messages of location of error on read errors
+ - Enable the `ignore_others` parameter
 
 ## License
 
