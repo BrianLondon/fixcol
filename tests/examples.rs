@@ -8,7 +8,11 @@ fn read_expected_output_file(name: &str, variant: &str) -> String {
     let file_name = format!("{}.txt", variant);
 
     let cargo = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let path = cargo.join("examples").join(name).join("expected_output").join(file_name);
+    let path = cargo
+        .join("examples")
+        .join(name)
+        .join("expected_output")
+        .join(file_name);
 
     if path.exists() {
         fs::read_to_string(path).unwrap()

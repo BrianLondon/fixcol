@@ -1,5 +1,6 @@
 use fixcol::{ReadFixed, WriteFixed};
-#[derive(ReadFixed)]
+
+#[derive(ReadFixed, WriteFixed)]
 struct Point {
     #[fixcol(width = 5)]
     point_x: u16,

@@ -11,7 +11,6 @@ fn ui_write() {
     t.compile_fail("tests/ui/read-write/*.rs")
 }
 
-
 #[cfg(not(feature = "experimental-write"))]
 #[test]
 fn ui_read_only() {

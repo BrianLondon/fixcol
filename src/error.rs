@@ -24,8 +24,8 @@
 //! }
 //!
 //! use std::fs::File;
-//! # fn f() {
-//! let mut file = File::open("my_file.txt").unwrap();
+//! # fn f() -> Result<(), fixcol::error::Error> {
+//! let mut file = File::open("my_file.txt")?;
 //! for row in MyType::read_fixed_all(file) {
 //!     match row {
 //!         Ok(my_type) => {
@@ -37,6 +37,7 @@
 //!         }
 //!     }
 //! }
+//! # Ok(()) 
 //! # }
 //! ```
 use std::fmt::{Display, Formatter};
@@ -62,16 +63,16 @@ use std::string::FromUtf8Error;
 ///
 /// ```
 /// use fixcol::ReadFixed;
-/// 
+///
 /// #[derive(ReadFixed)]
 /// struct MyType {
 ///     // Fields here
 /// }
 ///
 /// use std::fs::File;
-/// # fn f() {
-/// let mut file = File::open("my_file.txt").unwrap();
-/// 
+/// # fn f() -> Result<(), fixcol::error::Error> {
+/// let mut file = File::open("my_file.txt")?;
+///
 /// for row in MyType::read_fixed_all(file) {
 ///     match row {
 ///         Ok(my_type) => {
@@ -83,6 +84,7 @@ use std::string::FromUtf8Error;
 ///         }
 ///     }
 /// }
+/// # Ok(())
 /// # }
 /// ```
 ///
@@ -96,7 +98,6 @@ use std::string::FromUtf8Error;
 /// [`ReadFixed`]: crate::ReadFixed
 /// [`WriteFixed`]: crate::WriteFixed
 /// [`to_string`]: std::string::ToString::to_string()
-///
 #[derive(Debug)]
 pub enum Error {
     /// An error that occured while parsing the formatted data
@@ -198,17 +199,11 @@ impl DataError {
     }
 
     pub(crate) fn new_data_width_error(text: String, expected: usize, actual: usize) -> Self {
-        Self::new_err(
-            text,
-            InnerError::InvalidWidth(expected, actual)
-        )
+        Self::new_err(text, InnerError::InvalidWidth(expected, actual))
     }
 
     pub(crate) fn whitespace_error(text: String) -> Self {
-        Self::new_err(
-            text,
-            InnerError::WhitespaceError,
-        )
+        Self::new_err(text, InnerError::WhitespaceError)
     }
 
     /// Creates a new custom `DataError`
@@ -232,8 +227,8 @@ impl DataError {
     /// use `DataError::custom` to provide error context.
     ///
     /// ```
-    /// use fixcol::{FixedDeserializer, FieldDescription};
     /// use fixcol::error::DataError;
+    /// use fixcol::{FieldDescription, FixedDeserializer};
     ///
     /// struct TriState(Option<bool>);
     ///
@@ -242,14 +237,15 @@ impl DataError {
     ///         // We've defined this type as always having one column so confirm that
     ///         assert_eq!(desc.len, 1);
     ///         // burn columns we have to skip
-    ///         let column = &s[desc.skip..desc.skip+1];
+    ///         let column = &s[desc.skip..desc.skip + 1];
     ///         match column {
     ///             "Y" => Ok(TriState(Some(true))),
     ///             "N" => Ok(TriState(Some(false))),
     ///             " " => Ok(TriState(None)),
-    ///             other => {
-    ///                 Err(DataError::custom(other, "Expected \"Y\", \"N\", or an empty column"))
-    ///             }
+    ///             other => Err(DataError::custom(
+    ///                 other,
+    ///                 "Expected \"Y\", \"N\", or an empty column",
+    ///             )),
     ///         }
     ///     }
     /// }
@@ -304,11 +300,18 @@ impl Display for DataError {
             }
             InnerError::InvalidWidth(exp, act) => {
                 fmt_err(&self.text, f)?;
-                write!(f, "Expected field to have width {} but supplied value has width {}.", exp, act)?;
+                write!(
+                    f,
+                    "Expected field to have width {} but supplied value has width {}.",
+                    exp, act
+                )?;
             }
             InnerError::WhitespaceError => {
                 fmt_err(&self.text, f)?;
-                write!(f, "Found non-whitespace character between data fields (strict)")?;
+                write!(
+                    f,
+                    "Found non-whitespace character between data fields (strict)"
+                )?;
             }
         }
 
@@ -334,11 +337,11 @@ pub enum InnerError {
     /// While decoding an enum found a key that does not match any known variant
     UnknownKey,
     /// Aparent width of parsed field do not match declared field size
-    /// 
+    ///
     /// Params are expected len, actual len
     InvalidWidth(usize, usize),
     /// Whitespace error in `strict` mode.
-    /// 
+    ///
     /// While parsing serialized data in `strict` mode, found missing whitespace
     /// at end of line or a non-whitespace character where whitespace was expected.
     WhitespaceError,

@@ -1,6 +1,6 @@
-use std::io::{BufRead, BufReader, Lines, Read};
 #[cfg(any(feature = "experimental-write", doc))]
 use std::io::Write;
+use std::io::{BufRead, BufReader, Lines, Read};
 use std::marker::PhantomData;
 
 use crate::error::Error;
@@ -27,9 +27,9 @@ pub trait WriteFixed {
     /// # use std::io;
     /// #[derive(WriteFixed)]
     /// struct Point {
-    ///     #[fixcol(width=3)]
+    ///     #[fixcol(width = 3)]
     ///     x: u8,
-    ///     #[fixcol(width=3)]
+    ///     #[fixcol(width = 3)]
     ///     y: u8,
     /// }
     ///
@@ -58,8 +58,10 @@ pub trait WriteFixed {
 /// use fixcol::WriteFixed;
 /// #[derive(WriteFixed)]
 /// struct Point {
-///     #[fixcol(width=3)] x: u8,
-///     #[fixcol(width=3)] y: u8,
+///     #[fixcol(width = 3)]
+///     x: u8,
+///     #[fixcol(width = 3)]
+///     y: u8,
 /// }
 /// // Point implements WriteFixed
 ///
@@ -88,8 +90,9 @@ pub trait WriteFixedAll {
     /// #   Point { x: 123, y: 42},
     /// #   Point { x: 42, y: 123},
     /// ];
-    /// # fn f() {
-    /// let mut file = File::open("my_file.txt").unwrap();
+    /// # fn f() -> Result<(), fixcol::error::Error> {
+    /// let mut file = File::open("my_file.txt")?;
+    /// # Ok(())
     /// # }
     /// # let mut file: Vec<u8> = Vec::new();
     ///
@@ -123,6 +126,7 @@ impl<T: WriteFixed, Iter: IntoIterator<Item = T>> WriteFixedAll for Iter {
 /// [`read_fixed_all`].
 ///
 /// [`read_fixed_all`]: ReadFixed::read_fixed_all
+#[derive(Debug)]
 pub struct Iter<T, R>
 where
     T: ReadFixed,
@@ -195,22 +199,25 @@ pub trait ReadFixed {
     ///
     /// # Example
     /// ```
-    /// use fixcol::ReadFixed;
     /// use std::fs::File;
     /// use std::io;
-    /// 
+    ///
+    /// use fixcol::ReadFixed;
+    /// use fixcol::error::Error;
+    ///
     /// #[derive(ReadFixed)]
     /// struct Foo {
-    ///     #[fixcol(width=3)]
+    ///     #[fixcol(width = 3)]
     ///     foo: String,
-    ///     #[fixcol(width=3)]
+    ///     #[fixcol(width = 3)]
     ///     bar: String,
     /// }
     ///
     /// let mut buffer: &[u8] = "foobar".as_bytes();
-    /// let my_foo: Foo = Foo::read_fixed(&mut buffer).unwrap();
-    /// # assert_eq!(my_foo.foo, "foo".to_string());
-    /// # assert_eq!(my_foo.bar, "bar".to_string());
+    /// let res: Result<Foo, Error> = Foo::read_fixed(&mut buffer);
+    /// # let foo = res.unwrap();
+    /// # assert_eq!(foo.foo, "foo".to_string());
+    /// # assert_eq!(foo.bar, "bar".to_string());
     /// ```
     fn read_fixed<R>(buf: &mut R) -> Result<Self, Error>
     where
@@ -232,16 +239,19 @@ pub trait ReadFixed {
     ///     // ...
     /// }
     ///
-    /// # fn f() {
-    /// let mut file = File::open("my_file.txt").unwrap();
+    /// # fn f() -> Result<(), fixcol::error::Error> {
+    /// let mut file = File::open("my_file.txt")?;
     /// for res in MyType::read_fixed_all(file) {
     ///     match res {
-    ///         Ok(my_type) => // my_type is of type MyType ... do something with it here
-    /// #       {},
-    ///         Err(_) => // handle error
-    /// #       {},
+    ///         Ok(my_type) => {
+    ///             // my_type is of type MyType ... do something with it here
+    ///         }
+    ///         Err(_) => {
+    ///             // handle error
+    ///         }
     ///     }
     /// }
+    /// # Ok(())
     /// # }
     /// ```
     fn read_fixed_all<R>(buf: R) -> Iter<Self, R>
@@ -266,18 +276,23 @@ pub trait ReadFixed {
     /// # use fixcol::FieldDescription;
     /// #[derive(ReadFixed)]
     /// struct Point {
-    ///     #[fixcol(width=3, align="right")]
+    ///     #[fixcol(width = 3, align = "right")]
     ///     x: u8,
-    ///     #[fixcol(width=3, align="right")]
+    ///     #[fixcol(width = 3, align = "right")]
     ///     y: u8,
     /// }
     ///
-    /// let point = Point::read_fixed_str(" 42  7").unwrap();
+    /// # fn f() -> Result<(), fixcol::error::Error> {
+    /// let point = Point::read_fixed_str(" 42  7")?;
     /// assert_eq!(point.x, 42);
-    /// assert_eq!(point.y, 7)
+    /// assert_eq!(point.y, 7);
+    /// # Ok(())
+    /// # }
+    /// # assert!(f().is_ok());
     /// ```
     ///
     /// It can also be useful to pull directly from slices.
+    /// 
     /// ```
     /// # use fixcol::{FixedDeserializer, FieldDescription, ReadFixed};
     /// # #[derive(ReadFixed)]
@@ -287,11 +302,16 @@ pub trait ReadFixed {
     /// #     #[fixcol(width=3)]
     /// #     y: u8,
     /// # }
+    /// #
+    /// # fn f() -> Result<(), fixcol::error::Error> {
     /// let s = ">>12361 <<";
-    /// let point = Point::read_fixed_str(&s[2..8]).unwrap();
+    /// let point = Point::read_fixed_str(&s[2..8])?;
     ///
     /// assert_eq!(point.x, 123);
     /// assert_eq!(point.y, 61);
+    /// # Ok(())
+    /// # }
+    /// # assert!(f().is_ok());
     /// ```
     fn read_fixed_str(s: &str) -> Result<Self, Error>
     where
@@ -315,16 +335,20 @@ pub trait ReadFixed {
     /// # use fixcol::FieldDescription;
     /// #[derive(ReadFixed)]
     /// struct Point {
-    ///     #[fixcol(width=3, align="right")]
+    ///     #[fixcol(width = 3, align = "right")]
     ///     x: u8,
-    ///     #[fixcol(width=3, align="right")]
+    ///     #[fixcol(width = 3, align = "right")]
     ///     y: u8,
     /// }
     ///
+    /// # fn f() -> Result<(), fixcol::error::Error> {
     /// let s = String::from(" 42  7");
-    /// let point = Point::read_fixed_string(s).unwrap();
+    /// let point = Point::read_fixed_string(s)?;
     /// assert_eq!(point.x, 42);
-    /// assert_eq!(point.y, 7)
+    /// assert_eq!(point.y, 7);
+    /// # Ok(())
+    /// # }
+    /// # assert!(f().is_ok());
     /// ```
     fn read_fixed_string(s: String) -> Result<Self, Error>
     where
@@ -407,9 +431,16 @@ mod tests {
         assert_eq!(actual, expected);
     }
 
+    #[test]
+    fn iter_debug() {
+        let buf = "foo\nbar\nbaz";
+        let iter = Foo::read_fixed_all(buf.as_bytes());
+        assert_ne!(format!("{:?}", iter), "");
+    }
+
     // Derive tests (struct)
     ////////////////////////////////
-    
+
     // Helper function only used in write tests
     #[cfg(feature = "experimental-write")]
     fn to_str(inp: Vec<u8>) -> String {
@@ -417,9 +448,10 @@ mod tests {
         str::from_utf8(inp.as_slice()).unwrap().to_string()
     }
 
-    use crate as fixcol;
     #[cfg(feature = "experimental-write")]
     use fixcol::WriteFixed;
+
+    use crate as fixcol;
 
     #[cfg_attr(feature = "experimental-write", derive(WriteFixed))]
     #[derive(ReadFixed, Eq, PartialEq, Debug)]

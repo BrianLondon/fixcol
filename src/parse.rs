@@ -48,15 +48,19 @@ use crate::ReadFixed;
 ///
 /// #[derive(ReadFixed)]
 /// struct Person {
-///     #[fixcol(width=10)]
+///     #[fixcol(width = 10)]
 ///     pub name: String,
 ///     #[fixcol(width=3, align=right)]
 ///     pub age: u8,
-///     #[fixcol(width=2)]
+///     #[fixcol(width = 2)]
 ///     pub eye_color: EyeColor,
 /// }
 ///
-/// let person = Person::read_fixed_str("Harold     42Gr").unwrap();
+/// # fn f() -> Result<(), fixcol::error::Error> {
+/// let person = Person::read_fixed_str("Harold     42Gr")?;
+/// # Ok(())
+/// # }
+/// # let person = Person::read_fixed_str("Harold     42Gr").unwrap();
 /// assert_eq!(person.eye_color, EyeColor::Green);
 /// ```
 ///
@@ -101,8 +105,9 @@ use crate::ReadFixed;
 /// }
 ///
 /// // Note we are being sloppy with error handling to keep the example simple
-/// # fn f() {
-/// let mut file = File::open("my_file.txt").unwrap();
+/// # fn f() -> Result<(), fixcol::error::Error> {
+/// let mut file = File::open("my_file.txt")?;
+/// # Ok(())
 /// # }
 /// # let mut file = "George       1989  3 12\nClaire       2001 11 26".as_bytes();
 /// let people: Vec<Person> = Person::read_fixed_all(file)
@@ -128,9 +133,9 @@ use crate::ReadFixed;
 /// #[derive(ReadFixed)]
 /// # #[derive(Eq, PartialEq, Debug)]
 /// struct Person {
-///     #[fixcol(width=12)]
+///     #[fixcol(width = 12)]
 ///     name: String,
-///     #[fixcol(width=10, skip=1)]
+///     #[fixcol(width = 10, skip = 1)]
 ///     birthday: Birthday,
 /// }
 ///
@@ -140,20 +145,23 @@ use crate::ReadFixed;
 ///
 /// impl FixedDeserializer for Birthday {
 ///     fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<Birthday, DataError> {
-///         let text = &s[desc.skip..desc.skip+desc.len];
+///         let text = &s[desc.skip..desc.skip + desc.len];
 ///         let mut parts = text.split(' ').filter(|x| *x != "");
 ///
-///         let year = parts.next()
+///         let year = parts
+///             .next()
 ///             .ok_or(DataError::custom(&text, "Could not find year"))?
 ///             .parse()
 ///             .map_err(|e| DataError::custom(&text, "Could not decode year"))?;
 ///
-///         let month = parts.next()
+///         let month = parts
+///             .next()
 ///             .ok_or(DataError::custom(&text, "Could not find month"))?
 ///             .parse()
 ///             .map_err(|e| DataError::custom(&text, "Could not decode month"))?;
 ///
-///         let day = parts.next()
+///         let day = parts
+///             .next()
 ///             .ok_or(DataError::custom(&text, "Could not find day"))?
 ///             .parse()
 ///             .map_err(|e| DataError::custom(&text, "Could not decode day"))?;
@@ -236,11 +244,15 @@ macro_rules! fixed_deserializer_int_impl {
 
                 if desc.strict && desc.alignment == Alignment::Full && trimmed.len() != s.len() {
                     let trimmed_len = trimmed.len();
-                    Err(DataError::new_data_width_error(String::from(trimmed), trimmed_len, s.len()))
+                    Err(DataError::new_data_width_error(
+                        String::from(trimmed),
+                        trimmed_len,
+                        s.len(),
+                    ))
                 } else {
                     trimmed.parse::<$t>().map_err(|e| {
                         DataError::new_err(trimmed.to_string(), InnerError::ParseIntError(e))
-                    })    
+                    })
                 }
             }
         }
@@ -586,9 +598,24 @@ mod tests {
     #[test]
     fn extract_f32_padding() {
         let descs = vec![
-            FieldDescription{ skip: 0, len: 6, alignment: Alignment::Full, strict: false },
-            FieldDescription{ skip: 0, len: 6, alignment: Alignment::Left, strict: false },
-            FieldDescription{ skip: 0, len: 6, alignment: Alignment::Right, strict: false },
+            FieldDescription {
+                skip: 0,
+                len: 6,
+                alignment: Alignment::Full,
+                strict: false,
+            },
+            FieldDescription {
+                skip: 0,
+                len: 6,
+                alignment: Alignment::Left,
+                strict: false,
+            },
+            FieldDescription {
+                skip: 0,
+                len: 6,
+                alignment: Alignment::Right,
+                strict: false,
+            },
         ];
         let expected: f32 = 3.14;
 
@@ -612,7 +639,6 @@ mod tests {
 
         assert_eq!(tests_run, 3);
     }
-    
 
     #[test]
     fn extract_f32_full() {
@@ -731,7 +757,7 @@ mod tests {
         };
         let actual = u8::parse_fixed("042", &desc).unwrap();
         assert_eq!(actual, 42);
-        
+
         let desc = FieldDescription {
             skip: 0,
             len: 3,
@@ -749,7 +775,7 @@ mod tests {
         };
         let actual = u8::parse_fixed(" 42", &desc).unwrap();
         assert_eq!(actual, 42);
-        
+
         let desc = FieldDescription {
             skip: 0,
             len: 3,
@@ -822,7 +848,7 @@ mod tests {
         let actual = u8::parse_fixed("  42 ", &desc);
         assert!(actual.is_err());
         assert_eq!(
-            actual.unwrap_err().to_string(), 
+            actual.unwrap_err().to_string(),
             "Error decoding data from \"42 \": invalid digit found in string\n"
         );
 
