@@ -2,6 +2,13 @@
 name = "fixcol"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+keywords = ["fixed", "column", "serialization", "parse", "file"]
+categories = ["encoding", "parsing"]
+homepage = "https://github.com/BrianLondon/fixcol"
+repository = "https://github.com/BrianLondon/fixcol"
+readme = "README.md"
+description = "A library for reading and writing fixed width / column delimited data files."
 
 [features]
 experimental-write = []
