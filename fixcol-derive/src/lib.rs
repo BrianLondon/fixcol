@@ -23,8 +23,8 @@ use crate::structs::{struct_read, struct_write};
 /// Derive proc-macro for ReadFixed
 //
 // See documentation on [`ReadFixed`] for a full description.
-// 
-// [`ReadFixed`]: fixcol::ReadFixed 
+//
+// [`ReadFixed`]: fixcol::ReadFixed
 #[proc_macro_derive(ReadFixed, attributes(fixcol))]
 pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
     let ast: DeriveInput = syn::parse(input).unwrap();
@@ -59,7 +59,7 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
 }
 
 /// Derive proc-macro for WriteFixed
-// 
+//
 // See [[`WriteFixed`]] for a complete discuassion.
 #[proc_macro_derive(WriteFixed, attributes(fixcol))]
 pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
@@ -71,7 +71,9 @@ pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
 
     let function_impl_result = match ast.data {
         Data::Struct(DataStruct { fields, .. }) => struct_write(name, attrs, fields),
-        Data::Enum(DataEnum { variants, .. }) => enum_write(name, attrs, &variants.iter().collect()),
+        Data::Enum(DataEnum { variants, .. }) => {
+            enum_write(name, attrs, &variants.iter().collect())
+        }
         Data::Union(u) => Err(MacroError::new(
             "Deriving WriteFixed on unions is not supported",
             u.union_token.span(),

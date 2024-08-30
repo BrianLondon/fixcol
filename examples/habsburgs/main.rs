@@ -1,5 +1,5 @@
-use std::{fs::File, io};
 use std::path::Path;
+use std::{fs::File, io};
 
 use alg::coi_for_data_set;
 use fixcol::{ReadFixed, WriteFixed, WriteFixedAll};
@@ -20,7 +20,7 @@ enum RelationType {
 #[fixcol(key_width = 1)]
 enum Record {
     #[fixcol(key = "P")]
-    Person{
+    Person {
         #[fixcol(width = 3)]
         id: u8,
         #[fixcol(width = 11, align = "right")]
@@ -74,7 +74,9 @@ pub fn main() {
         .collect();
 
     // Run the coi calculation
-    let results = coi_for_data_set(records).into_iter().filter(|r| r.coi > 0.0);
+    let results = coi_for_data_set(records)
+        .into_iter()
+        .filter(|r| r.coi > 0.0);
 
     // Write the serialized output to STDOUT
     let mut stdout = io::stdout();

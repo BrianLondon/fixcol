@@ -62,7 +62,7 @@ use std::string::FromUtf8Error;
 ///
 /// ```
 /// use fixcol::ReadFixed;
-/// 
+///
 /// #[derive(ReadFixed)]
 /// struct MyType {
 ///     // Fields here
@@ -71,7 +71,7 @@ use std::string::FromUtf8Error;
 /// use std::fs::File;
 /// # fn f() {
 /// let mut file = File::open("my_file.txt").unwrap();
-/// 
+///
 /// for row in MyType::read_fixed_all(file) {
 ///     match row {
 ///         Ok(my_type) => {
@@ -198,17 +198,11 @@ impl DataError {
     }
 
     pub(crate) fn new_data_width_error(text: String, expected: usize, actual: usize) -> Self {
-        Self::new_err(
-            text,
-            InnerError::InvalidWidth(expected, actual)
-        )
+        Self::new_err(text, InnerError::InvalidWidth(expected, actual))
     }
 
     pub(crate) fn whitespace_error(text: String) -> Self {
-        Self::new_err(
-            text,
-            InnerError::WhitespaceError,
-        )
+        Self::new_err(text, InnerError::WhitespaceError)
     }
 
     /// Creates a new custom `DataError`
@@ -304,11 +298,18 @@ impl Display for DataError {
             }
             InnerError::InvalidWidth(exp, act) => {
                 fmt_err(&self.text, f)?;
-                write!(f, "Expected field to have width {} but supplied value has width {}.", exp, act)?;
+                write!(
+                    f,
+                    "Expected field to have width {} but supplied value has width {}.",
+                    exp, act
+                )?;
             }
             InnerError::WhitespaceError => {
                 fmt_err(&self.text, f)?;
-                write!(f, "Found non-whitespace character between data fields (strict)")?;
+                write!(
+                    f,
+                    "Found non-whitespace character between data fields (strict)"
+                )?;
             }
         }
 
@@ -334,11 +335,11 @@ pub enum InnerError {
     /// While decoding an enum found a key that does not match any known variant
     UnknownKey,
     /// Aparent width of parsed field do not match declared field size
-    /// 
+    ///
     /// Params are expected len, actual len
     InvalidWidth(usize, usize),
     /// Whitespace error in `strict` mode.
-    /// 
+    ///
     /// While parsing serialized data in `strict` mode, found missing whitespace
     /// at end of line or a non-whitespace character where whitespace was expected.
     WhitespaceError,

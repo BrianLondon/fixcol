@@ -9,7 +9,6 @@ use fixcol::{WriteFixed, WriteFixedAll};
 // we did not correctly handle when those two had different
 // names. i.e., Atom(Atom) worked but AtomV(AtomS) did not.
 
-
 #[cfg_attr(feature = "experimental-write", derive(WriteFixed))]
 #[derive(Debug, PartialEq, Eq, ReadFixed)]
 struct AtomS {

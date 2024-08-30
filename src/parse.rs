@@ -236,11 +236,15 @@ macro_rules! fixed_deserializer_int_impl {
 
                 if desc.strict && desc.alignment == Alignment::Full && trimmed.len() != s.len() {
                     let trimmed_len = trimmed.len();
-                    Err(DataError::new_data_width_error(String::from(trimmed), trimmed_len, s.len()))
+                    Err(DataError::new_data_width_error(
+                        String::from(trimmed),
+                        trimmed_len,
+                        s.len(),
+                    ))
                 } else {
                     trimmed.parse::<$t>().map_err(|e| {
                         DataError::new_err(trimmed.to_string(), InnerError::ParseIntError(e))
-                    })    
+                    })
                 }
             }
         }
@@ -586,9 +590,24 @@ mod tests {
     #[test]
     fn extract_f32_padding() {
         let descs = vec![
-            FieldDescription{ skip: 0, len: 6, alignment: Alignment::Full, strict: false },
-            FieldDescription{ skip: 0, len: 6, alignment: Alignment::Left, strict: false },
-            FieldDescription{ skip: 0, len: 6, alignment: Alignment::Right, strict: false },
+            FieldDescription {
+                skip: 0,
+                len: 6,
+                alignment: Alignment::Full,
+                strict: false,
+            },
+            FieldDescription {
+                skip: 0,
+                len: 6,
+                alignment: Alignment::Left,
+                strict: false,
+            },
+            FieldDescription {
+                skip: 0,
+                len: 6,
+                alignment: Alignment::Right,
+                strict: false,
+            },
         ];
         let expected: f32 = 3.14;
 
@@ -612,7 +631,6 @@ mod tests {
 
         assert_eq!(tests_run, 3);
     }
-    
 
     #[test]
     fn extract_f32_full() {
@@ -731,7 +749,7 @@ mod tests {
         };
         let actual = u8::parse_fixed("042", &desc).unwrap();
         assert_eq!(actual, 42);
-        
+
         let desc = FieldDescription {
             skip: 0,
             len: 3,
@@ -749,7 +767,7 @@ mod tests {
         };
         let actual = u8::parse_fixed(" 42", &desc).unwrap();
         assert_eq!(actual, 42);
-        
+
         let desc = FieldDescription {
             skip: 0,
             len: 3,
@@ -822,7 +840,7 @@ mod tests {
         let actual = u8::parse_fixed("  42 ", &desc);
         assert!(actual.is_err());
         assert_eq!(
-            actual.unwrap_err().to_string(), 
+            actual.unwrap_err().to_string(),
             "Error decoding data from \"42 \": invalid digit found in string\n"
         );
 

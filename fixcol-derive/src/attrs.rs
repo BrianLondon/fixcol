@@ -322,7 +322,12 @@ struct FieldConfigBuilder {
 
 impl FieldConfigBuilder {
     fn new() -> Self {
-        Self { width: None, skip: None, align: None, strict: None }
+        Self {
+            width: None,
+            skip: None,
+            align: None,
+            strict: None,
+        }
     }
 }
 
@@ -385,7 +390,6 @@ pub(crate) fn parse_field_attributes(
                     .map_err(|_| MacroError::new(err, param.value_span()))?;
                 let old = conf.strict.replace(val);
                 check_none("strict", param.key_span(), old)?;
-
             }
             key => {
                 return Err(MacroError::new(
@@ -415,7 +419,7 @@ pub(crate) fn parse_field_attributes(
 }
 
 // TODO: confirm these need to be public
-struct StructConfigBuilder { 
+struct StructConfigBuilder {
     strict: Option<bool>,
 }
 
@@ -429,9 +433,7 @@ pub(crate) struct StructConfig {
     strict: bool,
 }
 
-pub(crate) fn parse_struct_attributes(
-    attrs: &Vec<Attribute>,
-) -> Result<StructConfig, MacroError> {
+pub(crate) fn parse_struct_attributes(attrs: &Vec<Attribute>) -> Result<StructConfig, MacroError> {
     let params = parse_attributes(attrs)?;
     let mut conf = StructConfigBuilder::new();
 
@@ -471,7 +473,11 @@ struct EnumConfigBuilder {
 
 impl EnumConfigBuilder {
     pub fn new() -> Self {
-        Self { ignore_others: None, key_width: None, strict: None }
+        Self {
+            ignore_others: None,
+            key_width: None,
+            strict: None,
+        }
     }
 }
 

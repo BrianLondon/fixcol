@@ -1,6 +1,6 @@
-use std::io::{BufRead, BufReader, Lines, Read};
 #[cfg(any(feature = "experimental-write", doc))]
 use std::io::Write;
+use std::io::{BufRead, BufReader, Lines, Read};
 use std::marker::PhantomData;
 
 use crate::error::Error;
@@ -198,7 +198,7 @@ pub trait ReadFixed {
     /// use fixcol::ReadFixed;
     /// use std::fs::File;
     /// use std::io;
-    /// 
+    ///
     /// #[derive(ReadFixed)]
     /// struct Foo {
     ///     #[fixcol(width=3)]
@@ -409,7 +409,7 @@ mod tests {
 
     // Derive tests (struct)
     ////////////////////////////////
-    
+
     // Helper function only used in write tests
     #[cfg(feature = "experimental-write")]
     fn to_str(inp: Vec<u8>) -> String {

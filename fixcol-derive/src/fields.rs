@@ -28,19 +28,19 @@ pub(crate) fn read_unnamed_fields(
             let buf_size = skip + width;
 
             let read_field = if field_num == last_field && !strict {
-                quote! { 
+                quote! {
                     println!("last/lax");
                     let n = buf.read(&mut s)
                         .map_err(|e| fixcol::error::Error::from(e))?;
                     println!("{}, [{}]", n, s);
                     let raw = String::from_utf8(s[..n].to_vec())
-                        .map_err(|e| fixcol::error::Error::from(e))?;                
+                        .map_err(|e| fixcol::error::Error::from(e))?;
                 }
             } else {
-                quote! { 
+                quote! {
                     println!("last/strict");
                     buf.read_exact(&mut s)
-                        .map_err(|e| fixcol::error::Error::from(e))?; 
+                        .map_err(|e| fixcol::error::Error::from(e))?;
                     let raw = String::from_utf8(s.to_vec())
                         .map_err(|e| fixcol::error::Error::from(e))?;
                 }
@@ -84,21 +84,20 @@ pub(crate) fn read_named_fields(
             let buf_size = skip + width;
 
             let read_field = if field_num == last_field && !strict {
-                quote! { 
+                quote! {
                     let n = buf.read(&mut s)
                         .map_err(|e| fixcol::error::Error::from(e))?;
                     let raw = String::from_utf8(s[..n].to_vec())
-                        .map_err(|e| fixcol::error::Error::from(e))?;                
+                        .map_err(|e| fixcol::error::Error::from(e))?;
                 }
             } else {
-                quote! { 
+                quote! {
                     buf.read_exact(&mut s)
-                        .map_err(|e| fixcol::error::Error::from(e))?; 
+                        .map_err(|e| fixcol::error::Error::from(e))?;
                     let raw = String::from_utf8(s.to_vec())
                         .map_err(|e| fixcol::error::Error::from(e))?;
                 }
             };
-
 
             // TODO: we shouldn't need a String here at all
             let read = quote! {
@@ -143,7 +142,8 @@ pub(crate) fn write_unnamed_fields(
         .enumerate()
         .map(|field| -> Result<(Index, FieldConfig), MacroError> {
             let name = syn::Index::from(field.0);
-            let config = attrs::parse_field_attributes(&field.1.span(), &field.1.attrs, outer_config)?;
+            let config =
+                attrs::parse_field_attributes(&field.1.span(), &field.1.attrs, outer_config)?;
 
             Ok((name, config))
         })

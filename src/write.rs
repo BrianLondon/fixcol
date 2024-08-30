@@ -41,12 +41,12 @@ impl FixedSerializer for String {
     ) -> Result<(), Error> {
         // If strict fail on overflow
         if desc.strict && self.len() > desc.len {
-            return Err(DataError::new_data_width_error(self.clone(), desc.len, self.len()).into())
+            return Err(DataError::new_data_width_error(self.clone(), desc.len, self.len()).into());
         }
 
         // if strict and full-align fail on too short also
         if desc.strict && desc.alignment == Alignment::Full && self.len() != desc.len {
-            return Err(DataError::new_data_width_error(self.clone(), desc.len, self.len()).into())
+            return Err(DataError::new_data_width_error(self.clone(), desc.len, self.len()).into());
         }
 
         // If so we'll need to truncate
@@ -92,9 +92,7 @@ macro_rules! fixed_serializer_int_impl {
                 if s.len() > desc.len {
                     if desc.strict {
                         let len = s.len();
-                        return Err(
-                            DataError::new_data_width_error(s, desc.len, len).into()
-                        );
+                        return Err(DataError::new_data_width_error(s, desc.len, len).into());
                     }
                     // truncate if not strict
                     s = s.as_str()[..desc.len].to_string();
@@ -295,7 +293,7 @@ mod tests {
         assert!(res.is_err());
         let e = res.unwrap_err();
         assert_eq!(
-            e.to_string(), 
+            e.to_string(),
             "Error decoding data from \"foo\": Expected field to \
             have width 6 but supplied value has width 3.\n"
         );

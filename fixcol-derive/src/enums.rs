@@ -3,13 +3,12 @@ use quote::{format_ident, quote};
 use syn::spanned::Spanned;
 use syn::{Attribute, FieldsNamed, FieldsUnnamed, Ident, Variant};
 
-use crate::attrs::{fixcol_attrs, parse_enum_attributes, parse_variant_attributes, OuterConfig, VariantConfig};
+use crate::attrs::{
+    fixcol_attrs, parse_enum_attributes, parse_variant_attributes, OuterConfig, VariantConfig,
+};
 use crate::error::{MacroError, MacroResult};
 use crate::fields::{
-    read_named_fields,
-    read_unnamed_fields,
-    write_named_fields,
-    write_unnamed_fields,
+    read_named_fields, read_unnamed_fields, write_named_fields, write_unnamed_fields,
 };
 
 //
@@ -28,7 +27,8 @@ pub(crate) fn enum_read(
         .map(|variant| -> Result<(String, TokenStream), MacroError> {
             let var_name = &variant.ident;
 
-            let config: VariantConfig = parse_variant_attributes(&var_name, &variant.attrs, &enum_config)?;
+            let config: VariantConfig =
+                parse_variant_attributes(&var_name, &variant.attrs, &enum_config)?;
             let key = config.key.clone();
 
             let read = match &variant.fields {
@@ -151,11 +151,15 @@ pub(crate) fn enum_write(
                 parse_variant_attributes(&variant.ident, &variant.attrs, &enum_config).unwrap(); // TODO: need to do this for write macros also
 
             let out = match &variant.fields {
-                syn::Fields::Named(fields) => write_struct_variant(&variant.ident, &config, fields)?,
+                syn::Fields::Named(fields) => {
+                    write_struct_variant(&variant.ident, &config, fields)?
+                }
                 syn::Fields::Unnamed(fields) if config.embed => {
                     write_embedded_variant(&variant.ident, &config, fields)?
                 }
-                syn::Fields::Unnamed(fields) => write_tuple_variant(&variant.ident, &config, fields)?,
+                syn::Fields::Unnamed(fields) => {
+                    write_tuple_variant(&variant.ident, &config, fields)?
+                }
                 syn::Fields::Unit => write_unit_variant(&variant.ident, &config),
             };
 
@@ -180,7 +184,11 @@ pub(crate) fn enum_write(
     Ok(code)
 }
 
-fn write_struct_variant(ident: &Ident, config: &VariantConfig, fields: &FieldsNamed) -> MacroResult {
+fn write_struct_variant(
+    ident: &Ident,
+    config: &VariantConfig,
+    fields: &FieldsNamed,
+) -> MacroResult {
     let key = config.key.to_owned();
     let key_len = key.len();
     let (names, configs) = write_named_fields(&fields, &(*config).clone().into())?;
@@ -204,7 +212,11 @@ fn write_struct_variant(ident: &Ident, config: &VariantConfig, fields: &FieldsNa
     Ok(code)
 }
 
-fn write_tuple_variant(ident: &Ident, config: &VariantConfig, fields: &FieldsUnnamed) -> MacroResult {
+fn write_tuple_variant(
+    ident: &Ident,
+    config: &VariantConfig,
+    fields: &FieldsUnnamed,
+) -> MacroResult {
     let (_, configs) = write_unnamed_fields(&fields, &config.clone().into())?;
     let VariantConfig { key, strict, .. } = config;
 
@@ -235,7 +247,11 @@ fn write_tuple_variant(ident: &Ident, config: &VariantConfig, fields: &FieldsUnn
     Ok(code)
 }
 
-fn write_embedded_variant(ident: &Ident, config: &VariantConfig, fields: &FieldsUnnamed) -> MacroResult {
+fn write_embedded_variant(
+    ident: &Ident,
+    config: &VariantConfig,
+    fields: &FieldsUnnamed,
+) -> MacroResult {
     if fields.unnamed.len() != 1 {
         return Err(MacroError::new(
             "Embed param is only valid on variants with exactly one field",
