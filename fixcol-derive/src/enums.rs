@@ -247,7 +247,7 @@ fn write_embedded_variant(ident: &Ident, config: &VariantConfig, fields: &Fields
         if let Some(fa) = fixcol_attrs(&field.attrs).first() {
             return Err(MacroError::new(
                 "Did not expect fixcol attribute on embedded enum variant",
-                fa.meta.span(),
+                fa.meta.path().span(),
             ));
         }
 
