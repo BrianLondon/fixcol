@@ -125,6 +125,7 @@ impl<T: WriteFixed, Iter: IntoIterator<Item = T>> WriteFixedAll for Iter {
 /// [`read_fixed_all`].
 ///
 /// [`read_fixed_all`]: ReadFixed::read_fixed_all
+#[derive(Debug)]
 pub struct Iter<T, R>
 where
     T: ReadFixed,
@@ -408,6 +409,13 @@ mod tests {
             .collect();
 
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn iter_debug() {
+        let buf = "foo\nbar\nbaz";
+        let iter = Foo::read_fixed_all(buf.as_bytes());
+        assert_ne!(format!("{:?}", iter), "");
     }
 
     // Derive tests (struct)
