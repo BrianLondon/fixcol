@@ -93,7 +93,7 @@ fn read_embedded_variant(name: &Ident, fields: &FieldsUnnamed) -> MacroResult {
         if let Some(fa) = fixcol_attrs(&field.attrs).first() {
             return Err(MacroError::new(
                 "Did not expect fixcol attribute on embedded enum variant",
-                fa.meta.span(),
+                fa.meta.path().span(),
             ));
         }
 
