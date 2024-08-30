@@ -56,7 +56,11 @@ use crate::ReadFixed;
 ///     pub eye_color: EyeColor,
 /// }
 ///
-/// let person = Person::read_fixed_str("Harold     42Gr").unwrap();
+/// # fn f() -> Result<(), fixcol::error::Error> {
+/// let person = Person::read_fixed_str("Harold     42Gr")?;
+/// # Ok(())
+/// # }
+/// # let person = Person::read_fixed_str("Harold     42Gr").unwrap();
 /// assert_eq!(person.eye_color, EyeColor::Green);
 /// ```
 ///
@@ -101,8 +105,9 @@ use crate::ReadFixed;
 /// }
 ///
 /// // Note we are being sloppy with error handling to keep the example simple
-/// # fn f() {
-/// let mut file = File::open("my_file.txt").unwrap();
+/// # fn f() -> Result<(), fixcol::error::Error> {
+/// let mut file = File::open("my_file.txt")?;
+/// # Ok(())
 /// # }
 /// # let mut file = "George       1989  3 12\nClaire       2001 11 26".as_bytes();
 /// let people: Vec<Person> = Person::read_fixed_all(file)

@@ -90,8 +90,9 @@ pub trait WriteFixedAll {
     /// #   Point { x: 123, y: 42},
     /// #   Point { x: 42, y: 123},
     /// ];
-    /// # fn f() {
-    /// let mut file = File::open("my_file.txt").unwrap();
+    /// # fn f() -> Result<(), fixcol::error::Error> {
+    /// let mut file = File::open("my_file.txt")?;
+    /// # Ok(())
     /// # }
     /// # let mut file: Vec<u8> = Vec::new();
     ///
@@ -202,6 +203,7 @@ pub trait ReadFixed {
     /// use std::io;
     ///
     /// use fixcol::ReadFixed;
+    /// use fixcol::error::Error;
     ///
     /// #[derive(ReadFixed)]
     /// struct Foo {
@@ -212,9 +214,10 @@ pub trait ReadFixed {
     /// }
     ///
     /// let mut buffer: &[u8] = "foobar".as_bytes();
-    /// let my_foo: Foo = Foo::read_fixed(&mut buffer).unwrap();
-    /// # assert_eq!(my_foo.foo, "foo".to_string());
-    /// # assert_eq!(my_foo.bar, "bar".to_string());
+    /// let res: Result<Foo, Error> = Foo::read_fixed(&mut buffer);
+    /// # let foo = res.unwrap();
+    /// # assert_eq!(foo.foo, "foo".to_string());
+    /// # assert_eq!(foo.bar, "bar".to_string());
     /// ```
     fn read_fixed<R>(buf: &mut R) -> Result<Self, Error>
     where
@@ -236,16 +239,19 @@ pub trait ReadFixed {
     ///     // ...
     /// }
     ///
-    /// # fn f() {
-    /// let mut file = File::open("my_file.txt").unwrap();
+    /// # fn f() -> Result<(), fixcol::error::Error> {
+    /// let mut file = File::open("my_file.txt")?;
     /// for res in MyType::read_fixed_all(file) {
     ///     match res {
-    ///         Ok(my_type) => // my_type is of type MyType ... do something with it here
-    /// #       {},
-    ///         Err(_) => // handle error
-    /// #       {},
+    ///         Ok(my_type) => {
+    ///             // my_type is of type MyType ... do something with it here
+    ///         }
+    ///         Err(_) => {
+    ///             // handle error
+    ///         }
     ///     }
     /// }
+    /// # Ok(())
     /// # }
     /// ```
     fn read_fixed_all<R>(buf: R) -> Iter<Self, R>
@@ -276,12 +282,17 @@ pub trait ReadFixed {
     ///     y: u8,
     /// }
     ///
-    /// let point = Point::read_fixed_str(" 42  7").unwrap();
+    /// # fn f() -> Result<(), fixcol::error::Error> {
+    /// let point = Point::read_fixed_str(" 42  7")?;
     /// assert_eq!(point.x, 42);
-    /// assert_eq!(point.y, 7)
+    /// assert_eq!(point.y, 7);
+    /// # Ok(())
+    /// # }
+    /// # assert!(f().is_ok());
     /// ```
     ///
     /// It can also be useful to pull directly from slices.
+    /// 
     /// ```
     /// # use fixcol::{FixedDeserializer, FieldDescription, ReadFixed};
     /// # #[derive(ReadFixed)]
@@ -291,11 +302,16 @@ pub trait ReadFixed {
     /// #     #[fixcol(width=3)]
     /// #     y: u8,
     /// # }
+    /// #
+    /// # fn f() -> Result<(), fixcol::error::Error> {
     /// let s = ">>12361 <<";
-    /// let point = Point::read_fixed_str(&s[2..8]).unwrap();
+    /// let point = Point::read_fixed_str(&s[2..8])?;
     ///
     /// assert_eq!(point.x, 123);
     /// assert_eq!(point.y, 61);
+    /// # Ok(())
+    /// # }
+    /// # assert!(f().is_ok());
     /// ```
     fn read_fixed_str(s: &str) -> Result<Self, Error>
     where
@@ -325,10 +341,14 @@ pub trait ReadFixed {
     ///     y: u8,
     /// }
     ///
+    /// # fn f() -> Result<(), fixcol::error::Error> {
     /// let s = String::from(" 42  7");
-    /// let point = Point::read_fixed_string(s).unwrap();
+    /// let point = Point::read_fixed_string(s)?;
     /// assert_eq!(point.x, 42);
-    /// assert_eq!(point.y, 7)
+    /// assert_eq!(point.y, 7);
+    /// # Ok(())
+    /// # }
+    /// # assert!(f().is_ok());
     /// ```
     fn read_fixed_string(s: String) -> Result<Self, Error>
     where

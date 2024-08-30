@@ -24,8 +24,8 @@
 //! }
 //!
 //! use std::fs::File;
-//! # fn f() {
-//! let mut file = File::open("my_file.txt").unwrap();
+//! # fn f() -> Result<(), fixcol::error::Error> {
+//! let mut file = File::open("my_file.txt")?;
 //! for row in MyType::read_fixed_all(file) {
 //!     match row {
 //!         Ok(my_type) => {
@@ -37,6 +37,7 @@
 //!         }
 //!     }
 //! }
+//! # Ok(()) 
 //! # }
 //! ```
 use std::fmt::{Display, Formatter};
@@ -69,8 +70,8 @@ use std::string::FromUtf8Error;
 /// }
 ///
 /// use std::fs::File;
-/// # fn f() {
-/// let mut file = File::open("my_file.txt").unwrap();
+/// # fn f() -> Result<(), fixcol::error::Error> {
+/// let mut file = File::open("my_file.txt")?;
 ///
 /// for row in MyType::read_fixed_all(file) {
 ///     match row {
@@ -83,6 +84,7 @@ use std::string::FromUtf8Error;
 ///         }
 ///     }
 /// }
+/// # Ok(())
 /// # }
 /// ```
 ///
