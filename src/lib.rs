@@ -134,7 +134,6 @@
 //! 
 //! ```
 //! # use fixcol::ReadFixed;
-//! 
 //! # #[derive(PartialEq, Debug)]
 //! #[derive(ReadFixed)]
 //! struct Node {
@@ -175,7 +174,57 @@
 //! # ]);
 //! ```
 //! 
+//! ## Strict Mode
+//! 
+//! Strict mode may be toggled on or off setting the appropriate `fixcol` attribute
+//! like `#[fixcol(strict = true)]`. When strict mode is disabled, Fixcol will
+//! try it's best to recover encoding errors. When enabled, many more unexpected
+//! conditions will be reported as errors.
+//! 
+//! Strict mode is currently enabled by default, but **this may change** in a 
+//! future version.
+//! 
+//! The `strict` parameter can be applied to a `struct` or `enum`, `enum` variant,
+//! or field. The setting will cascade to other levels with the innermost explicit
+//! application of the `strict` parameter controlling.
+//! 
+//! #### Example
+//! 
+//! ```
+//! # use fixcol::ReadFixed;
+//! #[derive(ReadFixed)]
+//! #[fixcol(strict = false)] // Inner elements will not be parsed in strict mode
+//! struct Point {
+//!     #[fixcol(width = 3)]
+//!     x: u8, // Strict mode not will be applied
+//!     #[fixcol(width = 3, strict = true)]
+//!     y: u8, // Strict mode will be applied
+//!     #[fixcol(width = 3)]
+//!     z: u8, // Strict mode not will be applied
+//! }
+//! ```
+//! 
+//! #### Strict mode effects
+//! 
+//! When a given field is parsed in strict mode the following conditions become
+//! errors.
+//! - The last field on a line is not whitespace padded to the defined length.
+//! - Columns between defined data columns contain non-whitespace characters.
+//! - Numeric column defined with `Full` alignment are not zero-padded to the
+//!   full length.
+//! - A `Left` aligned field beginning with whitespace.
+//! - A `Right` aligned field ending with whitespace.
+//! 
+//! Additional rules are applied while attempting to write a record. The following
+//! are errors in strict mode.
+//! - A `Full` aligned `String` field that is not the expected full length. That
+//!   is, the supplied string must either be naturally the correct length or 
+//!   explicitly whitespace padded to be.
+//! - Value supplied for any column that would overflow the allowed space.
+//! 
 //! ## Schema Definition Parameters
+//! 
+//! 
 #![feature(doc_auto_cfg)]
 
 pub mod error;
