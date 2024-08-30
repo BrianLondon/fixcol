@@ -12,7 +12,6 @@ extern crate syn;
 use enums::enum_write;
 use error::MacroError;
 use proc_macro::TokenStream;
-
 use quote::quote;
 use syn::spanned::Spanned;
 use syn::{Data, DataEnum, DataStruct, DeriveInput};

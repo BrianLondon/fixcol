@@ -1,5 +1,6 @@
+use std::fs::File;
+use std::io;
 use std::path::Path;
-use std::{fs::File, io};
 
 use alg::coi_for_data_set;
 use fixcol::{ReadFixed, WriteFixed, WriteFixedAll};

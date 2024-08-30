@@ -4,7 +4,8 @@ use std::str::FromStr;
 
 use proc_macro2::{Literal, Span, TokenStream, TokenTree};
 use quote::quote;
-use syn::{spanned::Spanned, Attribute, Ident, Meta, Path};
+use syn::spanned::Spanned;
+use syn::{Attribute, Ident, Meta, Path};
 
 use crate::error::MacroError;
 

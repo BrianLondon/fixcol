@@ -27,9 +27,9 @@ pub trait WriteFixed {
     /// # use std::io;
     /// #[derive(WriteFixed)]
     /// struct Point {
-    ///     #[fixcol(width=3)]
+    ///     #[fixcol(width = 3)]
     ///     x: u8,
-    ///     #[fixcol(width=3)]
+    ///     #[fixcol(width = 3)]
     ///     y: u8,
     /// }
     ///
@@ -58,8 +58,10 @@ pub trait WriteFixed {
 /// use fixcol::WriteFixed;
 /// #[derive(WriteFixed)]
 /// struct Point {
-///     #[fixcol(width=3)] x: u8,
-///     #[fixcol(width=3)] y: u8,
+///     #[fixcol(width = 3)]
+///     x: u8,
+///     #[fixcol(width = 3)]
+///     y: u8,
 /// }
 /// // Point implements WriteFixed
 ///
@@ -195,15 +197,16 @@ pub trait ReadFixed {
     ///
     /// # Example
     /// ```
-    /// use fixcol::ReadFixed;
     /// use std::fs::File;
     /// use std::io;
     ///
+    /// use fixcol::ReadFixed;
+    ///
     /// #[derive(ReadFixed)]
     /// struct Foo {
-    ///     #[fixcol(width=3)]
+    ///     #[fixcol(width = 3)]
     ///     foo: String,
-    ///     #[fixcol(width=3)]
+    ///     #[fixcol(width = 3)]
     ///     bar: String,
     /// }
     ///
@@ -266,9 +269,9 @@ pub trait ReadFixed {
     /// # use fixcol::FieldDescription;
     /// #[derive(ReadFixed)]
     /// struct Point {
-    ///     #[fixcol(width=3, align="right")]
+    ///     #[fixcol(width = 3, align = "right")]
     ///     x: u8,
-    ///     #[fixcol(width=3, align="right")]
+    ///     #[fixcol(width = 3, align = "right")]
     ///     y: u8,
     /// }
     ///
@@ -315,9 +318,9 @@ pub trait ReadFixed {
     /// # use fixcol::FieldDescription;
     /// #[derive(ReadFixed)]
     /// struct Point {
-    ///     #[fixcol(width=3, align="right")]
+    ///     #[fixcol(width = 3, align = "right")]
     ///     x: u8,
-    ///     #[fixcol(width=3, align="right")]
+    ///     #[fixcol(width = 3, align = "right")]
     ///     y: u8,
     /// }
     ///
@@ -417,9 +420,10 @@ mod tests {
         str::from_utf8(inp.as_slice()).unwrap().to_string()
     }
 
-    use crate as fixcol;
     #[cfg(feature = "experimental-write")]
     use fixcol::WriteFixed;
+
+    use crate as fixcol;
 
     #[cfg_attr(feature = "experimental-write", derive(WriteFixed))]
     #[derive(ReadFixed, Eq, PartialEq, Debug)]

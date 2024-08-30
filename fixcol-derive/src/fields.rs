@@ -1,6 +1,7 @@
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
-use syn::{spanned::Spanned, FieldsNamed, FieldsUnnamed, Index};
+use syn::spanned::Spanned;
+use syn::{FieldsNamed, FieldsUnnamed, Index};
 
 use crate::attrs::{self, parse_field_attributes, FieldConfig, OuterConfig};
 use crate::error::MacroError;

@@ -96,7 +96,6 @@ use std::string::FromUtf8Error;
 /// [`ReadFixed`]: crate::ReadFixed
 /// [`WriteFixed`]: crate::WriteFixed
 /// [`to_string`]: std::string::ToString::to_string()
-///
 #[derive(Debug)]
 pub enum Error {
     /// An error that occured while parsing the formatted data
@@ -226,8 +225,8 @@ impl DataError {
     /// use `DataError::custom` to provide error context.
     ///
     /// ```
-    /// use fixcol::{FixedDeserializer, FieldDescription};
     /// use fixcol::error::DataError;
+    /// use fixcol::{FieldDescription, FixedDeserializer};
     ///
     /// struct TriState(Option<bool>);
     ///
@@ -236,14 +235,15 @@ impl DataError {
     ///         // We've defined this type as always having one column so confirm that
     ///         assert_eq!(desc.len, 1);
     ///         // burn columns we have to skip
-    ///         let column = &s[desc.skip..desc.skip+1];
+    ///         let column = &s[desc.skip..desc.skip + 1];
     ///         match column {
     ///             "Y" => Ok(TriState(Some(true))),
     ///             "N" => Ok(TriState(Some(false))),
     ///             " " => Ok(TriState(None)),
-    ///             other => {
-    ///                 Err(DataError::custom(other, "Expected \"Y\", \"N\", or an empty column"))
-    ///             }
+    ///             other => Err(DataError::custom(
+    ///                 other,
+    ///                 "Expected \"Y\", \"N\", or an empty column",
+    ///             )),
     ///         }
     ///     }
     /// }

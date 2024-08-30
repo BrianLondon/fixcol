@@ -48,11 +48,11 @@ use crate::ReadFixed;
 ///
 /// #[derive(ReadFixed)]
 /// struct Person {
-///     #[fixcol(width=10)]
+///     #[fixcol(width = 10)]
 ///     pub name: String,
 ///     #[fixcol(width=3, align=right)]
 ///     pub age: u8,
-///     #[fixcol(width=2)]
+///     #[fixcol(width = 2)]
 ///     pub eye_color: EyeColor,
 /// }
 ///
@@ -128,9 +128,9 @@ use crate::ReadFixed;
 /// #[derive(ReadFixed)]
 /// # #[derive(Eq, PartialEq, Debug)]
 /// struct Person {
-///     #[fixcol(width=12)]
+///     #[fixcol(width = 12)]
 ///     name: String,
-///     #[fixcol(width=10, skip=1)]
+///     #[fixcol(width = 10, skip = 1)]
 ///     birthday: Birthday,
 /// }
 ///
@@ -140,20 +140,23 @@ use crate::ReadFixed;
 ///
 /// impl FixedDeserializer for Birthday {
 ///     fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<Birthday, DataError> {
-///         let text = &s[desc.skip..desc.skip+desc.len];
+///         let text = &s[desc.skip..desc.skip + desc.len];
 ///         let mut parts = text.split(' ').filter(|x| *x != "");
 ///
-///         let year = parts.next()
+///         let year = parts
+///             .next()
 ///             .ok_or(DataError::custom(&text, "Could not find year"))?
 ///             .parse()
 ///             .map_err(|e| DataError::custom(&text, "Could not decode year"))?;
 ///
-///         let month = parts.next()
+///         let month = parts
+///             .next()
 ///             .ok_or(DataError::custom(&text, "Could not find month"))?
 ///             .parse()
 ///             .map_err(|e| DataError::custom(&text, "Could not decode month"))?;
 ///
-///         let day = parts.next()
+///         let day = parts
+///             .next()
 ///             .ok_or(DataError::custom(&text, "Could not find day"))?
 ///             .parse()
 ///             .map_err(|e| DataError::custom(&text, "Could not decode day"))?;

@@ -57,21 +57,51 @@
 //! # Shanghai    24870895   31.229  121.475
 //! # Sao Paulo   12252023  -23.550  -46.333
 //! # Mexico City  9209944   19.433  -99.133".as_bytes();
-//! let cities: Vec<City> = City::read_fixed_all(file).map(|res| match res {
-//!     Ok(city) => city,
-//!     Err(err) => {
-//!         eprintln!("{}", err);
-//!         std::process::exit(1);
-//!     }
-//! }).collect();
+//! let cities: Vec<City> = City::read_fixed_all(file)
+//!     .map(|res| match res {
+//!         Ok(city) => city,
+//!         Err(err) => {
+//!             eprintln!("{}", err);
+//!             std::process::exit(1);
+//!         }
+//!     })
+//!     .collect();
 //!
-//! assert_eq!(cities, vec![
-//!      City { name: "Tokyo".into(), population: 13515271, lat: 35.689, lon: 139.692 },
-//!      City { name: "Delhi".into(), population: 16753235, lat: 28.610, lon: 77.230 },
-//!      City { name: "Shanghai".into(), population: 24870895, lat: 31.229, lon: 121.475 },
-//!      City { name: "Sao Paulo".into(), population: 12252023, lat: -23.550, lon: -46.333 },
-//!      City { name: "Mexico City".into(), population: 9209944, lat: 19.433, lon: -99.133 },
-//! ]);
+//! assert_eq!(
+//!     cities,
+//!     vec![
+//!         City {
+//!             name: "Tokyo".into(),
+//!             population: 13515271,
+//!             lat: 35.689,
+//!             lon: 139.692
+//!         },
+//!         City {
+//!             name: "Delhi".into(),
+//!             population: 16753235,
+//!             lat: 28.610,
+//!             lon: 77.230
+//!         },
+//!         City {
+//!             name: "Shanghai".into(),
+//!             population: 24870895,
+//!             lat: 31.229,
+//!             lon: 121.475
+//!         },
+//!         City {
+//!             name: "Sao Paulo".into(),
+//!             population: 12252023,
+//!             lat: -23.550,
+//!             lon: -46.333
+//!         },
+//!         City {
+//!             name: "Mexico City".into(),
+//!             population: 9209944,
+//!             lat: 19.433,
+//!             lon: -99.133
+//!         },
+//!     ]
+//! );
 //! ```
 //!
 //! ### Multiple Record Types
@@ -104,7 +134,7 @@
 //!         #[fixcol(skip = 1, width = 3)]
 //!         id: u8,
 //!         #[fixcol(skip = 1, width = 6)]
-//!         name: String
+//!         name: String,
 //!     },
 //!     #[fixcol(key = "EDGE")]
 //!     Edge {
@@ -112,7 +142,7 @@
 //!         from_id: u8,
 //!         #[fixcol(skip = 1, width = 3)]
 //!         to_id: u8,
-//!     }
+//!     },
 //! }
 //! # let mut buf = "NODE 001 Item A
 //! # NODE 002 Item B
@@ -142,7 +172,7 @@
 //!     #[fixcol(skip = 1, width = 3)]
 //!     id: u8,
 //!     #[fixcol(skip = 1, width = 6)]
-//!     name: String
+//!     name: String,
 //! }
 //!
 //! # #[derive(PartialEq, Debug)]
@@ -333,7 +363,6 @@
 //! **Default**: Must be set **explicitly**.
 //!
 //! **Example**: `#[fixcol(width = 12)]`
-//!
 
 pub mod error;
 mod fixcol;
@@ -346,17 +375,15 @@ mod write;
 extern crate fixcol_derive;
 
 pub use fixcol::{Iter, ReadFixed};
-pub use format::{Alignment, FieldDescription};
-pub use parse::FixedDeserializer;
-
 #[cfg(feature = "experimental-write")]
 pub use fixcol::{WriteFixed, WriteFixedAll};
-#[cfg(feature = "experimental-write")]
-pub use write::FixedSerializer;
-
 pub use fixcol_derive::ReadFixed;
 #[cfg(feature = "experimental-write")]
 pub use fixcol_derive::WriteFixed;
+pub use format::{Alignment, FieldDescription};
+pub use parse::FixedDeserializer;
+#[cfg(feature = "experimental-write")]
+pub use write::FixedSerializer;
 
 #[cfg(test)]
 mod tests {
