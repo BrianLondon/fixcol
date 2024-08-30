@@ -377,9 +377,11 @@ extern crate fixcol_derive;
 pub use fixcol::{Iter, ReadFixed};
 #[cfg(feature = "experimental-write")]
 pub use fixcol::{WriteFixed, WriteFixedAll};
+
 pub use fixcol_derive::ReadFixed;
 #[cfg(feature = "experimental-write")]
 pub use fixcol_derive::WriteFixed;
+
 pub use format::{Alignment, FieldDescription};
 pub use parse::FixedDeserializer;
 #[cfg(feature = "experimental-write")]
