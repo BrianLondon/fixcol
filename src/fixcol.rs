@@ -101,7 +101,6 @@ pub trait WriteFixedAll {
     /// # let s = std::str::from_utf8(file.as_slice()).unwrap();
     /// # assert_eq!(s, "0  3  \n12342 \n42 123\n");
     /// ```
-    #[cfg_attr(docsrs, doc(cfg(feature = "experimental-write")))]
     fn write_fixed_all<W: Write>(self, buf: &mut W) -> Result<(), Error>;
 }
 

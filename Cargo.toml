@@ -23,6 +23,9 @@ repository = "https://github.com/BrianLondon/fixcol"
 [features]
 experimental-write = []
 
+[lib]
+doc-scrape-examples = false
+
 [dependencies]
 fixcol-derive = {path = "fixcol-derive", version = "0.1.0"}
 
