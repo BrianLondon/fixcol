@@ -1,23 +1,30 @@
 [package]
 name = "fixcol"
-version = "0.1.0"
+version.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+description = "A library for reading and writing fixed width / column delimited data files."
 edition = "2021"
-license = "MIT"
 keywords = ["fixed", "column", "serialization", "parse", "file"]
 categories = ["encoding", "parsing"]
-homepage = "https://github.com/BrianLondon/fixcol"
-repository = "https://github.com/BrianLondon/fixcol"
 readme = "README.md"
-description = "A library for reading and writing fixed width / column delimited data files."
-
-[features]
-experimental-write = []
+publish = true
 
 [workspace]
 members = ["fixcol-derive"]
 
+[workspace.package]
+version = "0.1.0"
+license = "MIT"
+homepage = "https://github.com/BrianLondon/fixcol"
+repository = "https://github.com/BrianLondon/fixcol"
+
+[features]
+experimental-write = []
+
 [dependencies]
-fixcol-derive = {path = "fixcol-derive"}
+fixcol-derive = {path = "fixcol-derive", version = "*"}
 
 [dev-dependencies]
 chrono = "0.4.38"
