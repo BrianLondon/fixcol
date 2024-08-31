@@ -1,4 +1,4 @@
-#![feature(doc_auto_cfg)]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 //! A crate used for *fixed* width *column* serialization and deserialization
 //!
