@@ -58,14 +58,14 @@ fn whitespace_malformed_strict() {
     let err = PointS::read_fixed_str("1234201").unwrap_err();
     assert_eq!(
         err.to_string(),
-        "Error decoding data from \"4201\": Found non-whitespace \
+        "Error handling data from \"4201\": Found non-whitespace \
         character between data fields (strict)\n",
     );
 
     let err = PointS::read_fixed_str("1  42  ").unwrap_err();
     assert_eq!(
         err.to_string(),
-        "Error decoding data from \"42  \": Found non-whitespace \
+        "Error handling data from \"42  \": Found non-whitespace \
         character between data fields (strict)\n",
     );
 }

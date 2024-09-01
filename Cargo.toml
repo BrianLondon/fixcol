@@ -15,7 +15,7 @@ publish = true
 members = ["fixcol-derive"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 license = "MIT"
 homepage = "https://github.com/BrianLondon/fixcol"
 repository = "https://github.com/BrianLondon/fixcol"
@@ -27,7 +27,7 @@ experimental-write = []
 doc-scrape-examples = false
 
 [dependencies]
-fixcol-derive = {path = "fixcol-derive", version = "0.1.0"}
+fixcol-derive = {path = "fixcol-derive", version = "0.1.1"}
 
 [dev-dependencies]
 chrono = "0.4.38"
