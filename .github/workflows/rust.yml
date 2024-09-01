@@ -18,7 +18,8 @@ jobs:
       matrix:
         toolchain:
           - stable
-          # - nightly
+          - beta
+          - nightly
 
     steps:
     - uses: actions/checkout@v4
@@ -29,6 +30,16 @@ jobs:
       run: cargo test --workspace
     - name: Run write-experimental tests
       run: cargo test --workspace  --features experimental-write
+
+  # Run examples and compile tests on stable only
+  compile-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run default tests
+      run: cargo test -- --ignored
+    - name: Run write-experimental tests
+      run: cargo test --features experimental-write -- --ignored
 
   doc:
     name: Documentation

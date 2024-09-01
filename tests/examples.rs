@@ -44,6 +44,7 @@ fn run_example_as_test(name: &str, features: &str) {
 
 #[cfg(feature = "experimental-write")]
 #[test]
+#[ignore]
 fn test_habsburgs() {
     run_example_as_test("habsburgs", "experimental-write");
 }
