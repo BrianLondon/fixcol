@@ -741,7 +741,7 @@ mod tests {
             strict: false,
         };
         let actual: Result<f32, DataError> = f32::parse_fixed(" 3a14 ", &desc);
-        let expected = "Error decoding data from \"3a14\": invalid float literal\n";
+        let expected = "Error handling data from \"3a14\": invalid float literal\n";
         assert_eq!(actual.unwrap_err().to_string(), expected);
     }
 
@@ -786,7 +786,7 @@ mod tests {
         assert!(actual.is_err());
         assert_eq!(
             actual.unwrap_err().to_string(),
-            "Error decoding data from \" 42\": invalid digit found in string\n"
+            "Error handling data from \" 42\": invalid digit found in string\n"
         );
     }
 
@@ -813,7 +813,7 @@ mod tests {
         assert!(actual.is_err());
         assert_eq!(
             actual.unwrap_err().to_string(),
-            "Error decoding data from \" 42\": invalid digit found in string\n"
+            "Error handling data from \" 42\": invalid digit found in string\n"
         );
 
         let desc = FieldDescription {
@@ -849,7 +849,7 @@ mod tests {
         assert!(actual.is_err());
         assert_eq!(
             actual.unwrap_err().to_string(),
-            "Error decoding data from \"42 \": invalid digit found in string\n"
+            "Error handling data from \"42 \": invalid digit found in string\n"
         );
 
         let desc = FieldDescription {

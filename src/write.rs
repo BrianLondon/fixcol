@@ -294,7 +294,7 @@ mod tests {
         let e = res.unwrap_err();
         assert_eq!(
             e.to_string(),
-            "Error decoding data from \"foo\": Expected field to \
+            "Error handling data from \"foo\": Expected field to \
             have width 6 but supplied value has width 3.\n"
         );
     }
@@ -407,6 +407,71 @@ mod tests {
         assert_eq!(to_str(v), " abcd");
     }
 
+    #[test]
+    fn overflow_string_left() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 4,
+            alignment: Alignment::Left,
+            strict: true,
+        };
+
+        let foo = "abcdefg".to_string();
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_err());
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            "Error handling data from \"abcdefg\": Expected field to have width \
+            4 but supplied value has width 7.\n"
+        );
+    }
+
+    #[test]
+    fn overflow_string_right() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 4,
+            alignment: Alignment::Right,
+            strict: true,
+        };
+
+        let foo = "abcdefg".to_string();
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_err());
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            "Error handling data from \"abcdefg\": Expected field to have width \
+            4 but supplied value has width 7.\n"
+        );
+    }
+
+    #[test]
+    fn overflow_string_full() {
+        let desc = FieldDescription {
+            skip: 1,
+            len: 4,
+            alignment: Alignment::Full,
+            strict: true,
+        };
+
+        let foo = "abcdefg".to_string();
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_err());
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            "Error handling data from \"abcdefg\": Expected field to have width \
+            4 but supplied value has width 7.\n"
+        );
+    }
     //
     // Integer writes
     ////////////////////////////////////////////
@@ -481,6 +546,36 @@ mod tests {
 
         assert!(res.is_ok());
         assert_eq!(to_str(v), "   -12345");
+    }
+
+    #[test]
+    fn overflow_u16() {
+        let desc = FieldDescription {
+            skip: 0,
+            len: 3,
+            alignment: Alignment::Right,
+            strict: true,
+        };
+
+        let foo: u16 = 123;
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_ok());
+        assert_eq!(to_str(v), "123");
+
+        let foo: u16 = 12345;
+
+        let mut v = Vec::new();
+        let res = foo.write_fixed_field(&mut v, &desc);
+
+        assert!(res.is_err());
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            "Error handling data from \"12345\": Expected field to have width \
+            3 but supplied value has width 5.\n"
+        );
     }
 
     //

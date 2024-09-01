@@ -92,7 +92,7 @@ use std::string::FromUtf8Error;
 /// resembles the following.
 ///
 /// ```text
-/// Error decoding data from "123x6": invalid digit found in string
+/// Error handling data from "123x6": invalid digit found in string
 /// Error occured on line 56
 /// ```
 /// [`ReadFixed`]: crate::ReadFixed
@@ -273,7 +273,7 @@ impl DataError {
 impl Display for DataError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         fn fmt_err(text: &String, f: &mut Formatter<'_>) -> std::fmt::Result {
-            write!(f, "Error decoding data from \"{}\": ", text)
+            write!(f, "Error handling data from \"{}\": ", text)
         }
 
         match &self.inner_error {

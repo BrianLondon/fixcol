@@ -1,4 +1,4 @@
-# Fixed
+# Fixcol
 
 A library for reading fixed width / column delimited data files.
 
@@ -85,15 +85,6 @@ enum GraphItem {
 
 Please see the official documentation for complete usage guidance.
 
- <!-- 
- 
-  TODO: need test coverage for:
-  require `Left` and `Right` aligned text columns to not overflow in strict mode
-
-  TODO: need test coverage for:
-  error on overflow on write (esp. integers)
-  -->
-
 ## License
 
-Licensed under the MIT license. See: [[LICENSE.txt]].
+Licensed under the MIT license. See: [LICENSE](LICENSE.txt).
