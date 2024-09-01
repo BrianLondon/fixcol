@@ -42,6 +42,47 @@ let cities: Vec<City> = City::read_fixed_all(file).map(|res| match res {
 }).collect();
 ```
 
+### Multiple Record Types
+
+Many data files contain lines corresponding to multiple types of records.
+Typically the record type is indicated by the first few columns of the line.
+In Fixcol we call this the *key* of the record. Multiple record types can be
+decoded using an `enum` with a key annotation.
+
+Consider a directed graph with named nodes defined in a data file like the
+following.
+
+ ```text
+ NODE 001 Item A
+ NODE 002 Item B
+ EDGE 001 002
+ ```
+
+ This file can be parsed with an enum like the following.
+
+ ```rust
+ use fixcol::ReadFixed;
+
+#[derive(ReadFixed)]
+#[fixcol(key_width = 4)]
+enum GraphItem {
+    #[fixcol(key = "NODE")]
+    Node {
+        #[fixcol(skip = 1, width = 3)]
+        id: u8,
+        #[fixcol(skip = 1, width = 6)]
+        name: String,
+    },
+    #[fixcol(key = "EDGE")]
+    Edge {
+        #[fixcol(skip = 1, width = 3)]
+        from_id: u8,
+        #[fixcol(skip = 1, width = 3)]
+        to_id: u8,
+    },
+}
+```
+
 Please see the official documentation for complete usage guidance.
 
  <!-- 
@@ -53,17 +94,6 @@ Please see the official documentation for complete usage guidance.
   error on overflow on write (esp. integers)
   -->
 
-
-## Wishlist of new features
-
- - Fixed column offsets
- - Better error messages for writing operations
- - Make param list data rather than code to support dynamic lists of
-   valid parameters.
- - Allow a function based custom deserialization on individual columns
- - Clear error messages of location of error on read errors
- - Enable the `ignore_others` parameter
-
 ## License
 
-Licensed under the MIT license. See: [LICENSE.txt].
+Licensed under the MIT license. See: [[LICENSE.txt]].

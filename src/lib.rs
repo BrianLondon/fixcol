@@ -112,7 +112,7 @@
 //! decoded using an `enum` with a key annotation.
 //!
 //! Consider a directed graph with named nodes defined in a data file like the
-//! follinwg.
+//! following.
 //!
 //! ```text
 //! NODE 001 Item A
@@ -120,7 +120,7 @@
 //! EDGE 001 002
 //! ```
 //!
-//! This file can be parsed with an enum like the follwing.
+//! This file can be parsed with an enum like the following.
 //!
 //! ```
 //! use fixcol::ReadFixed;
