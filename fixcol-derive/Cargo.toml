@@ -5,6 +5,7 @@ description = "Proc Macro extensions for deriving fixcol traits"
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
+readme = "README.md"
 publish = true
 
 edition = "2021"
