@@ -22,7 +22,7 @@ impl MacroError {
 impl ToTokens for MacroError {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let message = format!("{} error: {}", env!("CARGO_PKG_NAME"), self.message);
-        let span = self.span.clone();
+        let span = self.span;
 
         tokens.extend(quote_spanned! {
             span =>

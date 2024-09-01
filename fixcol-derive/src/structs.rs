@@ -12,7 +12,7 @@ use crate::fields::{
 // Reads
 /////////////////////////////
 
-pub(crate) fn struct_read(ident: &Ident, attrs: &Vec<Attribute>, fields: Fields) -> MacroResult {
+pub(crate) fn struct_read(ident: &Ident, attrs: &[Attribute], fields: Fields) -> MacroResult {
     let config = parse_struct_attributes(attrs)?;
 
     match fields {
@@ -63,7 +63,7 @@ fn struct_read_fixed(fields: FieldsNamed, outer: StructConfig) -> MacroResult {
 // Writes
 ///////////////////////////////////
 
-pub(crate) fn struct_write(ident: &Ident, attrs: &Vec<Attribute>, fields: Fields) -> MacroResult {
+pub(crate) fn struct_write(ident: &Ident, attrs: &[Attribute], fields: Fields) -> MacroResult {
     let config = parse_struct_attributes(attrs)?;
 
     let writes = match fields {

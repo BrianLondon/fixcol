@@ -201,7 +201,7 @@ pub trait FixedDeserializer {
         Self: Sized;
 }
 
-fn extract_trimmed<'a, 'b>(src: &'a str, desc: &'b FieldDescription) -> Result<&'a str, DataError> {
+fn extract_trimmed<'a>(src: &'a str, desc: &FieldDescription) -> Result<&'a str, DataError> {
     if desc.strict && !&src[..desc.skip].trim().is_empty() {
         return Err(DataError::whitespace_error(String::from(src)));
     }

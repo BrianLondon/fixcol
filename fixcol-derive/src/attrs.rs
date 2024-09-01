@@ -9,7 +9,7 @@ use syn::{Attribute, Ident, Meta, Path};
 
 use crate::error::MacroError;
 
-const FIXED_ATTR_KEY: &'static str = "fixcol";
+const FIXED_ATTR_KEY: &str = "fixcol";
 const STRICT_DEFAULT: bool = true;
 
 // Extracts the ident name from a path
@@ -31,7 +31,7 @@ fn is_fixcol_attr(attr: &Attribute) -> bool {
     ident == FIXED_ATTR_KEY
 }
 
-pub(crate) fn fixcol_attrs(attrs: &Vec<Attribute>) -> Vec<&Attribute> {
+pub(crate) fn fixcol_attrs(attrs: &[Attribute]) -> Vec<&Attribute> {
     attrs.iter().filter(|a| is_fixcol_attr(a)).collect()
 }
 
@@ -213,10 +213,10 @@ fn parse_next_token(
     }
 }
 
-fn parse_attributes(attrs: &Vec<Attribute>) -> Result<Vec<FieldParam>, MacroError> {
+fn parse_attributes(attrs: &[Attribute]) -> Result<Vec<FieldParam>, MacroError> {
     let params: Vec<Result<Vec<FieldParam>, MacroError>> = attrs
         .iter()
-        .filter(|a| is_fixcol_attr(*a))
+        .filter(|a| is_fixcol_attr(a))
         .map(|a| -> Result<Vec<FieldParam>, MacroError> {
             match &a.meta {
                 Meta::Path(_) => Err(MacroError::new(
@@ -344,7 +344,7 @@ fn check_none<T>(key: &str, span: Span, opt: Option<T>) -> Result<(), MacroError
 
 pub(crate) fn parse_field_attributes(
     span: &Span,
-    attrs: &Vec<Attribute>,
+    attrs: &[Attribute],
     parent: &OuterConfig,
 ) -> Result<FieldConfig, MacroError> {
     let params = parse_attributes(attrs)?;
@@ -406,7 +406,7 @@ pub(crate) fn parse_field_attributes(
             let fc = FieldConfig {
                 skip: conf.skip.unwrap_or(0),
                 align: conf.align.unwrap_or(Align::Left),
-                width: width,
+                width,
                 strict: conf.strict.unwrap_or(parent.strict()),
             };
 
@@ -434,7 +434,7 @@ pub(crate) struct StructConfig {
     strict: bool,
 }
 
-pub(crate) fn parse_struct_attributes(attrs: &Vec<Attribute>) -> Result<StructConfig, MacroError> {
+pub(crate) fn parse_struct_attributes(attrs: &[Attribute]) -> Result<StructConfig, MacroError> {
     let params = parse_attributes(attrs)?;
     let mut conf = StructConfigBuilder::new();
 
@@ -490,7 +490,7 @@ pub(crate) struct EnumConfig {
 
 pub(crate) fn parse_enum_attributes(
     name: &Ident,
-    attrs: &Vec<Attribute>,
+    attrs: &[Attribute],
 ) -> Result<EnumConfig, MacroError> {
     let params = parse_attributes(attrs)?;
     let mut conf = EnumConfigBuilder::new();
@@ -573,7 +573,7 @@ pub(crate) struct VariantConfig {
 
 pub(crate) fn parse_variant_attributes(
     name: &Ident,
-    attrs: &Vec<Attribute>,
+    attrs: &[Attribute],
     parent: &EnumConfig,
 ) -> Result<VariantConfig, MacroError> {
     let params = parse_attributes(attrs)?;
@@ -621,7 +621,7 @@ pub(crate) fn parse_variant_attributes(
     ))?;
 
     let vc = VariantConfig {
-        key: key,
+        key,
         embed: conf.embed.unwrap_or(false),
         strict: conf.strict.unwrap_or(parent.strict),
     };

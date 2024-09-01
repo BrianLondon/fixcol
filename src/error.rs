@@ -163,7 +163,7 @@ impl Error {
         let text: String = String::from_utf8_lossy(good_bytes).into_owned();
 
         Self::DataError(DataError {
-            text: text,
+            text,
             line: None,
             inner_error: err.into(),
         })
@@ -192,7 +192,7 @@ impl DataError {
         Err: Into<InnerError>,
     {
         DataError {
-            text: text,
+            text,
             line: None,
             inner_error: err.into(),
         }
@@ -319,7 +319,7 @@ impl Display for DataError {
             write!(f, "\nError occured on line {}", line)?;
         }
 
-        write!(f, "\n")
+        writeln!(f)
     }
 }
 

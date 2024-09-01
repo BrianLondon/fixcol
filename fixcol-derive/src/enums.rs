@@ -17,7 +17,7 @@ use crate::fields::{
 
 pub(crate) fn enum_read(
     name: &Ident,
-    attrs: &Vec<Attribute>,
+    attrs: &[Attribute],
     variants: Vec<&Variant>,
 ) -> MacroResult {
     let enum_config = parse_enum_attributes(name, attrs)?;
@@ -28,7 +28,7 @@ pub(crate) fn enum_read(
             let var_name = &variant.ident;
 
             let config: VariantConfig =
-                parse_variant_attributes(&var_name, &variant.attrs, &enum_config)?;
+                parse_variant_attributes(var_name, &variant.attrs, &enum_config)?;
             let key = config.key.clone();
 
             let read = match &variant.fields {
@@ -139,8 +139,8 @@ fn read_unit_variant(
 
 pub(crate) fn enum_write(
     name: &Ident,
-    attrs: &Vec<Attribute>,
-    variants: &Vec<&Variant>,
+    attrs: &[Attribute],
+    variants: &[&Variant],
 ) -> MacroResult {
     let enum_config = parse_enum_attributes(name, attrs)?;
 
@@ -191,7 +191,7 @@ fn write_struct_variant(
 ) -> MacroResult {
     let key = config.key.to_owned();
     let key_len = key.len();
-    let (names, configs) = write_named_fields(&fields, &(*config).clone().into())?;
+    let (names, configs) = write_named_fields(fields, &(*config).clone().into())?;
 
     // TODO: we may want to inherit strict for the key from the enum or variant
     let code = quote! {
@@ -217,7 +217,7 @@ fn write_tuple_variant(
     config: &VariantConfig,
     fields: &FieldsUnnamed,
 ) -> MacroResult {
-    let (_, configs) = write_unnamed_fields(&fields, &config.clone().into())?;
+    let (_, configs) = write_unnamed_fields(fields, &config.clone().into())?;
     let VariantConfig { key, strict, .. } = config;
 
     let named_fields: Vec<Ident> = configs

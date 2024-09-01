@@ -22,7 +22,7 @@ pub(crate) fn read_unnamed_fields(
             let type_token = field.ty.clone();
             let ident = format_ident!("_{}", field_num);
 
-            let config = attrs::parse_field_attributes(&item.1.span(), &field.attrs, &outer_config)
+            let config = attrs::parse_field_attributes(&item.1.span(), &field.attrs, outer_config)
                 .map_err(|e| e.replace_span(field.span()))?;
             let FieldConfig { skip, width, strict, .. } = config;
 
