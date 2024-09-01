@@ -1,3 +1,15 @@
+//! A proc macro crate for deriving [`ReadFixed`] and [`WriteFixed`]
+//! 
+//! This crate, `fixcol-derive` contains the proc-macro derive functionality for
+//! the [`fixcol`](../fixcol) crate. Unless you are planning on contributing to 
+//! `fixcol`, you probably want one of the following.
+//!
+//!  - [Crate](https://crates.io/crates/fixcol)
+//!  - [Documentation](https://docs.rs/fixcol/latest/fixcol)
+//!  - [Repository](https://github.com/BrianLondon/fixcol)
+//! 
+//! [`ReadFixed`]: fixcol::ReadFixed
+//! [`WriteFixed`]: fixcol::WriteFixed
 mod attrs;
 mod enums;
 mod error;
@@ -20,10 +32,10 @@ use crate::enums::enum_read;
 use crate::structs::{struct_read, struct_write};
 
 /// Derive proc-macro for ReadFixed
-//
-// See documentation on [`ReadFixed`] for a full description.
-//
-// [`ReadFixed`]: fixcol::ReadFixed
+///
+/// See documentation on [`ReadFixed`] for a full description.
+///
+/// [`ReadFixed`]: fixcol::ReadFixed
 #[proc_macro_derive(ReadFixed, attributes(fixcol))]
 pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
     let ast: DeriveInput = syn::parse(input).unwrap();
@@ -58,8 +70,10 @@ pub fn read_fixed_impl(input: TokenStream) -> TokenStream {
 }
 
 /// Derive proc-macro for WriteFixed
-//
-// See [[`WriteFixed`]] for a complete discuassion.
+///
+/// See [`WriteFixed`] for a complete discuassion.
+///
+/// [`WriteFixed`]: fixcol::WriteFixed
 #[proc_macro_derive(WriteFixed, attributes(fixcol))]
 pub fn write_fixed_impl(input: TokenStream) -> TokenStream {
     let ast: DeriveInput = syn::parse(input).unwrap();
