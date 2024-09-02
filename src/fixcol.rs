@@ -13,7 +13,6 @@ use crate::error::Error;
 /// using the proc macro, which offers full string and integer support and
 /// limited floating point formatting.
 #[cfg(feature = "experimental-write")]
-// #[cfg(any(feature = "experimental-write", doc))]
 pub trait WriteFixed {
     /// Writes the object into the supplied buffer
     ///

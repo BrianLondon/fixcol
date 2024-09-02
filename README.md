@@ -32,7 +32,7 @@ struct City {
     lon: f32,
 }
 
-let mut file = File::open("cities.txt");
+let mut file = File::open("cities.txt")?;
 let cities: Vec<City> = City::read_fixed_all(file).map(|res| match res {
     Ok(city) => city,
     Err(err) => {
