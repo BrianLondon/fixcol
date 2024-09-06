@@ -48,16 +48,13 @@ pub(crate) fn read_unnamed_fields(
 
             let read_field = if field_num == last_field && !strict {
                 quote! {
-                    println!("last/lax");
                     let n = buf.read(&mut s)
                         .map_err(|e| fixcol::error::Error::from(e))?;
-                    println!("{}, [{}]", n, s);
                     let raw = String::from_utf8(s[..n].to_vec())
                         .map_err(|e| fixcol::error::Error::from(e))?;
                 }
             } else {
                 quote! {
-                    println!("last/strict");
                     buf.read_exact(&mut s)
                         .map_err(|e| fixcol::error::Error::from(e))?;
                     let raw = String::from_utf8(s.to_vec())

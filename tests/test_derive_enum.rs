@@ -57,7 +57,6 @@ fn edge(from: &str, to: &str, weight: u64) -> GraphObject {
 fn read_enums() {
     let mut buf = SAMPLE_DATA.as_bytes();
     let data: Vec<_> = GraphObject::read_fixed_all(&mut buf).collect();
-    println!("{:?}", data);
 
     let graph: Vec<GraphObject> = data.into_iter().map(|o| o.unwrap()).collect();
 

@@ -633,18 +633,14 @@ mod tests {
 
         let mut tests_run = 0;
         for desc in descs {
-            println!("a {:?}", desc);
             let actual: f32 = f32::parse_fixed(" 3.14 ", &desc).unwrap();
             assert_eq!(actual, expected);
-            println!("b {:?}", desc);
 
             let actual: f32 = f32::parse_fixed("3.14  ", &desc).unwrap();
             assert_eq!(actual, expected);
-            println!("c {:?}", desc);
 
             let actual: f32 = f32::parse_fixed("  3.14", &desc).unwrap();
             assert_eq!(actual, expected);
-            println!("d {:?}", desc);
 
             tests_run += 1;
         }
