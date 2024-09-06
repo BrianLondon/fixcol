@@ -1,10 +1,28 @@
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use syn::spanned::Spanned;
-use syn::{FieldsNamed, FieldsUnnamed, Index};
+use syn::{FieldsNamed, FieldsUnnamed, Index, Token, Type};
 
 use crate::attrs::{self, parse_field_attributes, FieldConfig, OuterConfig};
 use crate::error::MacroError;
+
+fn add_turbo_to_type(path: &syn::TypePath) -> syn::TypePath {
+    let mut new_path = path.clone();
+
+    for segment in new_path.path.segments.iter_mut() {
+        let span = segment.span();
+
+        match &mut segment.arguments {
+            syn::PathArguments::None => {},
+            syn::PathArguments::Parenthesized(_) => {},
+            syn::PathArguments::AngleBracketed(ref mut args) => {
+                args.colon2_token = Some(Token![::](span));
+            }
+        }
+    }
+
+    new_path
+}
 
 pub(crate) fn read_unnamed_fields(
     fields: &FieldsUnnamed,
@@ -76,7 +94,10 @@ pub(crate) fn read_named_fields(
         .map(|item| -> Result<(Ident, TokenStream), MacroError> {
             let (field_num, field) = item;
 
-            let type_token = field.ty.clone();
+            let type_token = match &field.ty {
+                Type::Path(path) => Type::Path(add_turbo_to_type(&path)),
+                other => other.clone(),
+            };
             let name = field.ident.as_ref().unwrap().clone();
 
             let config = parse_field_attributes(&name.span(), &field.attrs, &outer_config)?;
@@ -151,4 +172,40 @@ pub(crate) fn write_unnamed_fields(
         .collect();
 
     Ok(field_configs?.into_iter().unzip())
+}
+
+#[cfg(test)]
+mod tests {
+    use syn::TypePath;
+
+    use super::*;
+
+    #[test]
+    fn add_turbo_where_needed() {
+        let orig: TypePath = syn::parse_str("Option<u64>").unwrap();
+        let actual = add_turbo_to_type(&orig);
+        let expected: TypePath = syn::parse_str("Option::<u64>").unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn dont_add_turbo_where_not_needed() {
+        let orig: TypePath = syn::parse_str("Option::<u64>").unwrap();
+        let actual = add_turbo_to_type(&orig);
+        let expected: TypePath = syn::parse_str("Option::<u64>").unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn qualified_turbo() {
+        let orig: TypePath = syn::parse_str("custom::Result<u64>").unwrap();
+        let actual = add_turbo_to_type(&orig);
+        let expected: TypePath = syn::parse_str("custom::Result::<u64>").unwrap();
+        assert_eq!(actual, expected);
+
+        let orig: TypePath = syn::parse_str("custom::Result::<u64>").unwrap();
+        let actual = add_turbo_to_type(&orig);
+        let expected: TypePath = syn::parse_str("custom::Result::<u64>").unwrap();
+        assert_eq!(actual, expected);
+    }
 }
