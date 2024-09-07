@@ -1,5 +1,8 @@
 use fixcol::ReadFixed;
+#[cfg(feature = "experimental-write")]
+use fixcol::WriteFixed;
 
+#[cfg_attr(feature = "experimental-write", derive(WriteFixed))]
 #[derive(Debug, PartialEq, ReadFixed)]
 struct Thing1 {
     #[fixcol(width = 5)]
@@ -89,4 +92,32 @@ fn option_vs_empty_string() {
     let actual = Thing4::read_fixed_str("      3.14   42").unwrap();
     let expected = Thing4 { name: String::from(""), x: 3.14, y: 42.0};
     assert_eq!(actual, expected);
+}
+
+#[test]
+#[cfg(feature = "experimental-write")]
+fn write_option_some() {
+    let thing = Thing1 { name: String::from("foo"), x: Some(3.14), y: Some(42.0)};
+
+    let mut v = Vec::new();
+    let res = thing.write_fixed(&mut v);
+
+    assert!(res.is_ok());
+
+    let text = std::str::from_utf8(v.as_slice()).unwrap();
+    assert_eq!(text, "foo   3.14   42");
+}
+
+#[test]
+#[cfg(feature = "experimental-write")]
+fn write_option_none() {
+    let thing = Thing1 { name: String::from("foo"), x: None, y: Some(42.0)};
+
+    let mut v = Vec::new();
+    let res = thing.write_fixed(&mut v);
+
+    assert!(res.is_ok());
+
+    let text = std::str::from_utf8(v.as_slice()).unwrap();
+    assert_eq!(text, "foo          42");
 }

@@ -203,6 +203,19 @@ impl<T: WriteFixed> FixedSerializer for T {
     }
 }
 
+impl<T: FixedSerializer> FixedSerializer for Option<T> {
+    fn write_fixed_field<W: Write>(
+        &self,
+        buf: &mut W,
+        desc: &FieldDescription,
+    ) -> Result<(), Error> {
+        match self {
+            None => String::new().write_fixed_field(buf, desc),
+            Some(t) => t.write_fixed_field(buf, desc),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use core::str;
