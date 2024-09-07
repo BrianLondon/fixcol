@@ -711,7 +711,7 @@ mod tests {
     fn parse_params_ident_only() {
         let code: MetaList = syn::parse_str("fixcol(width)").unwrap();
         let x: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
-        println!("{:?}", x)
+        assert_eq!(x, x);
     }
 
     #[test]
@@ -719,7 +719,7 @@ mod tests {
     fn parse_params_ident_equal_only() {
         let code: MetaList = syn::parse_str("fixcol(width=)").unwrap();
         let x: Vec<FieldParam> = get_config_params(code.tokens).unwrap();
-        println!("{:?}", x)
+        assert_eq!(x, x);
     }
 
     #[test]

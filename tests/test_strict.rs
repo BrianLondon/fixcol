@@ -75,7 +75,6 @@ fn whitespace_malformed_strict() {
 
 #[test]
 fn short_line_lax() {
-    println!("foo");
     let point = PointL::read_fixed_str("7   21").unwrap();
     assert_eq!(point, PointL::new(7, 21));
 }

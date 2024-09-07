@@ -357,6 +357,8 @@ pub trait ReadFixed {
     }
 }
 
+
+
 #[cfg(test)]
 mod tests {
     use fixcol_derive::ReadFixed;

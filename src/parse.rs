@@ -303,6 +303,18 @@ impl<T: ReadFixed> FixedDeserializer for T {
     }
 }
 
+impl<T: FixedDeserializer> FixedDeserializer for Option<T> {
+    fn parse_fixed(s: &str, desc: &FieldDescription) -> Result<Self, DataError> {
+        let slice = &s[desc.skip..desc.skip + desc.len];
+
+        if slice.trim_start().is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(T::parse_fixed(s, desc)?))
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::str::from_utf8;
@@ -621,18 +633,14 @@ mod tests {
 
         let mut tests_run = 0;
         for desc in descs {
-            println!("a {:?}", desc);
             let actual: f32 = f32::parse_fixed(" 3.14 ", &desc).unwrap();
             assert_eq!(actual, expected);
-            println!("b {:?}", desc);
 
             let actual: f32 = f32::parse_fixed("3.14  ", &desc).unwrap();
             assert_eq!(actual, expected);
-            println!("c {:?}", desc);
 
             let actual: f32 = f32::parse_fixed("  3.14", &desc).unwrap();
             assert_eq!(actual, expected);
-            println!("d {:?}", desc);
 
             tests_run += 1;
         }
@@ -900,5 +908,31 @@ mod tests {
         );
 
         assert_eq!(thing.unwrap(), Thing::Thing1);
+    }
+
+    #[test]
+    fn parse_option_some() {
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Right,
+            strict: true,
+        };
+
+        let actual = Option::<u16>::parse_fixed("   42", &desc).unwrap();
+        assert_eq!(actual, Some(42));
+    }
+
+    #[test]
+    fn parse_option_none() {
+        let desc = FieldDescription {
+            skip: 0,
+            len: 5,
+            alignment: Alignment::Right,
+            strict: true,
+        };
+
+        let actual = Option::<u16>::parse_fixed("     ", &desc).unwrap();
+        assert_eq!(actual, None);
     }
 }

@@ -13,6 +13,7 @@ def "main docs" [] {
 }
 
 def "main test" [] {
+    cargo +nightly docs-rs
     cargo test --workspace -- --include-ignored
     cargo test --workspace --features experimental-write -- --include-ignored
 }
