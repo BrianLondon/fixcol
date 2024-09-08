@@ -92,7 +92,7 @@ pub(crate) fn read_named_fields(
             let (field_num, field) = item;
 
             let type_token = match &field.ty {
-                Type::Path(path) => Type::Path(add_turbo_to_type(&path)),
+                Type::Path(path) => Type::Path(add_turbo_to_type(path)),
                 other => other.clone(),
             };
             let name = field.ident.as_ref().unwrap().clone();
