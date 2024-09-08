@@ -15,11 +15,7 @@ use crate::fields::{
 // Reads
 //////////////////////////
 
-pub(crate) fn enum_read(
-    name: &Ident,
-    attrs: &[Attribute],
-    variants: Vec<&Variant>,
-) -> MacroResult {
+pub(crate) fn enum_read(name: &Ident, attrs: &[Attribute], variants: Vec<&Variant>) -> MacroResult {
     let enum_config = parse_enum_attributes(name, attrs)?;
 
     let items: Result<Vec<(String, TokenStream)>, MacroError> = variants
@@ -137,11 +133,7 @@ fn read_unit_variant(
 // Writes
 //////////////////////////
 
-pub(crate) fn enum_write(
-    name: &Ident,
-    attrs: &[Attribute],
-    variants: &[&Variant],
-) -> MacroResult {
+pub(crate) fn enum_write(name: &Ident, attrs: &[Attribute], variants: &[&Variant]) -> MacroResult {
     let enum_config = parse_enum_attributes(name, attrs)?;
 
     let write_variants: Result<Vec<TokenStream>, MacroError> = variants

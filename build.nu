@@ -38,7 +38,7 @@ def "main deploy" [] {
         print $'Version ($version) has already been released on crates.io.'
         exit 1
     }
-    
+
     # assert current version is mentioned in the change log
     if (open CHANGELOG.md | lines | where $it =~ $version | is-empty) {
         print $'Version ($version) is not present in CHANGELOG. Please update.'

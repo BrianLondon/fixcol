@@ -8,6 +8,7 @@ struct Thing1 {
     #[fixcol(width = 5)]
     name: String,
     #[fixcol(width = 5, align = "right")]
+    #[rustfmt::skip]
     x: Option::<f32>,
     #[fixcol(width = 5, align = "right")]
     y: Option<f32>,
@@ -46,25 +47,41 @@ struct Thing4 {
 #[test]
 fn parse_option() {
     let actual = Thing1::read_fixed_str("foo   3.14   42").unwrap();
-    let expected = Thing1 { name: String::from("foo"), x: Some(3.14), y: Some(42.0)};
+    let expected = Thing1 {
+        name: String::from("foo"),
+        x: Some(3.14),
+        y: Some(42.0),
+    };
     assert_eq!(actual, expected);
 }
 
 #[test]
 fn parse_none() {
     let actual = Thing1::read_fixed_str("foo   3.14     ").unwrap();
-    let expected = Thing1 { name: String::from("foo"), x: Some(3.14), y: None};
+    let expected = Thing1 {
+        name: String::from("foo"),
+        x: Some(3.14),
+        y: None,
+    };
     assert_eq!(actual, expected);
 
     let actual = Thing1::read_fixed_str("foo          42").unwrap();
-    let expected = Thing1 { name: String::from("foo"), x: None, y: Some(42.0)};
+    let expected = Thing1 {
+        name: String::from("foo"),
+        x: None,
+        y: Some(42.0),
+    };
     assert_eq!(actual, expected);
 }
 
 #[test]
 fn err_on_non_option_empty() {
     let actual = Thing2::read_fixed_str("foo          42").unwrap();
-    let expected = Thing2 { name: String::from("foo"), x: None, y: 42.0};
+    let expected = Thing2 {
+        name: String::from("foo"),
+        x: None,
+        y: 42.0,
+    };
     assert_eq!(actual, expected);
 
     let actual = Thing2::read_fixed_str("foo   3.14     ");
@@ -78,26 +95,38 @@ fn err_on_non_option_empty() {
 #[test]
 fn option_vs_empty_string() {
     let actual = Thing3::read_fixed_str("foo   3.14   42").unwrap();
-    let expected = Thing3 { name: Some(String::from("foo")), x: 3.14, y: 42.0};
+    let expected = Thing3 {
+        name: Some(String::from("foo")),
+        x: 3.14,
+        y: 42.0,
+    };
     assert_eq!(actual, expected);
 
     let actual = Thing3::read_fixed_str("      3.14   42").unwrap();
-    let expected = Thing3 { name: None, x: 3.14, y: 42.0};
+    let expected = Thing3 { name: None, x: 3.14, y: 42.0 };
     assert_eq!(actual, expected);
 
     let actual = Thing4::read_fixed_str("foo   3.14   42").unwrap();
-    let expected = Thing4 { name: String::from("foo"), x: 3.14, y: 42.0};
+    let expected = Thing4 {
+        name: String::from("foo"),
+        x: 3.14,
+        y: 42.0,
+    };
     assert_eq!(actual, expected);
 
     let actual = Thing4::read_fixed_str("      3.14   42").unwrap();
-    let expected = Thing4 { name: String::from(""), x: 3.14, y: 42.0};
+    let expected = Thing4 { name: String::from(""), x: 3.14, y: 42.0 };
     assert_eq!(actual, expected);
 }
 
 #[test]
 #[cfg(feature = "experimental-write")]
 fn write_option_some() {
-    let thing = Thing1 { name: String::from("foo"), x: Some(3.14), y: Some(42.0)};
+    let thing = Thing1 {
+        name: String::from("foo"),
+        x: Some(3.14),
+        y: Some(42.0),
+    };
 
     let mut v = Vec::new();
     let res = thing.write_fixed(&mut v);
@@ -111,7 +140,11 @@ fn write_option_some() {
 #[test]
 #[cfg(feature = "experimental-write")]
 fn write_option_none() {
-    let thing = Thing1 { name: String::from("foo"), x: None, y: Some(42.0)};
+    let thing = Thing1 {
+        name: String::from("foo"),
+        x: None,
+        y: Some(42.0),
+    };
 
     let mut v = Vec::new();
     let res = thing.write_fixed(&mut v);

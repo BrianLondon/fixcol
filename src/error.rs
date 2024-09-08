@@ -37,7 +37,7 @@
 //!         }
 //!     }
 //! }
-//! # Ok(()) 
+//! # Ok(())
 //! # }
 //! ```
 use std::fmt::{Display, Formatter};

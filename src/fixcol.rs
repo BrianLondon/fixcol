@@ -290,7 +290,7 @@ pub trait ReadFixed {
     /// ```
     ///
     /// It can also be useful to pull directly from slices.
-    /// 
+    ///
     /// ```
     /// # use fixcol::{FixedDeserializer, FieldDescription, ReadFixed};
     /// # #[derive(ReadFixed)]
@@ -356,8 +356,6 @@ pub trait ReadFixed {
         Self::read_fixed(&mut bytes)
     }
 }
-
-
 
 #[cfg(test)]
 mod tests {

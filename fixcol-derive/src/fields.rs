@@ -13,8 +13,8 @@ fn add_turbo_to_type(path: &syn::TypePath) -> syn::TypePath {
         let span = segment.span();
 
         match &mut segment.arguments {
-            syn::PathArguments::None => {},
-            syn::PathArguments::Parenthesized(_) => {},
+            syn::PathArguments::None => {}
+            syn::PathArguments::Parenthesized(_) => {}
             syn::PathArguments::AngleBracketed(ref mut args) => {
                 args.colon2_token = Some(Token![::](span));
             }
