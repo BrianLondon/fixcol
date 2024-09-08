@@ -9,6 +9,7 @@ edition = "2021"
 keywords = ["fixed", "column", "serialization", "parse", "file"]
 categories = ["encoding", "parsing"]
 readme = "README.md"
+documentation = "https://crates.io/crates/fixcol"
 publish = true
 
 [workspace]
